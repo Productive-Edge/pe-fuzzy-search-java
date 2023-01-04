@@ -68,49 +68,96 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
     final class Matcher implements IterativeJuzzyMatcher {
         private final CharSequence text;
-        private int[] previousMatchings;
-        private int[] currentMatchings;
         private final int[] insertions;
         private final int[] deletions;
+        private final int[] _insertions;
+        private final int[] _deletions;
+        private int[] previousMatchings;
+        private int[] currentMatchings;
+        private int maxDistance;
         private int levenshteinDistance;
-        private int end;
-        private final int textLength;
+        private int index;
+        private int maxIndex;
 
         private Matcher(CharSequence text) {
             this.text = text;
-            currentMatchings = new int[maxLevenshteinDistance + 1];
-            previousMatchings = new int[currentMatchings.length];
-            insertions = new int[currentMatchings.length];
-            deletions = new int[currentMatchings.length];
-            textLength = text.length();
-            setEnd(-1);
+            maxIndex = text.length();
+            maxDistance = maxLevenshteinDistance;
+            final int n = maxDistance + 1;
+            currentMatchings = new int[n];
+            previousMatchings = new int[n];
+            insertions = new int[n];
+            deletions = new int[n];
+            _insertions = new int[n];
+            _deletions = new int[n];
+            setFrom(-1);
         }
 
         @Override
-        public void setEnd(final int fromIndex) {
-            end = fromIndex;
+        public void setFrom(final int fromIndex) {
+            index = fromIndex;
+        }
+
+        @Override
+        public void setTo(int lastIndex) {
+            maxIndex = lastIndex;
         }
 
         @Override
         public boolean find(final int fromIndex) {
-            setEnd(Math.max(0, fromIndex) - 1);
+            setFrom(Math.max(0, fromIndex) - 1);
             return find();
+        }
+
+        @Override
+        public boolean find(int fromIndex, int toIndex) {
+            setTo(Math.min(Math.max(0, toIndex), text.length()));
+            return find(fromIndex);
         }
 
         public boolean find() {
             resetState();
 
-            while (++end < textLength) {
-                if (testNextSymbol())
+            while (++index < maxIndex) {
+                if (testNextSymbol()) {
+                    int _maxDistance = maxDistance;
+                    improveResult(Math.min(index + patternLength, maxIndex));
+                    maxDistance = _maxDistance;
                     return true;
+                }
             }
 
             //insert at the end
-            for (int appendCount = 1; appendCount <= maxLevenshteinDistance; appendCount++) {
-                if (testNextInsert(appendCount))
+            for (int appendCount = 1; appendCount <= maxDistance; appendCount++) {
+                if (testNextInsert(appendCount)) {
                     return true;
+                }
             }
             return false;
+        }
+
+        private void improveResult(final int maxIndex) {
+            if (levenshteinDistance == 0)
+                return;
+            //store
+            int _index = index;
+            int _levenshteinDistance = levenshteinDistance;
+            for (int i = 1; i < _levenshteinDistance; i++) _deletions[i] = deletions[i];
+            for (int i = 1; i < _levenshteinDistance; i++) _insertions[i] = insertions[i];
+
+            maxDistance = levenshteinDistance - 1;
+            while (++index < maxIndex) {
+                if(testNextSymbol()) {
+                    improveResult(maxIndex);
+                    return;
+                }
+            }
+
+            //restore
+            index = _index;
+            levenshteinDistance = _levenshteinDistance;
+            for (int i = 1; i < _levenshteinDistance; i++) deletions[i] = _deletions[i];
+            for (int i = 1; i < _levenshteinDistance; i++) insertions[i] = _insertions[i];
         }
 
         @Override
@@ -123,21 +170,21 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
         @Override
         public boolean testNextSymbol() {
-            final int charPositions = positionBitMasks.getOrDefault(text.charAt(end), -1);
+            final int charPositions = positionBitMasks.getOrDefault(text.charAt(index), -1);
             swapMatching();
             levenshteinDistance = 0;
             currentMatchings[0] = (previousMatchings[0] << 1) | charPositions;
             if (0 == (currentMatchings[0] & lastBitMask)) {
                 return true;
             }
-            while (levenshteinDistance < maxLevenshteinDistance) {
-//                final int insertion = currentMatchings[levenshteinDistance] << 1; // original Bitap insert
+            while (levenshteinDistance < maxDistance) {
                 // ignore current character
                 final int deletion = previousMatchings[levenshteinDistance++];
                 // replace current character with correct one
                 final int substitution = deletion << 1;
-//                // insertion of missing correct character before current position
+                // insertion of missing correct character before current position
                 final int insertion = (substitution << 1) | charPositions;
+//                final int insertion = currentMatchings[levenshteinDistance - 1] << 1; // original Bitap insert
                 insertions[levenshteinDistance] = (insertions[levenshteinDistance] << 1) | 1;
                 deletions[levenshteinDistance] = (deletions[levenshteinDistance] << 1) | 1;
                 final int matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
@@ -160,10 +207,10 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
         @Override
         public boolean testNextInsert(final int iteration) {
             final int bitMask = lastBitMask >>> iteration;
-            final int maxIndex = maxLevenshteinDistance - iteration;
-            for (levenshteinDistance = 0; levenshteinDistance <= maxIndex; levenshteinDistance++) {
+            final int limit = maxDistance - iteration;
+            for (levenshteinDistance = 0; levenshteinDistance <= limit; levenshteinDistance++) {
                 if (0 == (currentMatchings[levenshteinDistance] & bitMask)) {
-                    end--;
+                    index--;
                     for (int i = 1; i <= iteration; i++) {
                         final int offset = levenshteinDistance + i;
                         insertions[offset] <<= i;
@@ -205,11 +252,11 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
         @Override
         public int end() {
-            if (end == -1)
+            if (index == -1)
                 throw new IllegalStateException("find method must be called before index");
-            if (end >= textLength)
+            if (index >= maxIndex)
                 throw new IllegalStateException("no matches were found, last call of the find method returned false");
-            return end + 1;
+            return index + 1;
         }
 
         @Override

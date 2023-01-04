@@ -268,16 +268,27 @@ class Bitap32Test {
     }
 
     @Test
-    public void testBestOnEdgeCase() {
-        Bitap32 p = new Bitap32("aabaa", 1);
-        JuzzyMatcher m = p.matcher("aaabaaa");
-        assertTrue(m.find());
-        assertEquals(5, m.end(), "end");
-        assertEquals(1, m.start(), "start");
-        assertEquals("aaba", m.foundText().toString(), "foundText");
-        assertEquals(1, m.distance(), "distance");
-        //TODO assertEquals("aabaa", m.foundText().toString(), "foundText");
-        //TODO assertEquals(0, m.distance(), "distance");
-        assertFalse(m.find());
+    public void testBestOnEdgeCases() {
+        {
+            Bitap32 p = new Bitap32("ababCabab", 2);
+            JuzzyMatcher m = p.matcher("abababCababab");
+            assertTrue(m.find());
+            assertEquals(2, m.start(), "start");
+            assertEquals(11, m.end(), "end");
+            assertEquals("ababCabab", m.foundText().toString(), "foundText");
+            assertEquals(0, m.distance(), "distance");
+            assertFalse(m.find());
+        }
+        {
+            Bitap32 p = new Bitap32("aabaa", 1);
+            JuzzyMatcher m = p.matcher("aaabaaa");
+            assertTrue(m.find());
+            assertEquals(6, m.end(), "end");
+            assertEquals(1, m.start(), "start");
+            assertEquals("aabaa", m.foundText().toString(), "foundText");
+            assertEquals(0, m.distance(), "distance");
+            assertFalse(m.find());
+        }
     }
+
 }

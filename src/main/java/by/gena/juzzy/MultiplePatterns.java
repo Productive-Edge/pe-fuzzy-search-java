@@ -29,7 +29,7 @@ final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
             textLength = text.length();
             matchers = new IterativeJuzzyMatcher[patterns.length];
             for (int i = 0, l = matchers.length; i < l; i++) matchers[i] = patterns[i].getIterativeMatcher(text);
-            setEnd(-1);
+            setFrom(-1);
         }
 
         @Override
@@ -49,7 +49,7 @@ final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
             //insert at the end
             int maxLevenshteinDistance = 0;
             for (IterativeJuzzyMatcher matcher : matchers) {
-                matcher.setEnd(end);
+                matcher.setFrom(end);
                 final int max = matcher.pattern().maxLevenshteinDistance();
                 if(maxLevenshteinDistance < max) maxLevenshteinDistance = max;
             }
@@ -62,8 +62,13 @@ final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
 
         @Override
         public boolean find(int fromIndex) {
-            setEnd(Math.max(0, fromIndex) - 1);
+            setFrom(Math.max(0, fromIndex) - 1);
             return find();
+        }
+
+        @Override
+        public boolean find(int fromIndex, int toIndex) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -87,8 +92,13 @@ final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
         }
 
         @Override
-        public void setEnd(int atIndex) {
+        public void setFrom(int atIndex) {
             end = atIndex;
+        }
+
+        @Override
+        public void setTo(int lastIndex) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -100,7 +110,7 @@ final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
         @Override
         public boolean testNextSymbol() {
             for (IterativeJuzzyMatcher matcher : matchers) {
-                matcher.setEnd(end);
+                matcher.setFrom(end);
                 if (matcher.testNextSymbol()) {
                     matched = matcher;
                     return true;

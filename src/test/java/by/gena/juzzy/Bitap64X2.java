@@ -168,6 +168,11 @@ class Bitap64X2 implements JuzzyPattern {
             return find();
         }
 
+        @Override
+        public boolean find(int fromIndex, int toIndex) {
+            throw new UnsupportedOperationException();
+        }
+
         public final int start() {
             return end() - patternLength + lengthChanges[levenshteinDistance];
         }

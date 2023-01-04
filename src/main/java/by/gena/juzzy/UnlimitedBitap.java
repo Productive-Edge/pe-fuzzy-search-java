@@ -83,12 +83,17 @@ final class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
             for (int i = 0; i < previousMatchings.length; i++) previousMatchings[i] = new BitVector(patternLength);
             lengthChanges = new int[currentMatchings.length];
             textLength = text.length();
-            setEnd(-1);
+            setFrom(-1);
         }
 
         @Override
-        public void setEnd(final int fromIndex) {
+        public void setFrom(final int fromIndex) {
             end = fromIndex;
+        }
+
+        @Override
+        public void setTo(int lastIndex) {
+            throw new UnsupportedOperationException();
         }
 
         public boolean find() {
@@ -189,8 +194,13 @@ final class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
         }
 
         public boolean find(int fromIndex) {
-            setEnd(Math.max(0, fromIndex) - 1);
+            setFrom(Math.max(0, fromIndex) - 1);
             return find();
+        }
+
+        @Override
+        public boolean find(int fromIndex, int toIndex) {
+            throw new UnsupportedOperationException();
         }
 
         public int start() {
