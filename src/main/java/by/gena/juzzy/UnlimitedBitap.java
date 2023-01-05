@@ -77,7 +77,6 @@ class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
         private final BitVector substitution = new BitVector(patternLength);
         private final BitVector insertion = new BitVector(patternLength);
         private final BitVector matching = new BitVector(patternLength);
-        private final BitVector inverted = new BitVector(patternLength);
         private final BitVector testDeletion = new BitVector(patternLength);
 
         private Matcher(CharSequence text, int fromIndex, int toIndex) {
