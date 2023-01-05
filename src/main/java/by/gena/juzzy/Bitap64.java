@@ -3,7 +3,7 @@ package by.gena.juzzy;
 import it.unimi.dsi.fastutil.chars.Char2LongMap;
 import it.unimi.dsi.fastutil.chars.Char2LongOpenHashMap;
 
-final class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
+class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
 
     private final Char2LongMap positionBitMasks;
     private final CharSequence pattern;
@@ -56,104 +56,144 @@ final class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
     }
 
     @Override
-    public JuzzyMatcher matcher(CharSequence text) {
-        return getIterativeMatcher(text);
+    public JuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
+        return getIterativeMatcher(text, fromIndex, toIndex);
     }
 
     @Override
-    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text) {
-        return new Matcher(text);
+    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
+        return new Matcher(text, fromIndex, toIndex);
     }
 
     final class Matcher implements IterativeJuzzyMatcher {
-        private final CharSequence text;
+        private CharSequence text;
+        private final long[] insertions;
+        private final long[] deletions;
+        private final long[] _insertions;
+        private final long[] _deletions;
         private long[] previousMatchings;
         private long[] currentMatchings;
-        private final int[] lengthChanges;
+        private int maxDistance;
         private int levenshteinDistance;
-        private int end;
-        private final int textLength;
+        private int index;
+        private int maxIndex;
 
-        private Matcher(CharSequence text) {
+        private Matcher(CharSequence text, int fromIndex, int toIndex) {
             this.text = text;
-            currentMatchings = new long[maxLevenshteinDistance + 1];
-            previousMatchings = new long[currentMatchings.length];
-            lengthChanges = new int[currentMatchings.length];
-            textLength = text.length();
-            setFrom(-1);
+            maxDistance = maxLevenshteinDistance;
+            final int n = maxDistance + 1;
+            currentMatchings = new long[n];
+            previousMatchings = new long[n];
+            insertions = new long[n];
+            deletions = new long[n];
+            _insertions = new long[n];
+            _deletions = new long[n];
+            index = Math.max(0, fromIndex) - 1;
+            maxIndex = Math.min(text.length(), toIndex);
         }
 
         @Override
-        public void setFrom(final int fromIndex) {
-            end = fromIndex;
+        public CharSequence text() {
+            return text;
         }
 
         @Override
-        public void setTo(int lastIndex) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean find(final int fromIndex) {
-            setFrom(Math.max(0, fromIndex) - 1);
-            return find();
-        }
-
-        @Override
-        public boolean find(int fromIndex, int toIndex) {
-            throw new UnsupportedOperationException();
+        public void reset(CharSequence text, int fromIndex, int toIndex) {
+            this.text = text;
+            index = Math.max(0, fromIndex) - 1;
+            maxIndex = Math.min(text.length(), maxIndex);
         }
 
         public boolean find() {
             resetState();
 
-            while (++end < textLength) {
-                if (testNextSymbol())
+            while (++index < maxIndex) {
+                if (testNextSymbol()) {
+                    int _maxDistance = maxDistance;
+                    improveResult(Math.min(index + patternLength, maxIndex));
+                    maxDistance = _maxDistance;
                     return true;
+                }
             }
 
             //insert at the end
-            for (int appendCount = 1; appendCount <= maxLevenshteinDistance; appendCount++) {
-                if (testNextInsert(appendCount))
+            for (int appendCount = 1; appendCount <= maxDistance; appendCount++) {
+                if (testNextInsert(appendCount)) {
                     return true;
+                }
             }
             return false;
         }
 
         @Override
+        @SuppressWarnings("ManualArrayCopy")
+        public void improveResult(final int maxIndex) {
+            if (levenshteinDistance == 0)
+                return;
+            //store
+            int _index = index;
+            int _levenshteinDistance = levenshteinDistance;
+            for (int i = 1; i < _levenshteinDistance; i++) _deletions[i] = deletions[i];
+            for (int i = 1; i < _levenshteinDistance; i++) _insertions[i] = insertions[i];
+
+            maxDistance = levenshteinDistance - 1;
+            while (++index < maxIndex) {
+                if(testNextSymbol()) {
+                    improveResult(maxIndex);
+                    return;
+                }
+            }
+
+            //restore
+            index = _index;
+            levenshteinDistance = _levenshteinDistance;
+            for (int i = 1; i < _levenshteinDistance; i++) deletions[i] = _deletions[i];
+            for (int i = 1; i < _levenshteinDistance; i++) insertions[i] = _insertions[i];
+        }
+
+        @Override
         public void resetState() {
-            for (int i = 1, l = lengthChanges.length; i < l; i++) lengthChanges[i] = 0;
-            for (int i = 0, l = currentMatchings.length; i < l; i++) currentMatchings[i] = -1L;
+            for (int i = 1; i <= maxDistance; i++) insertions[i] = -1L;
+            for (int i = 1; i <= maxDistance; i++) deletions[i] = -1L;
+            for (int i = 0; i <= maxDistance; i++) currentMatchings[i] = -1L;
+        }
+
+        @Override
+        public int getMaxDistance() {
+            return maxDistance;
+        }
+
+        @Override
+        public void setMaxDistance(int maxDistance) {
+            this.maxDistance = maxDistance;
         }
 
         @Override
         public boolean testNextSymbol() {
-            final long charPositions = positionBitMasks.getOrDefault(text.charAt(end), -1L);
+            final long charPositions = positionBitMasks.getOrDefault(text.charAt(index), -1L);
             swapMatching();
             levenshteinDistance = 0;
             currentMatchings[0] = (previousMatchings[0] << 1) | charPositions;
             if (0L == (currentMatchings[0] & lastBitMask)) {
                 return true;
             }
-            while (levenshteinDistance < maxLevenshteinDistance) {
+            while (levenshteinDistance < maxDistance) {
                 // ignore current character
-                final long deletion = previousMatchings[levenshteinDistance];
+                final long deletion = previousMatchings[levenshteinDistance++];
                 // replace current character with correct one
                 final long substitution = deletion << 1;
                 // insertion of missing correct character before current position
                 final long insertion = (substitution << 1) | charPositions;
 
-                final int resultLengthChange = lengthChanges[levenshteinDistance];
-                levenshteinDistance++;
+                insertions[levenshteinDistance] = (insertions[levenshteinDistance] << 1) | 1L;
+                deletions[levenshteinDistance] = (deletions[levenshteinDistance] << 1) | 1L;
                 final long matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
-                if (matching >= deletion) {
-                    if (insertion < deletion) {
-                        lengthChanges[levenshteinDistance] = resultLengthChange + 1;
-                    }
-                } else if (matching < substitution) {
-                    if (-1L == (matching | (~previousMatchings[levenshteinDistance]))) {
-                        //previous operation was deletion
-                        lengthChanges[levenshteinDistance] = resultLengthChange - 1;
+                if (insertion < substitution) {
+                    insertions[levenshteinDistance] &= -3L;
+                }
+                if (matching < substitution) {
+                    if (-1 == (matching | (~previousMatchings[levenshteinDistance]))) {
+                        deletions[levenshteinDistance] &= -2L;
                     }
                 }
                 currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
@@ -167,13 +207,16 @@ final class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
         @Override
         public boolean testNextInsert(final int iteration) {
             final long bitMask = lastBitMask >>> iteration;
-            final int maxIndex = maxLevenshteinDistance - iteration;
-            for (levenshteinDistance = 0; levenshteinDistance <= maxIndex; levenshteinDistance++) {
+            final int limit = maxDistance - iteration;
+            for (levenshteinDistance = 0; levenshteinDistance <= limit; levenshteinDistance++) {
                 if (0L == (currentMatchings[levenshteinDistance] & bitMask)) {
-                    end--;
-                    final int resultLengthChange = lengthChanges[levenshteinDistance];
+                    index--;
+                    for (int i = 1; i <= iteration; i++) {
+                        final int offset = levenshteinDistance + i;
+                        insertions[offset] <<= i;
+                        deletions[offset] = (deletions[offset] << i) | ((1L << i) - 1L);
+                    }
                     levenshteinDistance += iteration;
-                    lengthChanges[levenshteinDistance] = resultLengthChange + iteration;
                     return true;
                 }
             }
@@ -186,18 +229,36 @@ final class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
             previousMatchings = tmp;
         }
 
+        private int countEdits(final long mask, final int length) {
+            return (patternLength == 64 ? mask : mask | (-1L << length)) == -1 ? 0 : 1;
+        }
+
+        public int countOfInsertions(final int countOfDeletions) {
+            final int length = patternLength - countOfDeletions;
+            int result = 0;
+            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(insertions[i], length);
+            return result;
+        }
+
+        public int countOfDeletions() {
+            int result = 0;
+            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(deletions[i], patternLength);
+            return result;
+        }
+
         @Override
         public int start() {
-            return end() - patternLength + lengthChanges[levenshteinDistance];
+            final int deleted = countOfDeletions();
+            return end() - patternLength + countOfInsertions(deleted) - deleted;
         }
 
         @Override
         public int end() {
-            if (end == -1)
+            if (index == -1)
                 throw new IllegalStateException("find method must be called before index");
-            if (end >= textLength)
+            if (index >= maxIndex)
                 throw new IllegalStateException("no matches were found, last call of the find method returned false");
-            return end + 1;
+            return index + 1;
         }
 
         @Override

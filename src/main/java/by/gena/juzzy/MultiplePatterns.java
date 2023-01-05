@@ -1,6 +1,6 @@
 package by.gena.juzzy;
 
-final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
+class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
 
     private final IterativeJuzzyPattern[] patterns;
 
@@ -9,66 +9,65 @@ final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
     }
 
     @Override
-    public JuzzyMatcher matcher(CharSequence text) {
-        return getIterativeMatcher(text);
+    public JuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
+        return getIterativeMatcher(text, fromIndex, toIndex);
     }
 
     @Override
-    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text) {
-        return new Matcher(text);
+    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
+        return new Matcher(text, fromIndex, toIndex);
     }
 
     class Matcher implements IterativeJuzzyMatcher {
-
+        private CharSequence text;
         final IterativeJuzzyMatcher[] matchers;
         IterativeJuzzyMatcher matched;
-        private int end;
-        private final int textLength;
+        private int index;
+        private int maxIndex;
 
-        Matcher(CharSequence text) {
-            textLength = text.length();
+        Matcher(CharSequence text, int fromIndex, int toIndex) {
+            this.text = text;
+            index = Math.max(0, fromIndex) - 1;
+            maxIndex = Math.min(text.length(), toIndex);
             matchers = new IterativeJuzzyMatcher[patterns.length];
-            for (int i = 0, l = matchers.length; i < l; i++) matchers[i] = patterns[i].getIterativeMatcher(text);
-            setFrom(-1);
+            for (int i = 0, l = matchers.length; i < l; i++) matchers[i] = patterns[i].getIterativeMatcher(text, index, maxIndex);
         }
 
         @Override
-        public JuzzyPattern pattern() {
-            return ensureFound().pattern();
+        public CharSequence text() {
+            return text;
+        }
+
+        @Override
+        public void reset(CharSequence text, int fromIndex, int toIndex) {
+            this.text = text;
+            index = Math.max(0, fromIndex) - 1;
+            maxIndex = Math.min(text.length(), maxIndex);
+            for (IterativeJuzzyMatcher matcher : matchers) matcher.reset(text, index, maxIndex);
         }
 
         @Override
         public boolean find() {
             resetState();
 
-            while (++end < textLength) {
-                if(testNextSymbol())
+            while (++index < maxIndex) {
+                if (testNextSymbol()) {
                     return true;
+                }
             }
 
             //insert at the end
-            int maxLevenshteinDistance = 0;
+            int maxDistance = 0;
             for (IterativeJuzzyMatcher matcher : matchers) {
-                matcher.setFrom(end);
                 final int max = matcher.pattern().maxLevenshteinDistance();
-                if(maxLevenshteinDistance < max) maxLevenshteinDistance = max;
+                if(maxDistance < max) maxDistance = max;
             }
-            for (int appendCount = 1; appendCount <= maxLevenshteinDistance; appendCount++) {
+
+            for (int appendCount = 1; appendCount <= maxDistance; appendCount++) {
                 if (testNextInsert(appendCount))
                     return true;
             }
             return false;
-        }
-
-        @Override
-        public boolean find(int fromIndex) {
-            setFrom(Math.max(0, fromIndex) - 1);
-            return find();
-        }
-
-        @Override
-        public boolean find(int fromIndex, int toIndex) {
-            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -92,13 +91,8 @@ final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
         }
 
         @Override
-        public void setFrom(int atIndex) {
-            end = atIndex;
-        }
-
-        @Override
-        public void setTo(int lastIndex) {
-            throw new UnsupportedOperationException();
+        public JuzzyPattern pattern() {
+            return ensureFound().pattern();
         }
 
         @Override
@@ -108,11 +102,25 @@ final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
         }
 
         @Override
+        public int getMaxDistance() {
+            return ensureFound().getMaxDistance();
+        }
+
+        @Override
+        public void setMaxDistance(int maxDistance) {
+            for (IterativeJuzzyMatcher matcher : matchers) matcher.setMaxDistance(maxDistance);
+        }
+
+        @Override
         public boolean testNextSymbol() {
             for (IterativeJuzzyMatcher matcher : matchers) {
-                matcher.setFrom(end);
+                matcher.reset(index);
                 if (matcher.testNextSymbol()) {
                     matched = matcher;
+                    int maxDistance = matcher.getMaxDistance();
+                    matcher.improveResult(Math.min(index + matcher.pattern().text().length(), maxIndex));
+                    matcher.setMaxDistance(maxDistance);
+                    index = matcher.end() - 1;
                     return true;
                 }
             }
@@ -130,8 +138,13 @@ final class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
             return false;
         }
 
+        @Override
+        public void improveResult(int maxIndex) {
+            ensureFound().improveResult(maxIndex);
+        }
+
         private IterativeJuzzyMatcher ensureFound() {
-            if(end == -1)
+            if(index == -1)
                 throw new IllegalStateException("find method must be called before");
             if(matched == null)
                 throw new IllegalStateException("no matches were found, last call of find method returned false");

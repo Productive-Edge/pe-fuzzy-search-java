@@ -169,10 +169,9 @@ class UnlimitedBitapTest {
         }
         {
             JuzzyMatcher matcher = new UnlimitedBitap("aba", 1).matcher("baba");
-            int start = 0;
-            while (matcher.find(start)) {
+            while (matcher.find()) {
                 System.out.println(matcher.foundText());
-                start = matcher.end() - matcher.distance();
+                matcher.reset(matcher.end() - matcher.distance());
             }
         }
     }

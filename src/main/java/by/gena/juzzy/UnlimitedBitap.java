@@ -2,7 +2,7 @@ package by.gena.juzzy;
 
 import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
 
-final class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
+class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
 
     private final Char2ObjectOpenHashMap<BitVector> positionBitMasks;
     private final CharSequence pattern;
@@ -52,75 +52,132 @@ final class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
     }
 
     @Override
-    public JuzzyMatcher matcher(CharSequence text) {
-        return getIterativeMatcher(text);
+    public JuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
+        return getIterativeMatcher(text, fromIndex, toIndex);
     }
 
     @Override
-    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text) {
-        return new Matcher(text);
+    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
+        return new Matcher(text, fromIndex, toIndex);
     }
 
     final class Matcher implements IterativeJuzzyMatcher {
-        private final CharSequence text;
+        private CharSequence text;
+        private final BitVector[] insertions;
+        private final BitVector[] deletions;
+        private final BitVector[] _insertions;
+        private final BitVector[] _deletions;
         private BitVector[] previousMatchings;
         private BitVector[] currentMatchings;
-        private final int[] lengthChanges;
+        private int maxDistance;
         private int levenshteinDistance;
-        private int end;
-        private final int textLength;
+        private int index;
+        private int maxIndex;
 
         private final BitVector substitution = new BitVector(patternLength);
         private final BitVector insertion = new BitVector(patternLength);
         private final BitVector matching = new BitVector(patternLength);
         private final BitVector inverted = new BitVector(patternLength);
+        private final BitVector testDeletion = new BitVector(patternLength);
 
-        private Matcher(CharSequence text) {
+        private Matcher(CharSequence text, int fromIndex, int toIndex) {
             this.text = text;
-            currentMatchings = new BitVector[maxLevenshteinDistance + 1];
-            for (int i = 0; i < currentMatchings.length; i++) currentMatchings[i] = new BitVector(patternLength);
-            previousMatchings = new BitVector[currentMatchings.length];
-            for (int i = 0; i < previousMatchings.length; i++) previousMatchings[i] = new BitVector(patternLength);
-            lengthChanges = new int[currentMatchings.length];
-            textLength = text.length();
-            setFrom(-1);
+            maxDistance = maxLevenshteinDistance;
+            final int n = maxDistance + 1;
+            currentMatchings = createVectors(n);
+            previousMatchings = createVectors(n);
+            insertions = createVectors(n);
+            deletions = createVectors(n);
+            _insertions = createVectors(n);
+            _deletions = createVectors(n);
+            index = Math.max(0, fromIndex) - 1;
+            maxIndex = Math.min(text.length(), toIndex);
+        }
+
+        private BitVector[] createVectors(int n) {
+            BitVector[] result = new BitVector[n];
+            for (int i = 0; i < n; i++) result[i] = new BitVector(patternLength);
+            return result;
         }
 
         @Override
-        public void setFrom(final int fromIndex) {
-            end = fromIndex;
+        public CharSequence text() {
+            return text;
         }
 
         @Override
-        public void setTo(int lastIndex) {
-            throw new UnsupportedOperationException();
+        public void reset(CharSequence text, int fromIndex, int toIndex) {
+            this.text = text;
+            index = Math.max(0, fromIndex) - 1;
+            maxIndex = Math.min(text.length(), maxIndex);
         }
 
         public boolean find() {
             resetState();
 
-            while (++end < textLength) {
-                if(testNextSymbol())
+            while (++index < maxIndex) {
+                if (testNextSymbol()) {
+                    int _maxDistance = maxDistance;
+                    improveResult(Math.min(index + patternLength, maxIndex));
+                    maxDistance = _maxDistance;
                     return true;
+                }
             }
 
             //insert at the end
-            for (int appendCount = 1; appendCount <= maxLevenshteinDistance; appendCount++) {
-                if(testNextInsert(appendCount))
+            for (int appendCount = 1; appendCount <= maxDistance; appendCount++) {
+                if (testNextInsert(appendCount)) {
                     return true;
+                }
             }
             return false;
         }
 
         @Override
+        public void improveResult(final int maxIndex) {
+            if (levenshteinDistance == 0)
+                return;
+            //store
+            int _index = index;
+            int _levenshteinDistance = levenshteinDistance;
+            for (int i = 1; i < _levenshteinDistance; i++) _deletions[i].setBitsFrom(deletions[i]);
+            for (int i = 1; i < _levenshteinDistance; i++) _insertions[i].setBitsFrom(insertions[i]);
+
+            maxDistance = levenshteinDistance - 1;
+            while (++index < maxIndex) {
+                if (testNextSymbol()) {
+                    improveResult(maxIndex);
+                    return;
+                }
+            }
+
+            //restore
+            index = _index;
+            levenshteinDistance = _levenshteinDistance;
+            for (int i = 1; i < _levenshteinDistance; i++) deletions[i].setBitsFrom(_deletions[i]);
+            for (int i = 1; i < _levenshteinDistance; i++) insertions[i].setBitsFrom(_insertions[i]);
+        }
+
+        @Override
         public void resetState() {
-            for (int i = 0, l = lengthChanges.length; i < l; i++) lengthChanges[i] = 0;
-            for(final BitVector vector : currentMatchings) vector.setMinusOne();
+            for (int i = 1; i <= maxDistance; i++) insertions[i].setMinusOne();
+            for (int i = 1; i <= maxDistance; i++) deletions[i].setMinusOne();
+            for (int i = 0; i <= maxDistance; i++) currentMatchings[i].setMinusOne();
+        }
+
+        @Override
+        public int getMaxDistance() {
+            return maxDistance;
+        }
+
+        @Override
+        public void setMaxDistance(int maxDistance) {
+            this.maxDistance = maxDistance;
         }
 
         @Override
         public boolean testNextSymbol() {
-            final BitVector charPositions = positionBitMasks.getOrDefault(text.charAt(end), null);
+            final BitVector charPositions = positionBitMasks.getOrDefault(text.charAt(index), null);
             swapMatching();
             levenshteinDistance = 0;
             if (charPositions == null) {
@@ -132,9 +189,9 @@ final class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
             if (currentMatchings[0].hasZeroAtLastBit()) {
                 return true;
             }
-            while (levenshteinDistance < maxLevenshteinDistance) {
+            while (levenshteinDistance < maxDistance) {
                 // ignore current character
-                final BitVector deletion = previousMatchings[levenshteinDistance];
+                final BitVector deletion = previousMatchings[levenshteinDistance++];
                 // replace current character with correct one
                 substitution.setBitsFrom(deletion).leftShift1();
                 // insertion of missing correct character before current position
@@ -143,24 +200,23 @@ final class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
                 } else {
                     insertion.setBitsFrom(substitution).leftShift1().or(charPositions);
                 }
-                final int resultLengthChange = lengthChanges[levenshteinDistance];
-                levenshteinDistance++;
                 if (charPositions == null) {
                     matching.setMinusOne();
                 } else {
                     matching.setBitsFrom(previousMatchings[levenshteinDistance])
                             .leftShift1().or(charPositions);
                 }
-                if (matching.greaterOrEqualThan(deletion)) {
-                    if (!insertion.greaterOrEqualThan(deletion)) {
-                        lengthChanges[levenshteinDistance] = resultLengthChange + 1;
-                    }
-                } else if (!matching.greaterOrEqualThan(substitution)) {
-                    final boolean everyBitIsOne = inverted.setBitsFrom(previousMatchings[levenshteinDistance])
-                            .invert().or(matching).isMinusOne();
-                    if (everyBitIsOne) {
-                        //previous operation was deletion
-                        lengthChanges[levenshteinDistance] = resultLengthChange - 1;
+                if(insertion.lessThan(substitution)) {
+                    insertions[levenshteinDistance].and(-3L);
+                }
+                if(matching.lessThan(substitution)) {
+                    final boolean wasDeleted = testDeletion
+                            .setBitsFrom(previousMatchings[levenshteinDistance])
+                            .invert()
+                            .or(matching)
+                            .isMinusOne();
+                    if(wasDeleted) {
+                        deletions[levenshteinDistance].and(-2L);
                     }
                 }
                 currentMatchings[levenshteinDistance].setBitsFrom(insertion)
@@ -174,13 +230,18 @@ final class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
 
         @Override
         public boolean testNextInsert(final int iteration) {
-            final int maxIndex = maxLevenshteinDistance - iteration;
-            for (levenshteinDistance = 0; levenshteinDistance <= maxIndex; levenshteinDistance++) {
+            final int limit = maxDistance - iteration;
+            for (levenshteinDistance = 0; levenshteinDistance <= limit; levenshteinDistance++) {
                 if (currentMatchings[levenshteinDistance].leftShift1().hasZeroAtLastBit()) {
-                    end--;
-                    final int resultLengthChange = lengthChanges[levenshteinDistance];
+                    index--;
+                    BitVector mask = new BitVector(patternLength);
+                    for (int i = 1; i <= iteration; i++) {
+                        final int offset = levenshteinDistance + i;
+                        insertions[offset].leftShift(i);
+                        mask.leftShift1().or(1L);
+                        deletions[offset].leftShift(i).or(mask);
+                    }
                     levenshteinDistance += iteration;
-                    lengthChanges[levenshteinDistance] = resultLengthChange + iteration;
                     return true;
                 }
             }
@@ -193,112 +254,54 @@ final class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
             previousMatchings = tmp;
         }
 
-        public boolean find(int fromIndex) {
-            setFrom(Math.max(0, fromIndex) - 1);
-            return find();
+        private final BitVector edits = new BitVector(patternLength);
+        private int countEdits(BitVector mask, final int length) {
+            BitVector masked =  (patternLength & 63L) == 0L ? mask : edits.setMinusOne().leftShift(length).or(mask);
+            return masked.isMinusOne() ? 0 : 1;
+        }
+
+        public int countOfInsertions(final int countOfDeletions) {
+            final int length = patternLength - countOfDeletions;
+            int result = 0;
+            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(insertions[i], length);
+            return result;
+        }
+
+        public int countOfDeletions() {
+            int result = 0;
+            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(deletions[i], patternLength);
+            return result;
         }
 
         @Override
-        public boolean find(int fromIndex, int toIndex) {
-            throw new UnsupportedOperationException();
-        }
-
         public int start() {
-            return end() - patternLength + lengthChanges[levenshteinDistance];
+            final int deleted = countOfDeletions();
+            return end() - patternLength + countOfInsertions(deleted) - deleted;
         }
 
+        @Override
         public int end() {
-            if (end == -1)
+            if (index == -1)
                 throw new IllegalStateException("find method must be called before index");
-            if (end >= textLength)
-                throw new IllegalStateException("no matches were found, last call of find return false");
-            return end + 1;
+            if (index >= maxIndex)
+                throw new IllegalStateException("no matches were found, last call of the find method returned false");
+            return index + 1;
         }
 
+        @Override
         public int distance() {
             return levenshteinDistance;
         }
 
+        @Override
         public CharSequence foundText() {
             return text.subSequence(start(), end());
         }
 
+        @Override
         public JuzzyPattern pattern() {
             return UnlimitedBitap.this;
         }
-
     }
 
-    static final class BitVector {
-        final long[] bits;
-        final long lastBitMask;
-
-        BitVector(final int length) {
-            bits = new long[((length - 1) >>> 6) + 1];
-            lastBitMask = 1L << ((length - 1) & 63L);
-        }
-
-        BitVector setZeroAt(final int bitIndex) {
-            bits[bitIndex >>> 6] &= ~(1L << (bitIndex & 63));
-            return this;
-        }
-
-        boolean hasZeroAtLastBit() {
-            return 0L == (bits[bits.length - 1] & lastBitMask);
-        }
-
-        BitVector setMinusOne() {
-    //        Arrays.fill(bits, value);
-            for (int i = 0, l = bits.length; i < l; i++) bits[i] = -1L;
-            return this;
-        }
-
-        BitVector setBitsFrom(final BitVector vector) {
-    //        System.arraycopy(vector.bits, 0, bits, 0, bits.length); // is not effective! for short arrays
-            for (int i = 0, l = bits.length; i < l; i++) bits[i] = vector.bits[i];
-            return this;
-        }
-
-        BitVector or(final BitVector vector) {
-            for (int i = 0, l = bits.length; i < l; i++) bits[i] |= vector.bits[i];
-            return this;
-        }
-
-        BitVector and(final BitVector vector) {
-            for (int i = 0, l = bits.length; i < l; i++) bits[i] &= vector.bits[i];
-            return this;
-        }
-
-        BitVector invert() {
-            for (int i = 0, l = bits.length; i < l; i++) bits[i] = ~bits[i];
-            return this;
-        }
-
-        BitVector leftShift1() {
-            long bit = 0;
-            for (int i = 0, l = bits.length; i < l; i++) {
-                final long overflow = bits[i] >>> 63;
-                bits[i] <<= 1;
-                bits[i] |= bit;
-                bit = overflow;
-            }
-            return this;
-        }
-
-        boolean greaterOrEqualThan(final BitVector vector) {
-            for (int i = bits.length - 1; i >= 0; i--) {
-                final long delta = bits[i] - vector.bits[i];
-                if (delta == 0L) continue;
-                return delta > 0L;
-            }
-            return true;
-        }
-
-        boolean isMinusOne() {
-            for (final long bit : bits) {
-                if (bit != -1L) return false;
-            }
-            return true;
-        }
-    }
 }

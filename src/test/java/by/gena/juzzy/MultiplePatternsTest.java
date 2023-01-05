@@ -175,9 +175,8 @@ class MultiplePatternsTest {
                 public boolean caseInsensitive() {
                     return false;
                 }
-
                 @Override
-                public JuzzyMatcher matcher(CharSequence text) {
+                public JuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
                     return null;
                 }
             }, null);

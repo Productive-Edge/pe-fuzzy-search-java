@@ -3,9 +3,9 @@ package by.gena.juzzy;
 import by.gena.ordinal.Ordinal;
 
 interface IterativeJuzzyPattern {
-    IterativeJuzzyMatcher getIterativeMatcher(CharSequence text);
+    IterativeJuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex);
 
-    static IterativeJuzzyPattern cast(JuzzyPattern pattern, int index) {
+    static IterativeJuzzyPattern cast(final JuzzyPattern pattern, final int index) {
         if (pattern == null)
             throw new IllegalArgumentException(Ordinal.en(index) + " pattern is null");
         if (pattern instanceof IterativeJuzzyPattern)

@@ -3,7 +3,7 @@ package by.gena.juzzy;
 import it.unimi.dsi.fastutil.chars.Char2IntMap;
 import it.unimi.dsi.fastutil.chars.Char2IntOpenHashMap;
 
-final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
+class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
     private final Char2IntMap positionBitMasks;
     private final CharSequence pattern;
@@ -57,31 +57,30 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
     }
 
     @Override
-    public JuzzyMatcher matcher(CharSequence text) {
-        return getIterativeMatcher(text);
+    public JuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
+        return getIterativeMatcher(text, fromIndex, toIndex);
     }
 
     @Override
-    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text) {
-        return new Matcher(text);
+    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
+        return new Matcher(text, fromIndex, toIndex);
     }
 
     final class Matcher implements IterativeJuzzyMatcher {
-        private final CharSequence text;
+        private CharSequence text;
         private final int[] insertions;
         private final int[] deletions;
         private final int[] _insertions;
         private final int[] _deletions;
         private int[] previousMatchings;
         private int[] currentMatchings;
-        private int maxDistance;
         private int levenshteinDistance;
+        private int maxDistance;
         private int index;
         private int maxIndex;
 
-        private Matcher(CharSequence text) {
+        private Matcher(CharSequence text, int fromIndex, int toIndex) {
             this.text = text;
-            maxIndex = text.length();
             maxDistance = maxLevenshteinDistance;
             final int n = maxDistance + 1;
             currentMatchings = new int[n];
@@ -90,31 +89,23 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             deletions = new int[n];
             _insertions = new int[n];
             _deletions = new int[n];
-            setFrom(-1);
+            index = Math.max(0, fromIndex) - 1;
+            maxIndex = Math.min(text.length(), toIndex);
         }
 
         @Override
-        public void setFrom(final int fromIndex) {
-            index = fromIndex;
+        public CharSequence text() {
+            return text;
         }
 
         @Override
-        public void setTo(int lastIndex) {
-            maxIndex = lastIndex;
+        public void reset(CharSequence text, int fromIndex, int toIndex) {
+            this.text = text;
+            index = Math.max(0, fromIndex) - 1;
+            maxIndex = Math.min(text.length(), maxIndex);
         }
 
         @Override
-        public boolean find(final int fromIndex) {
-            setFrom(Math.max(0, fromIndex) - 1);
-            return find();
-        }
-
-        @Override
-        public boolean find(int fromIndex, int toIndex) {
-            setTo(Math.min(Math.max(0, toIndex), text.length()));
-            return find(fromIndex);
-        }
-
         public boolean find() {
             resetState();
 
@@ -136,7 +127,9 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             return false;
         }
 
-        private void improveResult(final int maxIndex) {
+        @Override
+        @SuppressWarnings("ManualArrayCopy")
+        public void improveResult(final int maxIndex) {
             if (levenshteinDistance == 0)
                 return;
             //store
@@ -147,7 +140,7 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
             maxDistance = levenshteinDistance - 1;
             while (++index < maxIndex) {
-                if(testNextSymbol()) {
+                if (testNextSymbol()) {
                     improveResult(maxIndex);
                     return;
                 }
@@ -162,10 +155,19 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
         @Override
         public void resetState() {
-            final int l = currentMatchings.length;
-            for (int i = 1; i < l; i++) insertions[i] = -1;
-            for (int i = 1; i < l; i++) deletions[i] = -1;
-            for (int i = 0; i < l; i++) currentMatchings[i] = -1;
+            for (int i = 1; i <= maxDistance; i++) insertions[i] = -1;
+            for (int i = 1; i <= maxDistance; i++) deletions[i] = -1;
+            for (int i = 0; i <= maxDistance; i++) currentMatchings[i] = -1;
+        }
+
+        @Override
+        public int getMaxDistance() {
+            return maxDistance;
+        }
+
+        @Override
+        public void setMaxDistance(int maxDistance) {
+            this.maxDistance = maxDistance;
         }
 
         @Override
@@ -229,25 +231,27 @@ final class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             previousMatchings = tmp;
         }
 
-        private int countEdits(int mask) {
-            return (patternLength == 32 ? mask : mask | (-1 << patternLength)) == -1 ? 0 : 1;
+        private int countEdits(final int mask, final int length) {
+            return (patternLength == 32 ? mask : mask | (-1 << length)) == -1 ? 0 : 1;
         }
 
-        public int countOfInsertions() {
+        public int countOfInsertions(final int countOfDeletions) {
+            final int length = patternLength - countOfDeletions;
             int result = 0;
-            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(insertions[i]);
+            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(insertions[i], length);
             return result;
         }
 
         public int countOfDeletions() {
             int result = 0;
-            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(deletions[i]);
+            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(deletions[i], patternLength);
             return result;
         }
 
         @Override
         public int start() {
-            return end() - patternLength + countOfInsertions() - countOfDeletions();
+            final int deleted = countOfDeletions();
+            return end() - patternLength + countOfInsertions(deleted) - deleted;
         }
 
         @Override
