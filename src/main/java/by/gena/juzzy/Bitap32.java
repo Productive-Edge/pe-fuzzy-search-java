@@ -1,11 +1,10 @@
 package by.gena.juzzy;
 
-import it.unimi.dsi.fastutil.chars.Char2IntMap;
 import it.unimi.dsi.fastutil.chars.Char2IntOpenHashMap;
 
 class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
-    private final Char2IntMap positionBitMasks;
+    private final Char2IntOpenHashMap positionBitMasks;
     private final CharSequence pattern;
     private final int patternLength;
     private final int lastBitMask;
@@ -68,10 +67,8 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
     final class Matcher implements IterativeJuzzyMatcher {
         private CharSequence text;
-        private final int[] insertions;
-        private final int[] deletions;
-        private final int[] _insertions;
-        private final int[] _deletions;
+        private final int[] lengthChanges;
+        private final int[] lengthChangesCopy;
         private int[] previousMatchings;
         private int[] currentMatchings;
         private int levenshteinDistance;
@@ -85,10 +82,8 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             final int n = maxDistance + 1;
             currentMatchings = new int[n];
             previousMatchings = new int[n];
-            insertions = new int[n];
-            deletions = new int[n];
-            _insertions = new int[n];
-            _deletions = new int[n];
+            lengthChanges = new int[n];
+            lengthChangesCopy = new int[n];
             index = Math.max(0, fromIndex) - 1;
             maxIndex = Math.min(text.length(), toIndex);
         }
@@ -135,8 +130,7 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             //store
             int _index = index;
             int _levenshteinDistance = levenshteinDistance;
-            for (int i = 1; i < _levenshteinDistance; i++) _deletions[i] = deletions[i];
-            for (int i = 1; i < _levenshteinDistance; i++) _insertions[i] = insertions[i];
+            for (int i = 1; i < _levenshteinDistance; i++) lengthChangesCopy[i] = lengthChanges[i];
 
             maxDistance = levenshteinDistance - 1;
             while (++index < maxIndex) {
@@ -149,14 +143,12 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             //restore
             index = _index;
             levenshteinDistance = _levenshteinDistance;
-            for (int i = 1; i < _levenshteinDistance; i++) deletions[i] = _deletions[i];
-            for (int i = 1; i < _levenshteinDistance; i++) insertions[i] = _insertions[i];
+            for (int i = 1; i < _levenshteinDistance; i++) lengthChanges[i] = lengthChangesCopy[i];
         }
 
         @Override
         public void resetState() {
-            for (int i = 1; i <= maxDistance; i++) insertions[i] = -1;
-            for (int i = 1; i <= maxDistance; i++) deletions[i] = -1;
+            for (int i = 1; i <= maxDistance; i++) lengthChanges[i] = 0;
             for (int i = 0; i <= maxDistance; i++) currentMatchings[i] = -1;
         }
 
@@ -180,6 +172,7 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
                 return true;
             }
             while (levenshteinDistance < maxDistance) {
+                final int current = currentMatchings[levenshteinDistance];
                 // ignore current character
                 final int deletion = previousMatchings[levenshteinDistance++];
                 // replace current character with correct one
@@ -187,18 +180,19 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
                 // insertion of missing correct character before current position
                 final int insertion = (substitution << 1) | charPositions;
 //                final int insertion = currentMatchings[levenshteinDistance - 1] << 1; // original Bitap insert
-                insertions[levenshteinDistance] = (insertions[levenshteinDistance] << 1) | 1;
-                deletions[levenshteinDistance] = (deletions[levenshteinDistance] << 1) | 1;
                 final int matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
-                if (insertion < substitution) {
-                    insertions[levenshteinDistance] &= -3;
-                }
-                if (matching < substitution) {
-                    if (-1 == (matching | (~previousMatchings[levenshteinDistance]))) {
-                        deletions[levenshteinDistance] &= -2;
+                currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
+                if (current >= deletion) {
+                    if (insertion < substitution && insertion < matching) {
+                        lengthChanges[levenshteinDistance] = 1;
+                    } else if (substitution < matching && deletion < current) {
+                        lengthChanges[levenshteinDistance] = 0;
+                    } else if(matching < substitution) {
+                        if (-1 == (matching | (~previousMatchings[levenshteinDistance]))) {
+                            lengthChanges[levenshteinDistance] = -1;
+                        }
                     }
                 }
-                currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
                 if (0 == (currentMatchings[levenshteinDistance] & lastBitMask)) {
                     return true;
                 }
@@ -213,12 +207,9 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             for (levenshteinDistance = 0; levenshteinDistance <= limit; levenshteinDistance++) {
                 if (0 == (currentMatchings[levenshteinDistance] & bitMask)) {
                     index--;
-                    for (int i = 1; i <= iteration; i++) {
-                        final int offset = levenshteinDistance + i;
-                        insertions[offset] <<= i;
-                        deletions[offset] = (deletions[offset] << i) | ((1 << i) - 1);
-                    }
-                    levenshteinDistance += iteration;
+                    final int end = levenshteinDistance + iteration;
+                    for (int i = levenshteinDistance + 1; i <= end; i++) lengthChanges[i] = 1;
+                    levenshteinDistance = end;
                     return true;
                 }
             }
@@ -231,27 +222,11 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             previousMatchings = tmp;
         }
 
-        private int countEdits(final int mask, final int length) {
-            return (patternLength == 32 ? mask : mask | (-1 << length)) == -1 ? 0 : 1;
-        }
-
-        public int countOfInsertions(final int countOfDeletions) {
-            final int length = patternLength - countOfDeletions;
-            int result = 0;
-            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(insertions[i], length);
-            return result;
-        }
-
-        public int countOfDeletions() {
-            int result = 0;
-            for (int i = 1; i <= levenshteinDistance; i++) result += countEdits(deletions[i], patternLength);
-            return result;
-        }
-
         @Override
         public int start() {
-            final int deleted = countOfDeletions();
-            return end() - patternLength + countOfInsertions(deleted) - deleted;
+            int lengthChange = 0;
+            for (int i = 1; i <= levenshteinDistance; i++) lengthChange += lengthChanges[i];
+            return end() - patternLength + lengthChange;
         }
 
         @Override

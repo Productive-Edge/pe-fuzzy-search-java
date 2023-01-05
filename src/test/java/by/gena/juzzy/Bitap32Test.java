@@ -13,6 +13,42 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
+            "test,tst,0,3",
+            "test,tost,0,4",
+            "test,toest,0,5",
+    })
+    public void testOperations1(String test, String text, int start, int end) {
+        System.out.println(text);
+        JuzzyPattern bitap = new Bitap32(test, 1);
+        JuzzyMatcher matcher = bitap.matcher(text);
+        assertTrue(matcher.find());
+        System.out.println();
+        assertEquals(start, matcher.start());
+        assertEquals(end, matcher.end());
+        assertEquals(1, matcher.distance());
+        assertFalse(matcher.find());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "test,tst,0,3",
+            "test,tost,0,4",
+            "test,toest,0,5",
+    })
+    public void testOperations2(String test, String text, int start, int end) {
+        System.out.println(text);
+        JuzzyPattern bitap = new Bitap32(test, 2);
+        JuzzyMatcher matcher = bitap.matcher(text);
+        assertTrue(matcher.find());
+        System.out.println();
+        assertEquals(start, matcher.start());
+        assertEquals(end, matcher.end());
+        assertEquals(1, matcher.distance());
+        assertFalse(matcher.find());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
             "test,test,0,4",
             "test,atest,1,5",
             "test,tetest,2,6",
@@ -87,15 +123,15 @@ class Bitap32Test {
             "Result,Resu,0,4,2",
             "Result,Resul_,0,6,1",
             "Result,Resu_t,0,6,1",
-            "Result,_esult,1,6,1",
-            "Result,_esul_,1,6,2",
-            "Result,_esul_t,1,6,2",
+            "Result,_esult,0,6,1",
+            "Result,_esul_,0,6,2",
+            "Result,_esul_t,0,6,2",
             "Result,_Result,1,7,0",
             "Result,_Resul_,1,7,1",
             "Result,_Resu_t,1,7,1",
-            "Result,__esult,2,7,1",
-            "Result,__esul_,2,7,2",
-            "Result,__esul_t,2,7,2"
+            "Result,__esult,1,7,1",
+            "Result,__esul_,1,7,2",
+            "Result,__esul_t,1,7,2"
     })
     public void testFuzzy2(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap32(test, 2);
@@ -112,7 +148,7 @@ class Bitap32Test {
         String text = "Test string to test all matches. tes";
         JuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
-        assertEquals(1, matcher.start()); //prefers insert in the beginning rather than replace
+        assertEquals(0, matcher.start());
         assertEquals(4, matcher.end());
         assertEquals(1, matcher.distance());
 
@@ -206,7 +242,7 @@ class Bitap32Test {
             List<JuzzyResult> results = pattern.streamMatches("0234567890123456789012345678901234567890")
                     .collect(Collectors.toList());
             assertEquals(1, results.size());
-            assertEquals(1, results.get(0).start());
+            assertEquals(0, results.get(0).start());
             assertEquals(1, results.get(0).distance());
             assertEquals(32, results.get(0).end());
         }

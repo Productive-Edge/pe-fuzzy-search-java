@@ -86,15 +86,15 @@ class Bitap64Test {
             "Result,Resu,0,4,2",
             "Result,Resul_,0,6,1",
             "Result,Resu_t,0,6,1",
-            "Result,_esult,1,6,1",
-            "Result,_esul_,1,6,2",
-            "Result,_esul_t,1,6,2",
+            "Result,_esult,0,6,1",
+            "Result,_esul_,0,6,2",
+            "Result,_esul_t,0,6,2",
             "Result,_Result,1,7,0",
             "Result,_Resul_,1,7,1",
             "Result,_Resu_t,1,7,1",
-            "Result,__esult,2,7,1",
-            "Result,__esul_,2,7,2",
-            "Result,__esul_t,2,7,2"
+            "Result,__esult,1,7,1",
+            "Result,__esul_,1,7,2",
+            "Result,__esul_t,1,7,2"
     })
     public void testFuzzy2(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap64(test, 2);
@@ -111,7 +111,7 @@ class Bitap64Test {
         String text = "Test string to test all matches. tes";
         JuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
-        assertEquals(1, matcher.start()); //prefers insert in the beginning rather than replace
+        assertEquals(0, matcher.start());
         assertEquals(4, matcher.end());
         assertEquals(1, matcher.distance());
 
