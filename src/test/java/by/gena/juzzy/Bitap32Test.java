@@ -81,6 +81,7 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
+            "Result,Rsuult,0,6,2",
             "Result,Result,0,6,0",
             "Result,Resul,0,5,1",
             "Result,Resu,0,4,2",

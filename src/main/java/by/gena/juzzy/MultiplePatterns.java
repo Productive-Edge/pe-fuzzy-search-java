@@ -43,7 +43,7 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
             this.text = text;
             index = Math.max(0, fromIndex) - 1;
             maxIndex = Math.min(text.length(), maxIndex);
-            for (IterativeJuzzyMatcher matcher : matchers) matcher.reset(text, index, maxIndex);
+            for (IterativeJuzzyMatcher matcher : matchers) matcher.reset(text, fromIndex, toIndex);
         }
 
         @Override
@@ -59,6 +59,7 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
             //insert at the end
             int maxDistance = 0;
             for (IterativeJuzzyMatcher matcher : matchers) {
+                matcher.reset(text, index + 1, maxIndex);
                 final int max = matcher.pattern().maxLevenshteinDistance();
                 if(maxDistance < max) maxDistance = max;
             }
@@ -113,8 +114,9 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
 
         @Override
         public boolean testNextSymbol() {
+            final int resetToIndex = index + 1;
             for (IterativeJuzzyMatcher matcher : matchers) {
-                matcher.reset(index);
+                matcher.reset(text, resetToIndex, maxIndex);
                 if (matcher.testNextSymbol()) {
                     matched = matcher;
                     int maxDistance = matcher.getMaxDistance();

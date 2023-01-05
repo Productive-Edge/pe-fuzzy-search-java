@@ -88,15 +88,15 @@ class MultiplePatternsTest {
             "Result,Resu,0,4,2",
             "Result,Resul_,0,6,1",
             "Result,Resu_t,0,6,1",
-            "Result,_esult,0,6,1",
-            "Result,_esul_,0,6,2",
-            "Result,_esul_t,0,6,2",
+            "Result,_esult,1,6,1",
+            "Result,_esul_,1,6,2",
+            "Result,_esul_t,1,6,2",
             "Result,_Result,1,7,0",
             "Result,_Resul_,1,7,1",
             "Result,_Resu_t,1,7,1",
-            "Result,__esult,1,7,1",
-            "Result,__esul_,1,7,2",
-            "Result,__esul_t,1,7,2"
+            "Result,__esult,2,7,1",
+            "Result,__esul_,2,7,2",
+            "Result,__esul_t,2,7,2"
     })
     public void testFuzzy2(String test, String text, int start, int end, int d) {
         MatcherProvider patterns = new MultiplePatterns(new IterativeJuzzyPattern[]{new UnlimitedBitap(test, 2)});
@@ -113,7 +113,7 @@ class MultiplePatternsTest {
         String text = "Test string to test all matches. tes";
         JuzzyMatcher matcher = patterns.matcher(text);
         assertTrue(matcher.find());
-        assertEquals(0, matcher.start());
+        assertEquals(1, matcher.start());
         assertEquals(4, matcher.end());
         assertEquals(1, matcher.distance());
 
@@ -146,7 +146,7 @@ class MultiplePatternsTest {
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
 
         String results = resultStream.map(JuzzyResult::foundText).collect(Collectors.joining(","));
-        assertEquals("dolor,ut,dolor,Ut,quis,ut,Duis,ut,dolor,dolor", results);
+        assertEquals("dolor,ut,dolor,Ut,uis,ut,Duis,ut,dolor,dolor", results);
     }
 
 

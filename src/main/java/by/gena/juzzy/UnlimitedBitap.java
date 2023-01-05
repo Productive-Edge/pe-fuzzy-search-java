@@ -111,6 +111,7 @@ class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
             maxIndex = Math.min(text.length(), maxIndex);
         }
 
+        @Override
         public boolean find() {
             resetState();
 
@@ -199,6 +200,10 @@ class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
                 } else {
                     insertion.setBitsFrom(substitution).leftShift1().or(charPositions);
                 }
+
+                insertions[levenshteinDistance].leftShift1().or(1L);
+                deletions[levenshteinDistance].leftShift1().or(1L);
+
                 if (charPositions == null) {
                     matching.setMinusOne();
                 } else {
