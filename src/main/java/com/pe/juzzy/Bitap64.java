@@ -184,7 +184,7 @@ class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
                 // replace current character with correct one
                 final long substitution = deletion << 1;
                 // insertion of missing correct character before current position
-                final long insertion = (substitution << 1) | charPositions;
+                final long insertion = (deletion << 2) | charPositions;
 
                 final long matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
                 currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;

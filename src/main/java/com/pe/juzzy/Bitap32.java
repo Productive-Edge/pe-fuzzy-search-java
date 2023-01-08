@@ -185,7 +185,7 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
                 // replace current character with correct one
                 final int substitution = deletion << 1;
                 // insertion of missing correct character before current position
-                final int insertion = (substitution << 1) | charPositions;
+                final int insertion = (deletion << 2) | charPositions;
 //                final int insertion = currentMatchings[levenshteinDistance - 1] << 1; // original Bitap insert
                 final int matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
                 currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
