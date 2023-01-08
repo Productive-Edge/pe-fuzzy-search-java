@@ -50,7 +50,7 @@ class Bitap64Test {
             "test,tst,0,3,1",
             "test,_tst,1,4,1",
             "test,t_est,0,5,1",
-            "test,tes_t,0,4,1" // replacement _ -> t
+            "test,tes_t,0,5,1"
     })
     public void testFuzzy1(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap64(test, 1);
@@ -88,13 +88,13 @@ class Bitap64Test {
             "Result,Resu_t,0,6,1",
             "Result,_esult,0,6,1",
             "Result,_esul_,0,6,2",
-            "Result,_esul_t,0,6,2",
+            "Result,_esul_t,0,7,2",
             "Result,_Result,1,7,0",
             "Result,_Resul_,1,7,1",
             "Result,_Resu_t,1,7,1",
             "Result,__esult,1,7,1",
             "Result,__esul_,1,7,2",
-            "Result,__esul_t,1,7,2"
+            "Result,__esul_t,1,8,2"
     })
     public void testFuzzy2(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap64(test, 2);
@@ -176,7 +176,7 @@ class Bitap64Test {
             "TESt,Tst,0,3,1",
             "tSET,_Tst,1,4,1",
             "TeSt,T_est,0,5,1",
-            "tEsT,Tes_t,0,4,1" // replacement _ -> t
+            "tEsT,Tes_t,0,5,1"
     })
     public void caseInsensitive(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap64(test, 1, true);

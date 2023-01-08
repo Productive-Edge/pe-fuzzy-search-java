@@ -18,11 +18,9 @@ class Bitap32Test {
             "test,toest,0,5",
     })
     public void testOperations1(String test, String text, int start, int end) {
-        System.out.println(text);
         JuzzyPattern bitap = new Bitap32(test, 1);
         JuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
-        System.out.println();
         assertEquals(start, matcher.start());
         assertEquals(end, matcher.end());
         assertEquals(1, matcher.distance());
@@ -36,11 +34,9 @@ class Bitap32Test {
             "test,toest,0,5",
     })
     public void testOperations2(String test, String text, int start, int end) {
-        System.out.println(text);
         JuzzyPattern bitap = new Bitap32(test, 2);
         JuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
-        System.out.println();
         assertEquals(start, matcher.start());
         assertEquals(end, matcher.end());
         assertEquals(1, matcher.distance());
@@ -86,7 +82,7 @@ class Bitap32Test {
             "test,tst,0,3,1",
             "test,_tst,1,4,1",
             "test,t_est,0,5,1",
-            "test,tes_t,0,4,1" // replacement _ -> t
+            "test,tes_t,0,5,1"
     })
     public void testFuzzy1(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap32(test, 1);
@@ -117,6 +113,7 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
+            "Result,Rsulut,0,6,2",
             "Result,Rsuult,0,6,2",
             "Result,Result,0,6,0",
             "Result,Resul,0,5,1",
@@ -125,13 +122,13 @@ class Bitap32Test {
             "Result,Resu_t,0,6,1",
             "Result,_esult,0,6,1",
             "Result,_esul_,0,6,2",
-            "Result,_esul_t,0,6,2",
+            "Result,_esul_t,0,7,2",
             "Result,_Result,1,7,0",
             "Result,_Resul_,1,7,1",
             "Result,_Resu_t,1,7,1",
             "Result,__esult,1,7,1",
             "Result,__esul_,1,7,2",
-            "Result,__esul_t,1,7,2"
+            "Result,__esul_t,1,8,2"
     })
     public void testFuzzy2(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap32(test, 2);
@@ -202,18 +199,18 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
-//            "test,Test,0,4,0",
-//            "Test,teT,0,3,1",
-//            "tEst,tEs,0,3,1",
-//            "teSt,tosT,0,4,1",
-//            "tesT,TESL,0,4,1",
-//            "TEst,Te5t,0,4,1",
-//            "tESt,_Test,1,5,0",
-//            "teST,_Te5t,1,5,1",
-//            "TESt,Tst,0,3,1",
-//            "tSET,_Tst,1,4,1",
+            "test,Test,0,4,0",
+            "Test,teT,0,3,1",
+            "tEst,tEs,0,3,1",
+            "teSt,tosT,0,4,1",
+            "tesT,TESL,0,4,1",
+            "TEst,Te5t,0,4,1",
+            "tESt,_Test,1,5,0",
+            "teST,_Te5t,1,5,1",
+            "TESt,Tst,0,3,1",
+            "tSET,_Tst,1,4,1",
             "TeSt,T_est,0,5,1",
-            "tEsT,Tes_t,0,4,1" // replacement _ -> t
+            "tEsT,Tes_t,0,5,1"
     })
     public void caseInsensitive(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap32(test, 1, true);

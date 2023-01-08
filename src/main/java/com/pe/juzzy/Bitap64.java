@@ -26,13 +26,13 @@ class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
         positionBitMasks = new Char2LongOpenHashMap(patternLength << 1);
         if (!caseInsensitive) {
             for (int i = 0; i < patternLength; i++) {
-                char c = pattern.charAt(i);
+                final char c = pattern.charAt(i);
                 positionBitMasks.put(c, positionBitMasks.getOrDefault(c, -1L) & (~(1L << i)));
             }
         } else {
             for (int i = 0; i < patternLength; i++) {
-                char lc = Character.toLowerCase(pattern.charAt(i));
-                long mask = positionBitMasks.getOrDefault(lc, -1L) & (~(1L << i));
+                final char lc = Character.toLowerCase(pattern.charAt(i));
+                final long mask = positionBitMasks.getOrDefault(lc, -1L) & (~(1L << i));
                 positionBitMasks.put(lc, mask);
                 positionBitMasks.put(Character.toUpperCase(lc), mask);
             }
@@ -126,6 +126,8 @@ class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
         public void improveResult(final int maxIndex) {
             if (levenshteinDistance == 0)
                 return;
+            if (index + 1 == maxIndex)
+                return;
             //store
             int _index = index;
             int _levenshteinDistance = levenshteinDistance;
@@ -143,6 +145,11 @@ class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
             index = _index;
             levenshteinDistance = _levenshteinDistance;
             for (int i = 1; i < _levenshteinDistance; i++) lengthChanges[i] = lengthChangesCopy[i];
+        }
+
+        @Override
+        public void setIndex(int index) {
+            this.index = index;
         }
 
         @Override
@@ -181,18 +188,30 @@ class Bitap64 implements JuzzyPattern, IterativeJuzzyPattern {
 
                 final long matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
                 currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
+                final boolean found = 0L == (currentMatchings[levenshteinDistance] & lastBitMask);
                 if (current >= deletion) {
                     if (insertion < substitution && insertion < matching) {
                         lengthChanges[levenshteinDistance] = 1;
                     } else if (substitution < matching && deletion < current) {
                         lengthChanges[levenshteinDistance] = 0;
+                        if (found) {
+                            //try to change replacement of last character onto deletion of current if next is correct
+                            final int nextIndex = index + 1;
+                            if (nextIndex < maxIndex) {
+                                final long nextCharPositions = positionBitMasks.getOrDefault(text.charAt(nextIndex), -1);
+                                if ((nextCharPositions & lastBitMask) == 0L) {
+                                    index = nextIndex;
+                                    lengthChanges[levenshteinDistance] = -1;
+                                }
+                            }
+                        }
                     } else if(matching < substitution) {
                         if (-1L == (matching | (~previousMatchings[levenshteinDistance]))) {
                             lengthChanges[levenshteinDistance] = -1;
                         }
                     }
                 }
-                if (0L == (currentMatchings[levenshteinDistance] & lastBitMask)) {
+                if (found) {
                     return true;
                 }
             }
