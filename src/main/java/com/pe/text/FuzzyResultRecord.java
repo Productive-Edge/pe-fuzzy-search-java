@@ -1,14 +1,14 @@
-package com.pe.juzzy;
+package com.pe.text;
 
-class JuzzyResultRecord implements JuzzyResult {
+class FuzzyResultRecord implements FuzzyResult {
 
-    private final JuzzyPattern pattern;
+    private final FuzzyPattern pattern;
     private final int start;
     private final int end;
     private final int distance;
     private final CharSequence foundText;
 
-    JuzzyResultRecord(JuzzyMatcher matcher) {
+    FuzzyResultRecord(FuzzyMatcher matcher) {
         this.pattern = matcher.pattern();
         this.start = matcher.start();
         this.end = matcher.end();
@@ -18,7 +18,7 @@ class JuzzyResultRecord implements JuzzyResult {
     }
 
     @Override
-    public JuzzyPattern pattern() {
+    public FuzzyPattern pattern() {
         return pattern;
     }
 

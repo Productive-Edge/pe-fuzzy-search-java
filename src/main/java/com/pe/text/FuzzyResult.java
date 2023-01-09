@@ -1,7 +1,7 @@
-package com.pe.juzzy;
+package com.pe.text;
 
-public interface JuzzyResult {
-    JuzzyPattern pattern();
+public interface FuzzyResult {
+    FuzzyPattern pattern();
     int start();
     int end();
     int distance();

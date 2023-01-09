@@ -1,4 +1,4 @@
-package com.pe.juzzy;
+package com.pe.text;
 
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.junit.jupiter.params.ParameterizedTest;

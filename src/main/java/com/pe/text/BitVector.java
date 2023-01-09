@@ -1,4 +1,4 @@
-package com.pe.juzzy;
+package com.pe.text;
 
 class BitVector {
     final long[] bits;

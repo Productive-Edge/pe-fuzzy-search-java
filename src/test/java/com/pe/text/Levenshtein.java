@@ -1,4 +1,4 @@
-package com.pe.juzzy;
+package com.pe.text;
 
 public class Levenshtein {
 
@@ -16,8 +16,8 @@ public class Levenshtein {
             l1 = l2;
             l2 = s2.length();
         }
-        JuzzyPattern pattern = JuzzyPattern.pattern(s1, l1);
-        @SuppressWarnings("OptionalGetWithoutIsPresent") JuzzyResult result = pattern.matcher(s2).findTheBestMatching().get();
+        FuzzyPattern pattern = FuzzyPattern.pattern(s1, l1);
+        @SuppressWarnings("OptionalGetWithoutIsPresent") FuzzyResult result = pattern.matcher(s2).findTheBestMatching().get();
         return l2 - result.end() + result.start() + result.distance();
     }
 

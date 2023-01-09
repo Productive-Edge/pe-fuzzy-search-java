@@ -1,4 +1,4 @@
-package com.pe.juzzy;
+package com.pe.text;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ public class BitapsBenchmark {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void benchmark64() {
-        JuzzyMatcher matcher = new Bitap64(PATTERN, 1).matcher(TEXT);
+        FuzzyMatcher matcher = new Bitap64(PATTERN, 1).matcher(TEXT);
         while (matcher.find()) {
             assertTrue(matcher.distance() <= 1);
         }
@@ -54,7 +54,7 @@ public class BitapsBenchmark {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void benchmark32() {
-        JuzzyMatcher matcher = new Bitap32(PATTERN, 1).matcher(TEXT);
+        FuzzyMatcher matcher = new Bitap32(PATTERN, 1).matcher(TEXT);
         while (matcher.find()) {
             assertTrue(matcher.distance() <= 1);
         }
@@ -63,7 +63,7 @@ public class BitapsBenchmark {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void benchmark64X() {
-        JuzzyMatcher matcher = new UnlimitedBitap(PATTERN, 1).matcher(TEXT);
+        FuzzyMatcher matcher = new UnlimitedBitap(PATTERN, 1).matcher(TEXT);
         while (matcher.find()) {
             assertTrue(matcher.distance() <= 1);
         }

@@ -1,15 +1,12 @@
-package com.pe.juzzy;
+package com.pe.text;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class Bitap64Test {
+class UnlimitedBitapTest {
 
     @ParameterizedTest
     @CsvSource({
@@ -18,8 +15,8 @@ class Bitap64Test {
             "test,tetest,2,6",
     })
     public void testFuzzy0(String test, String text, int start, int end) {
-        JuzzyPattern bitap = new Bitap64(test, 0);
-        JuzzyMatcher matcher = bitap.matcher(text);
+        FuzzyPattern bitap = new UnlimitedBitap(test, 0);
+        FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
         assertEquals(end, matcher.end());
@@ -31,8 +28,8 @@ class Bitap64Test {
     public void testFuzzy0Fail() {
         String test = "test";
         String text = "aaaa";
-        JuzzyPattern bitap = new Bitap64(test, 0);
-        JuzzyMatcher matcher = bitap.matcher(text);
+        FuzzyPattern bitap = new UnlimitedBitap(test, 0);
+        FuzzyMatcher matcher = bitap.matcher(text);
         assertFalse(matcher.find());
         assertThrows(IllegalStateException.class, matcher::start);
     }
@@ -53,8 +50,8 @@ class Bitap64Test {
             "test,tes_t,0,5,1"
     })
     public void testFuzzy1(String test, String text, int start, int end, int d) {
-        JuzzyPattern bitap = new Bitap64(test, 1);
-        JuzzyMatcher matcher = bitap.matcher(text);
+        FuzzyPattern bitap = new UnlimitedBitap(test, 1);
+        FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
         assertEquals(end, matcher.end());
@@ -74,8 +71,8 @@ class Bitap64Test {
             "test,_es_t"
     })
     public void testFuzzy1Fail(String test, String text) {
-        JuzzyPattern bitap = new Bitap64(test, 1);
-        JuzzyMatcher matcher = bitap.matcher(text);
+        FuzzyPattern bitap = new UnlimitedBitap(test, 1);
+        FuzzyMatcher matcher = bitap.matcher(text);
         assertFalse(matcher.find());
     }
 
@@ -97,8 +94,8 @@ class Bitap64Test {
             "Result,__esul_t,1,8,2"
     })
     public void testFuzzy2(String test, String text, int start, int end, int d) {
-        JuzzyPattern bitap = new Bitap64(test, 2);
-        JuzzyMatcher matcher = bitap.matcher(text);
+        FuzzyPattern bitap = new UnlimitedBitap(test, 2);
+        FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
         assertEquals(end, matcher.end());
@@ -107,9 +104,9 @@ class Bitap64Test {
 
     @Test
     public void testAllMatches() {
-        JuzzyPattern bitap = new Bitap64("test", 1);
+        FuzzyPattern bitap = new UnlimitedBitap("test", 1);
         String text = "Test string to test all matches. tes";
-        JuzzyMatcher matcher = bitap.matcher(text);
+        FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
         assertEquals(4, matcher.end());
@@ -139,8 +136,8 @@ class Bitap64Test {
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
         {
-            JuzzyPattern dolore = new Bitap64("dolore", 1);
-            JuzzyMatcher matcher = dolore.matcher(text);
+            FuzzyPattern dolore = new UnlimitedBitap("dolore", 1);
+            FuzzyMatcher matcher = dolore.matcher(text);
             int i = 0;
             String[] results = new String[]{"dolor ", "dolore", "dolor ", "dolore"};
             while (matcher.find()) {
@@ -151,14 +148,31 @@ class Bitap64Test {
         }
         {
             int i = 0;
-            JuzzyPattern laboris = new Bitap64("laboris", 3);
-            JuzzyMatcher matcher = laboris.matcher(text);
+            FuzzyPattern laboris = new UnlimitedBitap("laboris", 3);
+            FuzzyMatcher matcher = laboris.matcher(text);
             String[] results = new String[]{"labore ", "laboris", "laborum"};
             while (matcher.find()) {
                 assertEquals(results[i], text.subSequence(matcher.start(), matcher.end()));
                 i++;
             }
             assertEquals(results.length, i);
+        }
+    }
+
+    @Test
+    public void testAbnormal() {
+        {
+            FuzzyMatcher matcher = new UnlimitedBitap("aba", 1).matcher("aaba");
+            while (matcher.find()) {
+                System.out.println(matcher.foundText());
+            }
+        }
+        {
+            FuzzyMatcher matcher = new UnlimitedBitap("aba", 1).matcher("baba");
+            while (matcher.find()) {
+                System.out.println(matcher.foundText());
+                matcher.reset(matcher.end() - matcher.distance());
+            }
         }
     }
 
@@ -179,8 +193,8 @@ class Bitap64Test {
             "tEsT,Tes_t,0,5,1"
     })
     public void caseInsensitive(String test, String text, int start, int end, int d) {
-        JuzzyPattern bitap = new Bitap64(test, 1, true);
-        JuzzyMatcher matcher = bitap.matcher(text);
+        FuzzyPattern bitap = new UnlimitedBitap(test, 1, true);
+        FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
         assertEquals(end, matcher.end());
@@ -188,89 +202,20 @@ class Bitap64Test {
     }
 
     @Test
-    public void testMaxLen() {
-        JuzzyPattern pattern = JuzzyPattern.pattern("1234567890123456789012345678901234567890123456789012345678901234", 1);
-        assertTrue(pattern instanceof Bitap64);
-        //exact
-        {
-            List<JuzzyResult> results = pattern.matcher("01234567890123456789012345678901234567890123456789012345678901234567890")
-                    .stream().collect(Collectors.toList());
-            assertEquals(1, results.size());
-            assertEquals(1, results.get(0).start());
-            assertEquals(0, results.get(0).distance());
-            assertEquals(65, results.get(0).end());
-        }
-        //replace
-        {
-            List<JuzzyResult> results = pattern.matcher("0123456789_12345678901234567890123456789012345678901234567890123456789")
-                    .stream().collect(Collectors.toList());
-            assertEquals(1, results.size());
-            assertEquals(1, results.get(0).start());
-            assertEquals(1, results.get(0).distance());
-            assertEquals(65, results.get(0).end());
-        }
-        //better than replace
-        {
-            List<JuzzyResult> results = pattern.matcher("0123456789_123456789012345678901234567890123456789012345678901234567890123456789")
-                    .stream().collect(Collectors.toList());
-            assertEquals(1, results.size());
-            assertEquals(11, results.get(0).start());
-            assertEquals(0, results.get(0).distance());
-            assertEquals(75, results.get(0).end());
-        }
-        //insert
-        {
-            List<JuzzyResult> results = pattern.matcher("0123456789123456789012345678901234567890123456789012345678901234567890")
-                    .stream().collect(Collectors.toList());
-            assertEquals(1, results.size());
-            assertEquals(1, results.get(0).start());
-            assertEquals(1, results.get(0).distance());
-            assertEquals(64, results.get(0).end());
-        }
-        //delete
-        {
-            List<JuzzyResult> results = pattern.matcher("0123456789_0123456789012345678901234567890123456789012345678901234567890")
-                    .stream().collect(Collectors.toList());
-            assertEquals(1, results.size());
-            assertEquals(1, results.get(0).start());
-            assertEquals(1, results.get(0).distance());
-            assertEquals(66, results.get(0).end());
-        }
-    }
+    public void testLongPattern() {
+        FuzzyPattern pattern = FuzzyPattern.pattern(
+                "nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat",
+                5, true);
 
-    @Test
-    public void testEdgeCase() {
-        Bitap32 p = new Bitap32("aabaa", 2);
-        JuzzyMatcher m = p.matcher("aaa");
-        assertTrue(m.find());
-        assertEquals(0, m.start(), "start");
-        assertEquals(3, m.end(), "end");
-        assertEquals("aaa", m.foundText().toString(), "foundText");
-        assertEquals(2, m.distance(), "distance");
-        assertFalse(m.find());
-    }
+        FuzzyMatcher matcher = pattern.matcher("Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
+                "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
+                "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+                "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
+                "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
 
-    @Test
-    public void testBestOnEdgeCases() {
-        {
-            Bitap32 p = new Bitap32("ababCabab", 2);
-            JuzzyMatcher m = p.matcher("abababCababab");
-            assertTrue(m.find());
-            assertEquals(2, m.start(), "start");
-            assertEquals(11, m.end(), "end");
-            assertEquals("ababCabab", m.foundText().toString(), "foundText");
-            assertEquals(0, m.distance(), "distance");
-            assertFalse(m.find());
-        }
-        {
-            Bitap32 p = new Bitap32("aabaa", 1);
-            JuzzyMatcher m = p.matcher("aaabaaa");
-            assertTrue(m.find());
-            assertEquals(6, m.end(), "end");
-            assertEquals(1, m.start(), "start");
-            assertEquals("aabaa", m.foundText().toString(), "foundText");
-            assertEquals(0, m.distance(), "distance");
-            assertFalse(m.find());
+        while (matcher.find()) {
+            assertEquals(0, matcher.distance());
+            assertEquals(pattern.text(), matcher.foundText().toString());
         }
     }
 

@@ -1,10 +1,10 @@
-package com.pe.juzzy;
+package com.pe.text;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public interface JuzzyMatcher extends JuzzyResult {
+public interface FuzzyMatcher extends FuzzyResult {
 
     CharSequence text();
 
@@ -26,26 +26,26 @@ public interface JuzzyMatcher extends JuzzyResult {
 
     void reset(CharSequence text, int fromIndex, int toIndex);
 
-    default Stream<JuzzyResult> stream() {
-        return StreamSupport.stream(() -> new JuzzyResultSpliterator(this),
-                JuzzyResultSpliterator.CHARACTERISTICS, false);
+    default Stream<FuzzyResult> stream() {
+        return StreamSupport.stream(() -> new FuzzyResultSpliterator(this),
+                FuzzyResultSpliterator.CHARACTERISTICS, false);
     }
 
     boolean find();
 
-    default Optional<JuzzyResult> findTheBestMatching() {
-        JuzzyResultRecord best = null;
-        if(this instanceof IterativeJuzzyMatcher) {
+    default Optional<FuzzyResult> findTheBestMatching() {
+        FuzzyResultRecord best = null;
+        if(this instanceof IterativeFuzzyMatcher) {
             while (find()) {
-                best = new JuzzyResultRecord(this);
+                best = new FuzzyResultRecord(this);
                 if(best.distance() == 0)
                     break;
-                ((IterativeJuzzyMatcher)this).setMaxDistance(best.distance() - 1);
+                ((IterativeFuzzyMatcher)this).setMaxDistance(best.distance() - 1);
             }
         } else {
             while (find()) {
                 if(best == null || best.distance() > distance()) {
-                    best = new JuzzyResultRecord(this);
+                    best = new FuzzyResultRecord(this);
                     if(distance() == 0)
                         break;
                 }

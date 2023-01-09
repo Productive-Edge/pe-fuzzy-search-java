@@ -1,6 +1,6 @@
-package com.pe.juzzy;
+package com.pe.text;
 
-public interface JuzzyPattern extends MatcherProvider {
+public interface FuzzyPattern extends MatcherProvider {
 
     CharSequence text();
 
@@ -8,11 +8,11 @@ public interface JuzzyPattern extends MatcherProvider {
 
     boolean caseInsensitive();
 
-    static JuzzyPattern pattern(CharSequence pattern, int maxLevenshteinDistance) {
+    static FuzzyPattern pattern(CharSequence pattern, int maxLevenshteinDistance) {
         return pattern(pattern, maxLevenshteinDistance, false);
     }
 
-    static JuzzyPattern pattern(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
+    static FuzzyPattern pattern(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
         if (pattern == null)
             throw new IllegalArgumentException("pattern text can not be null");
         if (pattern.length() == 0)
@@ -24,13 +24,13 @@ public interface JuzzyPattern extends MatcherProvider {
         return new UnlimitedBitap(pattern, maxLevenshteinDistance, caseInsensitive);
     }
 
-    static MatcherProvider oneOf(JuzzyPattern first, JuzzyPattern orSecond, JuzzyPattern... orOthers) {
-        IterativeJuzzyPattern[] patterns = new IterativeJuzzyPattern[orOthers.length + 2];
-        patterns[0] = IterativeJuzzyPattern.cast(first, 1);
-        patterns[1] = IterativeJuzzyPattern.cast(orSecond, 2);
+    static MatcherProvider oneOf(FuzzyPattern first, FuzzyPattern orSecond, FuzzyPattern... orOthers) {
+        IterativeFuzzyPattern[] patterns = new IterativeFuzzyPattern[orOthers.length + 2];
+        patterns[0] = IterativeFuzzyPattern.cast(first, 1);
+        patterns[1] = IterativeFuzzyPattern.cast(orSecond, 2);
         for (int i = 0; i < orOthers.length; i++) {
             final int index = i + 2;
-            patterns[index] = IterativeJuzzyPattern.cast(orOthers[i], index);
+            patterns[index] = IterativeFuzzyPattern.cast(orOthers[i], index);
         }
         return new MultiplePatterns(patterns);
     }
