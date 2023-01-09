@@ -26,7 +26,7 @@ public interface JuzzyMatcher extends JuzzyResult {
 
     void reset(CharSequence text, int fromIndex, int toIndex);
 
-    default Stream<JuzzyResult> streamMatches() {
+    default Stream<JuzzyResult> stream() {
         return StreamSupport.stream(() -> new JuzzyResultSpliterator(this),
                 JuzzyResultSpliterator.CHARACTERISTICS, false);
     }
