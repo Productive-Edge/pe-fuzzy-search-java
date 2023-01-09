@@ -50,7 +50,7 @@ class Bitap64Test {
             "test,tst,0,3,1",
             "test,_tst,1,4,1",
             "test,t_est,0,5,1",
-            "test,tes_t,0,4,1" // replacement _ -> t
+            "test,tes_t,0,5,1"
     })
     public void testFuzzy1(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap64(test, 1);
@@ -88,13 +88,13 @@ class Bitap64Test {
             "Result,Resu_t,0,6,1",
             "Result,_esult,0,6,1",
             "Result,_esul_,0,6,2",
-            "Result,_esul_t,0,6,2",
+            "Result,_esul_t,0,7,2",
             "Result,_Result,1,7,0",
             "Result,_Resul_,1,7,1",
             "Result,_Resu_t,1,7,1",
             "Result,__esult,1,7,1",
             "Result,__esul_,1,7,2",
-            "Result,__esul_t,1,7,2"
+            "Result,__esul_t,1,8,2"
     })
     public void testFuzzy2(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap64(test, 2);
@@ -176,7 +176,7 @@ class Bitap64Test {
             "TESt,Tst,0,3,1",
             "tSET,_Tst,1,4,1",
             "TeSt,T_est,0,5,1",
-            "tEsT,Tes_t,0,4,1" // replacement _ -> t
+            "tEsT,Tes_t,0,5,1"
     })
     public void caseInsensitive(String test, String text, int start, int end, int d) {
         JuzzyPattern bitap = new Bitap64(test, 1, true);
@@ -193,8 +193,8 @@ class Bitap64Test {
         assertTrue(pattern instanceof Bitap64);
         //exact
         {
-            List<JuzzyResult> results = pattern.streamMatches("01234567890123456789012345678901234567890123456789012345678901234567890")
-                    .collect(Collectors.toList());
+            List<JuzzyResult> results = pattern.matcher("01234567890123456789012345678901234567890123456789012345678901234567890")
+                    .stream().collect(Collectors.toList());
             assertEquals(1, results.size());
             assertEquals(1, results.get(0).start());
             assertEquals(0, results.get(0).distance());
@@ -202,8 +202,8 @@ class Bitap64Test {
         }
         //replace
         {
-            List<JuzzyResult> results = pattern.streamMatches("0123456789_12345678901234567890123456789012345678901234567890123456789")
-                    .collect(Collectors.toList());
+            List<JuzzyResult> results = pattern.matcher("0123456789_12345678901234567890123456789012345678901234567890123456789")
+                    .stream().collect(Collectors.toList());
             assertEquals(1, results.size());
             assertEquals(1, results.get(0).start());
             assertEquals(1, results.get(0).distance());
@@ -211,8 +211,8 @@ class Bitap64Test {
         }
         //better than replace
         {
-            List<JuzzyResult> results = pattern.streamMatches("0123456789_123456789012345678901234567890123456789012345678901234567890123456789")
-                    .collect(Collectors.toList());
+            List<JuzzyResult> results = pattern.matcher("0123456789_123456789012345678901234567890123456789012345678901234567890123456789")
+                    .stream().collect(Collectors.toList());
             assertEquals(1, results.size());
             assertEquals(11, results.get(0).start());
             assertEquals(0, results.get(0).distance());
@@ -220,8 +220,8 @@ class Bitap64Test {
         }
         //insert
         {
-            List<JuzzyResult> results = pattern.streamMatches("0123456789123456789012345678901234567890123456789012345678901234567890")
-                    .collect(Collectors.toList());
+            List<JuzzyResult> results = pattern.matcher("0123456789123456789012345678901234567890123456789012345678901234567890")
+                    .stream().collect(Collectors.toList());
             assertEquals(1, results.size());
             assertEquals(1, results.get(0).start());
             assertEquals(1, results.get(0).distance());
@@ -229,8 +229,8 @@ class Bitap64Test {
         }
         //delete
         {
-            List<JuzzyResult> results = pattern.streamMatches("0123456789_0123456789012345678901234567890123456789012345678901234567890")
-                    .collect(Collectors.toList());
+            List<JuzzyResult> results = pattern.matcher("0123456789_0123456789012345678901234567890123456789012345678901234567890")
+                    .stream().collect(Collectors.toList());
             assertEquals(1, results.size());
             assertEquals(1, results.get(0).start());
             assertEquals(1, results.get(0).distance());

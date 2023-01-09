@@ -9,4 +9,5 @@ interface IterativeJuzzyMatcher extends JuzzyMatcher {
     boolean testNextInsert(int iteration);
 
     void improveResult(int maxIndex);
+    void setIndex(int index);
 }

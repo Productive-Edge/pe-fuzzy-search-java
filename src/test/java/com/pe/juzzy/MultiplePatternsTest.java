@@ -51,7 +51,7 @@ class MultiplePatternsTest {
             "test,tst,0,3,1",
             "test,_tst,1,4,1",
             "test,t_est,0,5,1",
-            "test,tes_t,0,4,1" // replacement _ -> t
+            "test,tes_t,0,5,1"
     })
     public void testFuzzy1(String test, String text, int start, int end, int d) {
         MatcherProvider patterns = new MultiplePatterns(new IterativeJuzzyPattern[]{new UnlimitedBitap(test, 1)});
@@ -89,13 +89,13 @@ class MultiplePatternsTest {
             "Result,Resu_t,0,6,1",
             "Result,_esult,0,6,1",
             "Result,_esul_,0,6,2",
-            "Result,_esul_t,0,6,2",
+            "Result,_esul_t,0,7,2",
             "Result,_Result,1,7,0",
             "Result,_Resul_,1,7,1",
             "Result,_Resu_t,1,7,1",
             "Result,__esult,1,7,1",
             "Result,__esul_,1,7,2",
-            "Result,__esul_t,1,7,2"
+            "Result,__esul_t,1,8,2"
     })
     public void testFuzzy2(String test, String text, int start, int end, int d) {
         MatcherProvider patterns = new MultiplePatterns(new IterativeJuzzyPattern[]{new UnlimitedBitap(test, 2)});
@@ -138,11 +138,12 @@ class MultiplePatternsTest {
                 JuzzyPattern.pattern("dolor", 1)
         );
 
-        Stream<JuzzyResult> resultStream = patterns.streamMatches("Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
+        Stream<JuzzyResult> resultStream = patterns.matcher("Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
                 "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
                 "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
-                "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
+                "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+        ).stream();
 
         String results = resultStream.map(JuzzyResult::foundText).collect(Collectors.joining(","));
         assertEquals("dolor,ut,dolor,Ut,quis,ut,Duis,ut,dolor,dolor", results);

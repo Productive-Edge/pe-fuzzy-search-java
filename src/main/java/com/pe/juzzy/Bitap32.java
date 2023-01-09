@@ -27,13 +27,13 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
         positionBitMasks = new Char2IntOpenHashMap(patternLength << 1);
         if (!caseInsensitive) {
             for (int i = 0; i < patternLength; i++) {
-                char c = pattern.charAt(i);
+                final char c = pattern.charAt(i);
                 positionBitMasks.put(c, positionBitMasks.getOrDefault(c, -1) & (~(1 << i)));
             }
         } else {
             for (int i = 0; i < patternLength; i++) {
-                char lc = Character.toLowerCase(pattern.charAt(i));
-                int mask = positionBitMasks.getOrDefault(lc, -1) & (~(1 << i));
+                final char lc = Character.toLowerCase(pattern.charAt(i));
+                final int mask = positionBitMasks.getOrDefault(lc, -1) & (~(1 << i));
                 positionBitMasks.put(lc, mask);
                 positionBitMasks.put(Character.toUpperCase(lc), mask);
             }
@@ -127,6 +127,8 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
         public void improveResult(final int maxIndex) {
             if (levenshteinDistance == 0)
                 return;
+            if (index + 1 == maxIndex)
+                return;
             //store
             int _index = index;
             int _levenshteinDistance = levenshteinDistance;
@@ -144,6 +146,11 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             index = _index;
             levenshteinDistance = _levenshteinDistance;
             for (int i = 1; i < _levenshteinDistance; i++) lengthChanges[i] = lengthChangesCopy[i];
+        }
+
+        @Override
+        public void setIndex(int index) {
+            this.index = index;
         }
 
         @Override
@@ -178,22 +185,34 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
                 // replace current character with correct one
                 final int substitution = deletion << 1;
                 // insertion of missing correct character before current position
-                final int insertion = (substitution << 1) | charPositions;
+                final int insertion = (deletion << 2) | charPositions;
 //                final int insertion = currentMatchings[levenshteinDistance - 1] << 1; // original Bitap insert
                 final int matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
                 currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
+                final boolean found = 0 == (currentMatchings[levenshteinDistance] & lastBitMask);
                 if (current >= deletion) {
                     if (insertion < substitution && insertion < matching) {
                         lengthChanges[levenshteinDistance] = 1;
                     } else if (substitution < matching && deletion < current) {
                         lengthChanges[levenshteinDistance] = 0;
-                    } else if(matching < substitution) {
+                        if (found) {
+                            //try to change replacement of last character onto deletion of current if next is correct
+                            final int nextIndex = index + 1;
+                            if (nextIndex < maxIndex) {
+                                final int nextCharPositions = positionBitMasks.getOrDefault(text.charAt(nextIndex), -1);
+                                if ((nextCharPositions & lastBitMask) == 0) {
+                                    index = nextIndex;
+                                    lengthChanges[levenshteinDistance] = -1;
+                                }
+                            }
+                        }
+                    } else if (matching < substitution) {
                         if (-1 == (matching | (~previousMatchings[levenshteinDistance]))) {
                             lengthChanges[levenshteinDistance] = -1;
                         }
                     }
                 }
-                if (0 == (currentMatchings[levenshteinDistance] & lastBitMask)) {
+                if (found) {
                     return true;
                 }
             }

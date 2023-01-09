@@ -134,6 +134,8 @@ class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
         public void improveResult(final int maxIndex) {
             if (levenshteinDistance == 0)
                 return;
+            if (index + 1 == maxIndex)
+                return;
             //store
             int _index = index;
             int _levenshteinDistance = levenshteinDistance;
@@ -151,6 +153,11 @@ class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
             index = _index;
             levenshteinDistance = _levenshteinDistance;
             for (int i = 1; i < _levenshteinDistance; i++) lengthChanges[i] = lengthChangesCopy[i];
+        }
+
+        @Override
+        public void setIndex(int index) {
+            this.index = index;
         }
 
         @Override
@@ -204,11 +211,23 @@ class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
                 }
                 currentMatchings[levenshteinDistance].setBitsFrom(insertion)
                         .and(deletion).and(substitution).and(matching);
+                final boolean found = currentMatchings[levenshteinDistance].hasZeroAtLastBit();
                 if (!current.lessThan(deletion)) {
                     if(insertion.lessThan(substitution) && insertion.lessThan(matching)) {
                         lengthChanges[levenshteinDistance] = 1;
                     } else if (substitution.lessThan(matching) && deletion.lessThan(current)) {
                         lengthChanges[levenshteinDistance] = 0;
+                        if (found) {
+                            //try to change replacement of last character onto deletion of current if next is correct
+                            final int nextIndex = index + 1;
+                            if (nextIndex < maxIndex) {
+                                final BitVector nextCharPositions = positionBitMasks.get(text.charAt(nextIndex));
+                                if (nextCharPositions != null && nextCharPositions.hasZeroAtLastBit()) {
+                                    index = nextIndex;
+                                    lengthChanges[levenshteinDistance] = -1;
+                                }
+                            }
+                        }
                     } else if(matching.lessThan(substitution)) {
                         final boolean wasDeleted = testDeletion
                                 .setBitsFrom(previousMatchings[levenshteinDistance])
@@ -220,7 +239,7 @@ class UnlimitedBitap implements JuzzyPattern, IterativeJuzzyPattern {
                         }
                     }
                 }
-                if (currentMatchings[levenshteinDistance].hasZeroAtLastBit()) {
+                if (found) {
                     return true;
                 }
             }

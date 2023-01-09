@@ -114,9 +114,8 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
 
         @Override
         public boolean testNextSymbol() {
-            final int resetToIndex = index + 1;
             for (IterativeJuzzyMatcher matcher : matchers) {
-                matcher.reset(text, resetToIndex, maxIndex);
+                matcher.setIndex(index);
                 if (matcher.testNextSymbol()) {
                     matched = matcher;
                     int maxDistance = matcher.getMaxDistance();
@@ -143,6 +142,11 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
         @Override
         public void improveResult(int maxIndex) {
             ensureFound().improveResult(maxIndex);
+        }
+
+        @Override
+        public void setIndex(int index) {
+            this.index = index;
         }
 
         private IterativeJuzzyMatcher ensureFound() {
