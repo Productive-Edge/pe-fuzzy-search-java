@@ -1,22 +1,22 @@
-package com.pe.juzzy;
+package com.pe.text;
 
 import java.util.Spliterators;
 import java.util.function.Consumer;
 
-class JuzzyResultSpliterator extends Spliterators.AbstractSpliterator<JuzzyResult> {
+class FuzzyResultSpliterator extends Spliterators.AbstractSpliterator<FuzzyResult> {
 
     static final int CHARACTERISTICS = ORDERED | DISTINCT | NONNULL | IMMUTABLE;
-    private JuzzyMatcher matcher;
+    private FuzzyMatcher matcher;
 
-    JuzzyResultSpliterator(JuzzyMatcher matcher) {
+    FuzzyResultSpliterator(FuzzyMatcher matcher) {
         super(Long.MAX_VALUE,  CHARACTERISTICS);
         this.matcher = matcher;
     }
 
     @Override
-    public boolean tryAdvance(Consumer<? super JuzzyResult> action) {
+    public boolean tryAdvance(Consumer<? super FuzzyResult> action) {
         if(!matcher.find()) return false;
-        action.accept(new JuzzyResultRecord(matcher));
+        action.accept(new FuzzyResultRecord(matcher));
         return true;
     }
 }

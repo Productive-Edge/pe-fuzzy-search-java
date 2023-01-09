@@ -1,4 +1,4 @@
-package com.pe.juzzy.benchmarks;
+package com.pe.text.benchmarks;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

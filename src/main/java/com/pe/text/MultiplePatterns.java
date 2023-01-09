@@ -1,27 +1,27 @@
-package com.pe.juzzy;
+package com.pe.text;
 
-class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
+class MultiplePatterns implements MatcherProvider, IterativeFuzzyPattern {
 
-    private final IterativeJuzzyPattern[] patterns;
+    private final IterativeFuzzyPattern[] patterns;
 
-    MultiplePatterns(IterativeJuzzyPattern[] patterns) {
+    MultiplePatterns(IterativeFuzzyPattern[] patterns) {
         this.patterns = patterns;
     }
 
     @Override
-    public JuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
+    public FuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
         return getIterativeMatcher(text, fromIndex, toIndex);
     }
 
     @Override
-    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
+    public IterativeFuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
         return new Matcher(text, fromIndex, toIndex);
     }
 
-    class Matcher implements IterativeJuzzyMatcher {
+    class Matcher implements IterativeFuzzyMatcher {
         private CharSequence text;
-        final IterativeJuzzyMatcher[] matchers;
-        IterativeJuzzyMatcher matched;
+        final IterativeFuzzyMatcher[] matchers;
+        IterativeFuzzyMatcher matched;
         private int index;
         private int maxIndex;
 
@@ -29,7 +29,7 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
             this.text = text;
             index = Math.max(0, fromIndex) - 1;
             maxIndex = Math.min(text.length(), toIndex);
-            matchers = new IterativeJuzzyMatcher[patterns.length];
+            matchers = new IterativeFuzzyMatcher[patterns.length];
             for (int i = 0, l = matchers.length; i < l; i++) matchers[i] = patterns[i].getIterativeMatcher(text, index, maxIndex);
         }
 
@@ -43,7 +43,7 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
             this.text = text;
             index = Math.max(0, fromIndex) - 1;
             maxIndex = Math.min(text.length(), maxIndex);
-            for (IterativeJuzzyMatcher matcher : matchers) matcher.reset(text, fromIndex, toIndex);
+            for (IterativeFuzzyMatcher matcher : matchers) matcher.reset(text, fromIndex, toIndex);
         }
 
         @Override
@@ -58,7 +58,7 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
 
             //insert at the end
             int maxDistance = 0;
-            for (IterativeJuzzyMatcher matcher : matchers) {
+            for (IterativeFuzzyMatcher matcher : matchers) {
                 matcher.reset(text, index + 1, maxIndex);
                 final int max = matcher.pattern().maxLevenshteinDistance();
                 if(maxDistance < max) maxDistance = max;
@@ -92,14 +92,14 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
         }
 
         @Override
-        public JuzzyPattern pattern() {
+        public FuzzyPattern pattern() {
             return ensureFound().pattern();
         }
 
         @Override
         public void resetState() {
             matched = null;
-            for (IterativeJuzzyMatcher matcher : matchers) matcher.resetState();
+            for (IterativeFuzzyMatcher matcher : matchers) matcher.resetState();
         }
 
         @Override
@@ -109,12 +109,12 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
 
         @Override
         public void setMaxDistance(int maxDistance) {
-            for (IterativeJuzzyMatcher matcher : matchers) matcher.setMaxDistance(maxDistance);
+            for (IterativeFuzzyMatcher matcher : matchers) matcher.setMaxDistance(maxDistance);
         }
 
         @Override
         public boolean testNextSymbol() {
-            for (IterativeJuzzyMatcher matcher : matchers) {
+            for (IterativeFuzzyMatcher matcher : matchers) {
                 matcher.setIndex(index);
                 if (matcher.testNextSymbol()) {
                     matched = matcher;
@@ -130,7 +130,7 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
 
         @Override
         public boolean testNextInsert(final int iteration) {
-            for (IterativeJuzzyMatcher matcher : matchers) {
+            for (IterativeFuzzyMatcher matcher : matchers) {
                 if (iteration <= matcher.pattern().maxLevenshteinDistance() && matcher.testNextInsert(iteration)) {
                     matched = matcher;
                     return true;
@@ -149,7 +149,7 @@ class MultiplePatterns implements MatcherProvider, IterativeJuzzyPattern {
             this.index = index;
         }
 
-        private IterativeJuzzyMatcher ensureFound() {
+        private IterativeFuzzyMatcher ensureFound() {
             if(index == -1)
                 throw new IllegalStateException("find method must be called before");
             if(matched == null)

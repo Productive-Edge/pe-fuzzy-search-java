@@ -1,6 +1,6 @@
-package com.pe.juzzy;
+package com.pe.text;
 
-interface IterativeJuzzyMatcher extends JuzzyMatcher {
+interface IterativeFuzzyMatcher extends FuzzyMatcher {
     void resetState();
     int getMaxDistance();
     void setMaxDistance(int maxDistance);

@@ -1,7 +1,7 @@
-package com.pe.juzzy.benchmarks;
+package com.pe.text.benchmarks;
 
-import com.pe.juzzy.JuzzyPattern;
-import com.pe.juzzy.Levenshtein;
+import com.pe.text.FuzzyPattern;
+import com.pe.text.Levenshtein;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -18,8 +18,8 @@ public class LevenshteinDistanceBenchmark {
 
     public static final String test1a = "This is a test text of testing";
     public static final String test1b = "teksting";
-    public static final JuzzyPattern pattern1 = JuzzyPattern.pattern(test1b, test1b.length());
-    public static final JuzzyPattern pattern1l = JuzzyPattern.pattern(test1b, 3);
+    public static final FuzzyPattern pattern1 = FuzzyPattern.pattern(test1b, test1b.length());
+    public static final FuzzyPattern pattern1l = FuzzyPattern.pattern(test1b, 3);
 
 
     @Disabled

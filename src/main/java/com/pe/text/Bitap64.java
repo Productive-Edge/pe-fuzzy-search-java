@@ -1,39 +1,38 @@
-package com.pe.juzzy;
+package com.pe.text;
 
-import it.unimi.dsi.fastutil.chars.Char2IntOpenHashMap;
+import it.unimi.dsi.fastutil.chars.Char2LongOpenHashMap;
 
-class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
+class Bitap64 implements FuzzyPattern, IterativeFuzzyPattern {
 
-    private final Char2IntOpenHashMap positionBitMasks;
+    private final Char2LongOpenHashMap positionBitMasks;
     private final CharSequence pattern;
     private final int patternLength;
-    private final int lastBitMask;
+    private final long lastBitMask;
     private final int maxLevenshteinDistance;
     private final boolean caseInsensitive;
 
-    public Bitap32(CharSequence pattern, int maxLevenshteinDistance) {
+    Bitap64(CharSequence pattern, int maxLevenshteinDistance) {
         this(pattern, maxLevenshteinDistance, false);
     }
 
-    public Bitap32(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
+    Bitap64(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
         patternLength = pattern.length();
-        if (patternLength > 32) {
-            throw new IllegalArgumentException("Pattern length exceeds allowed maximum in 32 characters");
-        }
+        if (patternLength > 64)
+            throw new IllegalArgumentException("Pattern length exceeded allowed maximum in 64 characters");
         this.pattern = pattern;
         this.maxLevenshteinDistance = maxLevenshteinDistance;
         this.caseInsensitive = caseInsensitive;
-        lastBitMask = 1 << (patternLength - 1);
-        positionBitMasks = new Char2IntOpenHashMap(patternLength << 1);
+        lastBitMask = 1L << (patternLength - 1);
+        positionBitMasks = new Char2LongOpenHashMap(patternLength << 1);
         if (!caseInsensitive) {
             for (int i = 0; i < patternLength; i++) {
                 final char c = pattern.charAt(i);
-                positionBitMasks.put(c, positionBitMasks.getOrDefault(c, -1) & (~(1 << i)));
+                positionBitMasks.put(c, positionBitMasks.getOrDefault(c, -1L) & (~(1L << i)));
             }
         } else {
             for (int i = 0; i < patternLength; i++) {
                 final char lc = Character.toLowerCase(pattern.charAt(i));
-                final int mask = positionBitMasks.getOrDefault(lc, -1) & (~(1 << i));
+                final long mask = positionBitMasks.getOrDefault(lc, -1L) & (~(1L << i));
                 positionBitMasks.put(lc, mask);
                 positionBitMasks.put(Character.toUpperCase(lc), mask);
             }
@@ -56,21 +55,21 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
     }
 
     @Override
-    public JuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
+    public FuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
         return getIterativeMatcher(text, fromIndex, toIndex);
     }
 
     @Override
-    public IterativeJuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
+    public IterativeFuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
         return new Matcher(text, fromIndex, toIndex);
     }
 
-    final class Matcher implements IterativeJuzzyMatcher {
+    final class Matcher implements IterativeFuzzyMatcher {
         private CharSequence text;
         private final int[] lengthChanges;
         private final int[] lengthChangesCopy;
-        private int[] previousMatchings;
-        private int[] currentMatchings;
+        private long[] previousMatchings;
+        private long[] currentMatchings;
         private int levenshteinDistance;
         private int maxDistance;
         private int index;
@@ -80,8 +79,8 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
             this.text = text;
             maxDistance = maxLevenshteinDistance;
             final int n = maxDistance + 1;
-            currentMatchings = new int[n];
-            previousMatchings = new int[n];
+            currentMatchings = new long[n];
+            previousMatchings = new long[n];
             lengthChanges = new int[n];
             lengthChangesCopy = new int[n];
             index = Math.max(0, fromIndex) - 1;
@@ -136,7 +135,7 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
             maxDistance = levenshteinDistance - 1;
             while (++index < maxIndex) {
-                if (testNextSymbol()) {
+                if(testNextSymbol()) {
                     improveResult(maxIndex);
                     return;
                 }
@@ -156,7 +155,7 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
         @Override
         public void resetState() {
             for (int i = 1; i <= maxDistance; i++) lengthChanges[i] = 0;
-            for (int i = 0; i <= maxDistance; i++) currentMatchings[i] = -1;
+            for (int i = 0; i <= maxDistance; i++) currentMatchings[i] = -1L;
         }
 
         @Override
@@ -171,25 +170,25 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
         @Override
         public boolean testNextSymbol() {
-            final int charPositions = positionBitMasks.getOrDefault(text.charAt(index), -1);
+            final long charPositions = positionBitMasks.getOrDefault(text.charAt(index), -1L);
             swapMatching();
             levenshteinDistance = 0;
             currentMatchings[0] = (previousMatchings[0] << 1) | charPositions;
-            if (0 == (currentMatchings[0] & lastBitMask)) {
+            if (0L == (currentMatchings[0] & lastBitMask)) {
                 return true;
             }
             while (levenshteinDistance < maxDistance) {
-                final int current = currentMatchings[levenshteinDistance];
+                final long current = currentMatchings[levenshteinDistance];
                 // ignore current character
-                final int deletion = previousMatchings[levenshteinDistance++];
+                final long deletion = previousMatchings[levenshteinDistance++];
                 // replace current character with correct one
-                final int substitution = deletion << 1;
+                final long substitution = deletion << 1;
                 // insertion of missing correct character before current position
-                final int insertion = (deletion << 2) | charPositions;
-//                final int insertion = currentMatchings[levenshteinDistance - 1] << 1; // original Bitap insert
-                final int matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
+                final long insertion = (deletion << 2) | charPositions;
+
+                final long matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
                 currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
-                final boolean found = 0 == (currentMatchings[levenshteinDistance] & lastBitMask);
+                final boolean found = 0L == (currentMatchings[levenshteinDistance] & lastBitMask);
                 if (current >= deletion) {
                     if (insertion < substitution && insertion < matching) {
                         lengthChanges[levenshteinDistance] = 1;
@@ -199,15 +198,15 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
                             //try to change replacement of last character onto deletion of current if next is correct
                             final int nextIndex = index + 1;
                             if (nextIndex < maxIndex) {
-                                final int nextCharPositions = positionBitMasks.getOrDefault(text.charAt(nextIndex), -1);
-                                if ((nextCharPositions & lastBitMask) == 0) {
+                                final long nextCharPositions = positionBitMasks.getOrDefault(text.charAt(nextIndex), -1);
+                                if ((nextCharPositions & lastBitMask) == 0L) {
                                     index = nextIndex;
                                     lengthChanges[levenshteinDistance] = -1;
                                 }
                             }
                         }
-                    } else if (matching < substitution) {
-                        if (-1 == (matching | (~previousMatchings[levenshteinDistance]))) {
+                    } else if(matching < substitution) {
+                        if (-1L == (matching | (~previousMatchings[levenshteinDistance]))) {
                             lengthChanges[levenshteinDistance] = -1;
                         }
                     }
@@ -221,10 +220,10 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
 
         @Override
         public boolean testNextInsert(final int iteration) {
-            final int bitMask = lastBitMask >>> iteration;
+            final long bitMask = lastBitMask >>> iteration;
             final int limit = maxDistance - iteration;
             for (levenshteinDistance = 0; levenshteinDistance <= limit; levenshteinDistance++) {
-                if (0 == (currentMatchings[levenshteinDistance] & bitMask)) {
+                if (0L == (currentMatchings[levenshteinDistance] & bitMask)) {
                     index--;
                     final int end = levenshteinDistance + iteration;
                     for (int i = levenshteinDistance + 1; i <= end; i++) lengthChanges[i] = 1;
@@ -236,7 +235,7 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
         }
 
         private void swapMatching() {
-            final int[] tmp = currentMatchings;
+            final long[] tmp = currentMatchings;
             currentMatchings = previousMatchings;
             previousMatchings = tmp;
         }
@@ -268,8 +267,8 @@ class Bitap32 implements JuzzyPattern, IterativeJuzzyPattern {
         }
 
         @Override
-        public JuzzyPattern pattern() {
-            return Bitap32.this;
+        public FuzzyPattern pattern() {
+            return Bitap64.this;
         }
     }
 
