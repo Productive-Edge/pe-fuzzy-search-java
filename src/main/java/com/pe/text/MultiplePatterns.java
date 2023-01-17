@@ -1,6 +1,7 @@
 package com.pe.text;
 
-class MultiplePatterns implements MatcherProvider, IterativeFuzzyPattern {
+// it looks like there is no performance benefits for multiple patterns
+class MultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPattern {
 
     private final IterativeFuzzyPattern[] patterns;
 

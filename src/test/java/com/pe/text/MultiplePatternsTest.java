@@ -75,7 +75,7 @@ class MultiplePatternsTest {
             "test,_es_t"
     })
     public void testFuzzy1Fail(String test, String text) {
-        MatcherProvider patterns = new MultiplePatterns(new IterativeFuzzyPattern[]{new UnlimitedBitap(test, 0)});
+        FuzzyMultiPattern patterns = new MultiplePatterns(new IterativeFuzzyPattern[]{new UnlimitedBitap(test, 0)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertFalse(matcher.find());
     }
@@ -132,7 +132,7 @@ class MultiplePatternsTest {
 
     @Test
     public void testLongPattern() {
-        MatcherProvider patterns = FuzzyPattern.oneOf(
+        FuzzyMultiPattern patterns = FuzzyMultiPattern.combine(
                 FuzzyPattern.pattern("ut", 0, true),
                 FuzzyPattern.pattern("Duis", 1),
                 FuzzyPattern.pattern("dolor", 1)
@@ -153,14 +153,14 @@ class MultiplePatternsTest {
     @Test
     public void testInvalidPatterns() {
         try {
-            MatcherProvider matcher = FuzzyPattern.oneOf(FuzzyPattern.pattern("1", 0), null);
+            FuzzyMultiPattern matcher = FuzzyMultiPattern.combine(FuzzyPattern.pattern("1", 0), null);
             assertNull(matcher);
         }catch (IllegalArgumentException e) {
             assertEquals("2nd pattern is null", e.getMessage());
         }
 
         try {
-            MatcherProvider matcher = FuzzyPattern.oneOf(new FuzzyPattern() {
+            FuzzyMultiPattern matcher = FuzzyMultiPattern.combine(new FuzzyPattern() {
                 @Override
                 public CharSequence text() {
                     return null;
