@@ -11,10 +11,10 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-public class BitapsBenchmark {
+public class BitapsBenchmarkTest {
 
     private static final String TEXT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
             "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
@@ -22,11 +22,11 @@ public class BitapsBenchmark {
             "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
             "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
-    private static final String PATTERN ="dolore";
+    private static final String PATTERN = "dolore";
 
-    @Disabled
+    @Disabled("benchmarks have to be run manually")
     @Test
-    public void runBenchmarks() throws Exception {
+    void runBenchmarks() throws Exception {
         new Runner(
                 new OptionsBuilder()
                         .include(this.getClass().getName() + ".*")
@@ -62,8 +62,35 @@ public class BitapsBenchmark {
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public void benchmark64X() {
-        FuzzyMatcher matcher = new UnlimitedBitap(PATTERN, 1).matcher(TEXT);
+    public void benchmark65Plus() {
+        FuzzyMatcher matcher = new Bitap65Plus(PATTERN, 1).matcher(TEXT);
+        while (matcher.find()) {
+            assertTrue(matcher.distance() <= 1);
+        }
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public void benchmark64v2() {
+        FuzzyMatcher matcher = new Bitap64(PATTERN, 1).matcher(TEXT);
+        while (matcher.find()) {
+            assertTrue(matcher.distance() <= 1);
+        }
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public void benchmark32v2() {
+        FuzzyMatcher matcher = new Bitap32(PATTERN, 1).matcher(TEXT);
+        while (matcher.find()) {
+            assertTrue(matcher.distance() <= 1);
+        }
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public void benchmark65v2Plus() {
+        FuzzyMatcher matcher = new Bitap65Plus(PATTERN, 1).matcher(TEXT);
         while (matcher.find()) {
             assertTrue(matcher.distance() <= 1);
         }

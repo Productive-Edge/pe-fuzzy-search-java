@@ -11,13 +11,16 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.concurrent.TimeUnit;
 
-public class CyclesExecution {
+/**
+ * no stable and notable difference in performance
+ */
+public class LoopLengthBenchmarkTest {
 
-    private static final int[] ints = new int[1024];
+    private static final int[] ints = new int[1024 * 1024];
 
-    @Disabled
+    @Disabled("benchmarks have to be run manually")
     @Test
-    public void runBenchmarks() throws Exception {
+    void runBenchmarks() throws Exception {
         new Runner(
                 new OptionsBuilder()
                         .include(this.getClass().getName() + ".*")

@@ -19,13 +19,11 @@ class BitVector {
     }
 
     BitVector setMinusOne() {
-        //        Arrays.fill(bits, value);
         for (int i = 0, l = bits.length; i < l; i++) bits[i] = -1L;
         return this;
     }
 
     BitVector setBitsFrom(final BitVector vector) {
-        //        System.arraycopy(vector.bits, 0, bits, 0, bits.length); // is not effective! for short arrays
         for (int i = 0, l = bits.length; i < l; i++) bits[i] = vector.bits[i];
         return this;
     }
