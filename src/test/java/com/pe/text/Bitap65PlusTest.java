@@ -6,7 +6,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class UnlimitedBitapTest {
+class Bitap65PlusTest {
 
     @ParameterizedTest
     @CsvSource({
@@ -14,8 +14,8 @@ class UnlimitedBitapTest {
             "test,atest,1,5",
             "test,tetest,2,6",
     })
-    public void testFuzzy0(String test, String text, int start, int end) {
-        FuzzyPattern bitap = new UnlimitedBitap(test, 0);
+    void testFuzzy0(String test, String text, int start, int end) {
+        FuzzyPattern bitap = new Bitap65v2Plus(test, 0);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -25,10 +25,10 @@ class UnlimitedBitapTest {
     }
 
     @Test
-    public void testFuzzy0Fail() {
+    void testFuzzy0Fail() {
         String test = "test";
         String text = "aaaa";
-        FuzzyPattern bitap = new UnlimitedBitap(test, 0);
+        FuzzyPattern bitap = new Bitap65v2Plus(test, 0);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertFalse(matcher.find());
         assertThrows(IllegalStateException.class, matcher::start);
@@ -49,8 +49,8 @@ class UnlimitedBitapTest {
             "test,t_est,0,5,1",
             "test,tes_t,0,5,1"
     })
-    public void testFuzzy1(String test, String text, int start, int end, int d) {
-        FuzzyPattern bitap = new UnlimitedBitap(test, 1);
+    void testFuzzy1(String test, String text, int start, int end, int d) {
+        FuzzyPattern bitap = new Bitap65v2Plus(test, 1);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -70,8 +70,8 @@ class UnlimitedBitapTest {
             "test,t_es_",
             "test,_es_t"
     })
-    public void testFuzzy1Fail(String test, String text) {
-        FuzzyPattern bitap = new UnlimitedBitap(test, 1);
+    void testFuzzy1Fail(String test, String text) {
+        FuzzyPattern bitap = new Bitap65v2Plus(test, 1);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertFalse(matcher.find());
     }
@@ -93,8 +93,8 @@ class UnlimitedBitapTest {
             "Result,__esul_,1,7,2",
             "Result,__esul_t,1,8,2"
     })
-    public void testFuzzy2(String test, String text, int start, int end, int d) {
-        FuzzyPattern bitap = new UnlimitedBitap(test, 2);
+    void testFuzzy2(String test, String text, int start, int end, int d) {
+        FuzzyPattern bitap = new Bitap65v2Plus(test, 2);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -103,8 +103,8 @@ class UnlimitedBitapTest {
     }
 
     @Test
-    public void testAllMatches() {
-        FuzzyPattern bitap = new UnlimitedBitap("test", 1);
+    void testAllMatches() {
+        FuzzyPattern bitap = new Bitap65v2Plus("test", 1);
         String text = "Test string to test all matches. tes";
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
@@ -128,7 +128,7 @@ class UnlimitedBitapTest {
 
 
     @Test
-    public void testBestMatching() {
+    void testBestMatching() {
         final String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
                 "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
                 "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
@@ -136,7 +136,7 @@ class UnlimitedBitapTest {
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
         {
-            FuzzyPattern dolore = new UnlimitedBitap("dolore", 1);
+            FuzzyPattern dolore = new Bitap65v2Plus("dolore", 1);
             FuzzyMatcher matcher = dolore.matcher(text);
             int i = 0;
             String[] results = new String[]{"dolor ", "dolore", "dolor ", "dolore"};
@@ -148,7 +148,7 @@ class UnlimitedBitapTest {
         }
         {
             int i = 0;
-            FuzzyPattern laboris = new UnlimitedBitap("laboris", 3);
+            FuzzyPattern laboris = new Bitap65v2Plus("laboris", 3);
             FuzzyMatcher matcher = laboris.matcher(text);
             String[] results = new String[]{"labore ", "laboris", "laborum"};
             while (matcher.find()) {
@@ -160,19 +160,25 @@ class UnlimitedBitapTest {
     }
 
     @Test
-    public void testAbnormal() {
+    void testAbnormal() {
         {
-            FuzzyMatcher matcher = new UnlimitedBitap("aba", 1).matcher("aaba");
+            int count = 0;
+            FuzzyMatcher matcher = new Bitap65v2Plus("aba", 1).matcher("aaba");
             while (matcher.find()) {
-                System.out.println(matcher.foundText());
+                count++;
+                assertEquals("aba", matcher.foundText());
             }
+            assertEquals(1, count);
         }
         {
-            FuzzyMatcher matcher = new UnlimitedBitap("aba", 1).matcher("baba");
+            int count = 0;
+            FuzzyMatcher matcher = new Bitap65v2Plus("aba", 1).matcher("baba");
             while (matcher.find()) {
-                System.out.println(matcher.foundText());
+                count++;
+                assertEquals("aba", matcher.foundText());
                 matcher.reset(matcher.end() - matcher.distance());
             }
+            assertEquals(1, count);
         }
     }
 
@@ -192,8 +198,8 @@ class UnlimitedBitapTest {
             "TeSt,T_est,0,5,1",
             "tEsT,Tes_t,0,5,1"
     })
-    public void caseInsensitive(String test, String text, int start, int end, int d) {
-        FuzzyPattern bitap = new UnlimitedBitap(test, 1, true);
+    void caseInsensitive(String test, String text, int start, int end, int d) {
+        FuzzyPattern bitap = new Bitap65v2Plus(test, 1, true);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -202,7 +208,7 @@ class UnlimitedBitapTest {
     }
 
     @Test
-    public void testLongPattern() {
+    void testLongPattern() {
         FuzzyPattern pattern = FuzzyPattern.pattern(
                 "nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat",
                 5, true);

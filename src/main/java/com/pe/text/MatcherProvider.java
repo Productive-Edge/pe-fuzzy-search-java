@@ -7,7 +7,7 @@ package com.pe.text;
 interface MatcherProvider {
 
     /**
-     * Creates {@link FuzzyMatcher} for the specified text. Equivalent to the {@code paatern.matcher(text, 0, text.length())}
+     * Creates {@link FuzzyMatcher} for the specified text. Equivalent to the {@code pattern.matcher(text, 0, text.length())}
      *
      * @param text The text to scan.
      *

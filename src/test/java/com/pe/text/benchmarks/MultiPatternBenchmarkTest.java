@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MultiPatternBenchmark {
+public class MultiPatternBenchmarkTest {
 
     public static final FuzzyPattern UT = FuzzyPattern.pattern("ut", 0, true);
     public static final FuzzyPattern DUIS = FuzzyPattern.pattern("Duis", 1);
@@ -33,16 +33,16 @@ public class MultiPatternBenchmark {
             "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
             "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
-    @Disabled
+    @Disabled("benchmarks have to be run manually")
     @Test
-    public void runBenchmarks() throws Exception {
+    void runBenchmarks() throws Exception {
         new Runner(
                 new OptionsBuilder()
                         .include(this.getClass().getName() + ".*")
                         .mode(Mode.AverageTime)
                         .warmupTime(TimeValue.seconds(1))
                         .warmupIterations(2)
-                        .threads(2)
+                        .threads(1)
                         .measurementIterations(5)
                         .measurementTime(TimeValue.seconds(2))
                         .forks(1)

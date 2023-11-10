@@ -6,7 +6,6 @@ class Bitap32 implements FuzzyPattern, IterativeFuzzyPattern {
 
     private final Char2IntOpenHashMap positionBitMasks;
     private final CharSequence pattern;
-    private final int patternLength;
     private final int lastBitMask;
     private final int maxLevenshteinDistance;
     private final boolean caseInsensitive;
@@ -16,22 +15,21 @@ class Bitap32 implements FuzzyPattern, IterativeFuzzyPattern {
     }
 
     public Bitap32(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
-        patternLength = pattern.length();
-        if (patternLength > 32) {
+        if (pattern.length() > 32) {
             throw new IllegalArgumentException("Pattern length exceeds allowed maximum in 32 characters");
         }
         this.pattern = pattern;
         this.maxLevenshteinDistance = maxLevenshteinDistance;
         this.caseInsensitive = caseInsensitive;
-        lastBitMask = 1 << (patternLength - 1);
-        positionBitMasks = new Char2IntOpenHashMap(patternLength << 1);
+        lastBitMask = 1 << (pattern.length() - 1);
+        positionBitMasks = new Char2IntOpenHashMap(pattern.length() << 1);
         if (!caseInsensitive) {
-            for (int i = 0; i < patternLength; i++) {
+            for (int i = 0; i < pattern.length(); i++) {
                 final char c = pattern.charAt(i);
                 positionBitMasks.put(c, positionBitMasks.getOrDefault(c, -1) & (~(1 << i)));
             }
         } else {
-            for (int i = 0; i < patternLength; i++) {
+            for (int i = 0; i < pattern.length(); i++) {
                 final char lc = Character.toLowerCase(pattern.charAt(i));
                 final int mask = positionBitMasks.getOrDefault(lc, -1) & (~(1 << i));
                 positionBitMasks.put(lc, mask);
@@ -106,9 +104,9 @@ class Bitap32 implements FuzzyPattern, IterativeFuzzyPattern {
 
             while (++index < maxIndex) {
                 if (testNextSymbol()) {
-                    int _maxDistance = maxDistance;
-                    improveResult(Math.min(index + patternLength, maxIndex));
-                    maxDistance = _maxDistance;
+                    int maxDistanceCopy = maxDistance;
+                    improveResult(Math.min(index + pattern.length(), maxIndex));
+                    maxDistance = maxDistanceCopy;
                     return true;
                 }
             }
@@ -245,7 +243,7 @@ class Bitap32 implements FuzzyPattern, IterativeFuzzyPattern {
         public int start() {
             int lengthChange = 0;
             for (int i = 1; i <= levenshteinDistance; i++) lengthChange += lengthChanges[i];
-            return end() - patternLength + lengthChange;
+            return end() - pattern.length() + lengthChange;
         }
 
         @Override

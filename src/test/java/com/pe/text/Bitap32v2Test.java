@@ -9,7 +9,39 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class Bitap64Test {
+class Bitap32v2Test {
+
+    @ParameterizedTest
+    @CsvSource({
+            "test,tst,0,3",
+            "test,tost,0,4",
+            "test,toest,0,5",
+    })
+    void testOperations1(String test, String text, int start, int end) {
+        FuzzyPattern bitap = new Bitap32v2(test, 1);
+        FuzzyMatcher matcher = bitap.matcher(text);
+        assertTrue(matcher.find());
+        assertEquals(start, matcher.start());
+        assertEquals(end, matcher.end());
+        assertEquals(1, matcher.distance());
+        assertFalse(matcher.find());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "test,tst,0,3",
+            "test,tost,0,4",
+            "test,toest,0,5",
+    })
+    void testOperations2(String test, String text, int start, int end) {
+        FuzzyPattern bitap = new Bitap32v2(test, 2);
+        FuzzyMatcher matcher = bitap.matcher(text);
+        assertTrue(matcher.find());
+        assertEquals(start, matcher.start());
+        assertEquals(end, matcher.end());
+        assertEquals(1, matcher.distance());
+        assertFalse(matcher.find());
+    }
 
     @ParameterizedTest
     @CsvSource({
@@ -18,7 +50,7 @@ class Bitap64Test {
             "test,tetest,2,6",
     })
     void testFuzzy0(String test, String text, int start, int end) {
-        FuzzyPattern bitap = new Bitap64(test, 0);
+        FuzzyPattern bitap = new Bitap32v2(test, 0);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -31,7 +63,7 @@ class Bitap64Test {
     void testFuzzy0Fail() {
         String test = "test";
         String text = "aaaa";
-        FuzzyPattern bitap = new Bitap64v2(test, 0);
+        FuzzyPattern bitap = new Bitap32v2(test, 0);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertFalse(matcher.find());
         assertThrows(IllegalStateException.class, matcher::start);
@@ -53,7 +85,7 @@ class Bitap64Test {
             "test,tes_t,0,5,1"
     })
     void testFuzzy1(String test, String text, int start, int end, int d) {
-        FuzzyPattern bitap = new Bitap64v2(test, 1);
+        FuzzyPattern bitap = new Bitap32v2(test, 1);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -74,13 +106,15 @@ class Bitap64Test {
             "test,_es_t"
     })
     void testFuzzy1Fail(String test, String text) {
-        FuzzyPattern bitap = new Bitap64v2(test, 1);
+        FuzzyPattern bitap = new Bitap32v2(test, 1);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertFalse(matcher.find());
     }
 
     @ParameterizedTest
     @CsvSource({
+            "Result,Rsulut,0,6,2",
+            "Result,Rsuult,0,6,2",
             "Result,Result,0,6,0",
             "Result,Resul,0,5,1",
             "Result,Resu,0,4,2",
@@ -97,7 +131,7 @@ class Bitap64Test {
             "Result,__esul_t,1,8,2"
     })
     void testFuzzy2(String test, String text, int start, int end, int d) {
-        FuzzyPattern bitap = new Bitap64v2(test, 2);
+        FuzzyPattern bitap = new Bitap32v2(test, 2);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -107,7 +141,7 @@ class Bitap64Test {
 
     @Test
     void testAllMatches() {
-        FuzzyPattern bitap = new Bitap64v2("test", 1);
+        FuzzyPattern bitap = new Bitap32v2("test", 1);
         String text = "Test string to test all matches. tes";
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
@@ -139,7 +173,7 @@ class Bitap64Test {
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
         {
-            FuzzyPattern dolore = new Bitap64v2("dolore", 1);
+            FuzzyPattern dolore = new Bitap32v2("dolore", 1);
             FuzzyMatcher matcher = dolore.matcher(text);
             int i = 0;
             String[] results = new String[]{"dolor ", "dolore", "dolor ", "dolore"};
@@ -151,7 +185,7 @@ class Bitap64Test {
         }
         {
             int i = 0;
-            FuzzyPattern laboris = new Bitap64v2("laboris", 3);
+            FuzzyPattern laboris = new Bitap32v2("laboris", 3);
             FuzzyMatcher matcher = laboris.matcher(text);
             String[] results = new String[]{"labore ", "laboris", "laborum"};
             while (matcher.find()) {
@@ -179,7 +213,7 @@ class Bitap64Test {
             "tEsT,Tes_t,0,5,1"
     })
     void caseInsensitive(String test, String text, int start, int end, int d) {
-        FuzzyPattern bitap = new Bitap64v2(test, 1, true);
+        FuzzyPattern bitap = new Bitap32v2(test, 1, true);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -189,58 +223,58 @@ class Bitap64Test {
 
     @Test
     void testMaxLen() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("1234567890123456789012345678901234567890123456789012345678901234", 1);
-        assertTrue(pattern instanceof Bitap64v2);
+        FuzzyPattern pattern = FuzzyPattern.pattern("12345678901234567890123456789012", 1);
+        assertTrue(pattern instanceof Bitap32v2);
+        //insert
+        {
+            List<FuzzyResult> results = pattern.matcher("0123456789123456789012345678901234567890")
+                    .stream().collect(Collectors.toList());
+            assertEquals(1, results.size());
+            assertEquals(1, results.get(0).start());
+            assertEquals(1, results.get(0).distance());
+            assertEquals(32, results.get(0).end());
+        }
+        //insert 2
+        {
+            List<FuzzyResult> results = pattern.matcher("0234567890123456789012345678901234567890")
+                    .stream().collect(Collectors.toList());
+            assertEquals(1, results.size());
+            assertEquals(0, results.get(0).start());
+            assertEquals(1, results.get(0).distance());
+            assertEquals(32, results.get(0).end());
+        }
         //exact
         {
-            List<FuzzyResult> results = pattern.matcher("01234567890123456789012345678901234567890123456789012345678901234567890")
+            List<FuzzyResult> results = pattern.matcher("01234567890123456789012345678901234567890")
                     .stream().collect(Collectors.toList());
             assertEquals(1, results.size());
             assertEquals(1, results.get(0).start());
             assertEquals(0, results.get(0).distance());
-            assertEquals(65, results.get(0).end());
+            assertEquals(33, results.get(0).end());
         }
         //replace
         {
-            List<FuzzyResult> results = pattern.matcher("0123456789_12345678901234567890123456789012345678901234567890123456789")
+            List<FuzzyResult> results = pattern.matcher("0123456789_123456789012345678901234567890")
                     .stream().collect(Collectors.toList());
             assertEquals(1, results.size());
             assertEquals(1, results.get(0).start());
             assertEquals(1, results.get(0).distance());
-            assertEquals(65, results.get(0).end());
-        }
-        //better than replace
-        {
-            List<FuzzyResult> results = pattern.matcher("0123456789_123456789012345678901234567890123456789012345678901234567890123456789")
-                    .stream().collect(Collectors.toList());
-            assertEquals(1, results.size());
-            assertEquals(11, results.get(0).start());
-            assertEquals(0, results.get(0).distance());
-            assertEquals(75, results.get(0).end());
-        }
-        //insert
-        {
-            List<FuzzyResult> results = pattern.matcher("0123456789123456789012345678901234567890123456789012345678901234567890")
-                    .stream().collect(Collectors.toList());
-            assertEquals(1, results.size());
-            assertEquals(1, results.get(0).start());
-            assertEquals(1, results.get(0).distance());
-            assertEquals(64, results.get(0).end());
+            assertEquals(33, results.get(0).end());
         }
         //delete
         {
-            List<FuzzyResult> results = pattern.matcher("0123456789_0123456789012345678901234567890123456789012345678901234567890")
+            List<FuzzyResult> results = pattern.matcher("0123456789_0123456789012345678901234567890")
                     .stream().collect(Collectors.toList());
             assertEquals(1, results.size());
             assertEquals(1, results.get(0).start());
             assertEquals(1, results.get(0).distance());
-            assertEquals(66, results.get(0).end());
+            assertEquals(34, results.get(0).end());
         }
     }
 
     @Test
     void testEdgeCase() {
-        Bitap32 p = new Bitap32("aabaa", 2);
+        FuzzyPattern p = new Bitap32v2("aabaa", 2);
         FuzzyMatcher m = p.matcher("aaa");
         assertTrue(m.find());
         assertEquals(0, m.start(), "start");
@@ -253,7 +287,7 @@ class Bitap64Test {
     @Test
     void testBestOnEdgeCases() {
         {
-            Bitap32 p = new Bitap32("ababCabab", 2);
+            FuzzyPattern p = new Bitap32v2("ababCabab", 2);
             FuzzyMatcher m = p.matcher("abababCababab");
             assertTrue(m.find());
             assertEquals(2, m.start(), "start");
@@ -263,7 +297,7 @@ class Bitap64Test {
             assertFalse(m.find());
         }
         {
-            Bitap32 p = new Bitap32("aabaa", 1);
+            FuzzyPattern p = new Bitap32v2("aabaa", 1);
             FuzzyMatcher m = p.matcher("aaabaaa");
             assertTrue(m.find());
             assertEquals(6, m.end(), "end");

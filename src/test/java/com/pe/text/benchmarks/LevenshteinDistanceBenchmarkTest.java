@@ -14,17 +14,17 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.concurrent.TimeUnit;
 
-public class LevenshteinDistanceBenchmark {
+public class LevenshteinDistanceBenchmarkTest {
 
     public static final String test1a = "This is a test text of testing";
     public static final String test1b = "teksting";
-    public static final FuzzyPattern pattern1 = FuzzyPattern.pattern(test1b, test1b.length());
-    public static final FuzzyPattern pattern1l = FuzzyPattern.pattern(test1b, 3);
+    public static final FuzzyPattern noLimitPattern = FuzzyPattern.pattern(test1b, test1b.length());
+    public static final FuzzyPattern limit3Pattern = FuzzyPattern.pattern(test1b, 3);
 
 
-    @Disabled
+    @Disabled("benchmarks have to be run manually")
     @Test
-    public void runBenchmarks() throws Exception {
+    void runBenchmarks() throws Exception {
         new Runner(
                 new OptionsBuilder()
                         .include(this.getClass().getName() + ".*")
@@ -48,6 +48,7 @@ public class LevenshteinDistanceBenchmark {
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    @Deprecated
     public void bitap1() {
         Levenshtein.distance(test1a, test1b);
     }
@@ -55,12 +56,12 @@ public class LevenshteinDistanceBenchmark {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void bitap1m() {
-        pattern1.matcher(test1a).findTheBestMatching();
+        noLimitPattern.matcher(test1a).findTheBestMatching();
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void bitap1l() {
-        pattern1l.matcher(test1a).findTheBestMatching();
+        limit3Pattern.matcher(test1a).findTheBestMatching();
     }
 }

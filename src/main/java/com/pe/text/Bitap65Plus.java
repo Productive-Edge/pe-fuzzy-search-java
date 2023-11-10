@@ -2,7 +2,7 @@ package com.pe.text;
 
 import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
 
-class UnlimitedBitap implements FuzzyPattern, IterativeFuzzyPattern {
+class Bitap65Plus implements FuzzyPattern, IterativeFuzzyPattern {
 
     private final Char2ObjectOpenHashMap<BitVector> positionBitMasks;
     private final CharSequence pattern;
@@ -10,11 +10,11 @@ class UnlimitedBitap implements FuzzyPattern, IterativeFuzzyPattern {
     private final int maxLevenshteinDistance;
     private final boolean caseInsensitive;
 
-    UnlimitedBitap(CharSequence pattern, int maxLevenshteinDistance) {
+    Bitap65Plus(CharSequence pattern, int maxLevenshteinDistance) {
         this(pattern, maxLevenshteinDistance, false);
     }
 
-    UnlimitedBitap(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
+    Bitap65Plus(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
         patternLength = pattern.length();
         this.pattern = pattern;
         this.maxLevenshteinDistance = maxLevenshteinDistance;
@@ -295,7 +295,7 @@ class UnlimitedBitap implements FuzzyPattern, IterativeFuzzyPattern {
 
         @Override
         public FuzzyPattern pattern() {
-            return UnlimitedBitap.this;
+            return Bitap65Plus.this;
         }
     }
 
