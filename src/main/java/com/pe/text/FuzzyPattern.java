@@ -1,17 +1,33 @@
 package com.pe.text;
 
+/**
+ * Fuzzy pattern interface. Instance can be created via {@link FuzzyPattern#pattern(CharSequence, int)}
+ * and {@link FuzzyPattern#pattern(CharSequence, int, boolean)}
+ */
 public interface FuzzyPattern extends MatcherProvider {
 
-    CharSequence text();
-
-    int maxLevenshteinDistance();
-
-    boolean caseInsensitive();
-
+    /**
+     * Creates case-sensitive compiled fuzzy search pattern with maximum allowed Levenshtein distance to match.
+     *
+     * @param pattern                Text of the pattern
+     * @param maxLevenshteinDistance Maximum allowed Levenshtein distance to match
+     * @return Case-sensitive compiled fuzzy search pattern.
+     * @throws IllegalArgumentException if specified text is null or empty
+     */
     static FuzzyPattern pattern(CharSequence pattern, int maxLevenshteinDistance) {
         return pattern(pattern, maxLevenshteinDistance, false);
     }
 
+    /**
+     * Creates compiled fuzzy search pattern with maximum allowed Levenshtein distance and specified case-sensitivity to match.
+     *
+     * @param pattern                Text of the pattern
+     * @param maxLevenshteinDistance Maximum allowed Levenshtein distance to match
+     * @param caseInsensitive        Case-insensitivity for the pattern.
+     *                               if {@code true} - the pattern's matcher will ignore casing when scanning.
+     * @return Compiled fuzzy search pattern with specified case-sensitivity.
+     * @throws IllegalArgumentException if specified text is null or empty
+     */
     static FuzzyPattern pattern(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
         if (pattern == null)
             throw new IllegalArgumentException("pattern text can not be null");
@@ -21,18 +37,28 @@ public interface FuzzyPattern extends MatcherProvider {
             return new Bitap32(pattern, maxLevenshteinDistance, caseInsensitive);
         if (pattern.length() <= 64)
             return new Bitap64(pattern, maxLevenshteinDistance, caseInsensitive);
-        return new UnlimitedBitap(pattern, maxLevenshteinDistance, caseInsensitive);
+        return new Bitap65Plus(pattern, maxLevenshteinDistance, caseInsensitive);
     }
 
-    static MatcherProvider oneOf(FuzzyPattern first, FuzzyPattern orSecond, FuzzyPattern... orOthers) {
-        IterativeFuzzyPattern[] patterns = new IterativeFuzzyPattern[orOthers.length + 2];
-        patterns[0] = IterativeFuzzyPattern.cast(first, 1);
-        patterns[1] = IterativeFuzzyPattern.cast(orSecond, 2);
-        for (int i = 0; i < orOthers.length; i++) {
-            final int index = i + 2;
-            patterns[index] = IterativeFuzzyPattern.cast(orOthers[i], index);
-        }
-        return new MultiplePatterns(patterns);
-    }
+    /**
+     * Returns text of this pattern.
+     *
+     * @return Text of this pattern.
+     */
+    CharSequence text();
+
+    /**
+     * Returns maximal allowed Levenshtein distance (i.e. count of character insertions, deletions, or replacements) for found matchings.
+     *
+     * @return The maximal allowed Levenshtein distance (i.e. count of character insertions, deletions, or replacements) for found matchings.
+     */
+    int maxLevenshteinDistance();
+
+    /**
+     * Indicates case sensitivity of this pattern
+     *
+     * @return {@code false} if pattern is case-sensitive (by default pattern is case-sensitive), otherwise - {@code true}
+     */
+    boolean caseInsensitive();
 
 }

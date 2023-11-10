@@ -12,7 +12,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-public class OutOfOrderExecution {
+public class OutOfOrderExecutionBenchmarkTest {
 
     private static final int[] ints = new int[1024];
     private static final int[] ires = new int[1024];
@@ -20,16 +20,16 @@ public class OutOfOrderExecution {
     private static final long[] longs = new long[1024];
     private static final long[] lres = new long[1024];
 
-    private static Random random = new Random();
+    private static final Random random = new Random();
 
     static {
-        for(int i=0; i<ints.length; i++) ints[i] = random.nextInt();
-        for(int i=0; i<longs.length; i++) longs[i] = random.nextLong();
+        for (int i = 0; i < ints.length; i++) ints[i] = random.nextInt();
+        for (int i = 0; i < longs.length; i++) longs[i] = random.nextLong();
     }
 
-    @Disabled
+    @Disabled("benchmarks have to be run manually")
     @Test
-    public void runBenchmarks() throws Exception {
+    void runBenchmarks() throws Exception {
         new Runner(
                 new OptionsBuilder()
                         .include(this.getClass().getName() + ".*")
@@ -50,6 +50,7 @@ public class OutOfOrderExecution {
     public void sequential() {
         for (int i = 0; i < ints.length; i++) {
             final int deletion = ints[i];
+            // these two lines are slower due to out of order optimization can not be applied
             final int substitution = deletion << 1;
             final int insertion = substitution << 1;
             ires[i] = deletion & substitution & insertion;
@@ -61,6 +62,7 @@ public class OutOfOrderExecution {
     public void outOfOrder() {
         for (int i = 0; i < ints.length; i++) {
             final int deletion = ints[i];
+            // these two lines are faster due to out of order optimization can be applied
             final int substitution = deletion << 1;
             final int insertion = deletion << 2;
             ires[i] = deletion & substitution & insertion;
@@ -70,7 +72,7 @@ public class OutOfOrderExecution {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void sequential64() {
-        for (int i=0; i < longs.length; i++) {
+        for (int i = 0; i < longs.length; i++) {
             final long deletion = longs[i];
             final long substitution = deletion << 1;
             final long insertion = substitution << 1;
@@ -81,7 +83,7 @@ public class OutOfOrderExecution {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void outOfOrder64() {
-        for (int i=0; i < longs.length; i++) {
+        for (int i = 0; i < longs.length; i++) {
             final long deletion = longs[i];
             final long substitution = deletion << 1;
             final long insertion = deletion << 2;

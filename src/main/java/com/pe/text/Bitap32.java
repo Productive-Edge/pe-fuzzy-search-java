@@ -2,36 +2,29 @@ package com.pe.text;
 
 import it.unimi.dsi.fastutil.chars.Char2IntOpenHashMap;
 
-class Bitap32 implements FuzzyPattern, IterativeFuzzyPattern {
+class Bitap32 extends BaseBitap {
 
     private final Char2IntOpenHashMap positionBitMasks;
-    private final CharSequence pattern;
-    private final int patternLength;
     private final int lastBitMask;
-    private final int maxLevenshteinDistance;
-    private final boolean caseInsensitive;
 
     public Bitap32(CharSequence pattern, int maxLevenshteinDistance) {
         this(pattern, maxLevenshteinDistance, false);
     }
 
     public Bitap32(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
-        patternLength = pattern.length();
-        if (patternLength > 32) {
+        super(pattern, maxLevenshteinDistance, caseInsensitive);
+        if (pattern.length() > 32) {
             throw new IllegalArgumentException("Pattern length exceeds allowed maximum in 32 characters");
         }
-        this.pattern = pattern;
-        this.maxLevenshteinDistance = maxLevenshteinDistance;
-        this.caseInsensitive = caseInsensitive;
-        lastBitMask = 1 << (patternLength - 1);
-        positionBitMasks = new Char2IntOpenHashMap(patternLength << 1);
+        lastBitMask = 1 << (pattern.length() - 1);
+        positionBitMasks = new Char2IntOpenHashMap(pattern.length() << 1);
         if (!caseInsensitive) {
-            for (int i = 0; i < patternLength; i++) {
+            for (int i = 0; i < pattern.length(); i++) {
                 final char c = pattern.charAt(i);
                 positionBitMasks.put(c, positionBitMasks.getOrDefault(c, -1) & (~(1 << i)));
             }
         } else {
-            for (int i = 0; i < patternLength; i++) {
+            for (int i = 0; i < pattern.length(); i++) {
                 final char lc = Character.toLowerCase(pattern.charAt(i));
                 final int mask = positionBitMasks.getOrDefault(lc, -1) & (~(1 << i));
                 positionBitMasks.put(lc, mask);
@@ -41,174 +34,66 @@ class Bitap32 implements FuzzyPattern, IterativeFuzzyPattern {
     }
 
     @Override
-    public CharSequence text() {
-        return pattern;
-    }
-
-    @Override
-    public int maxLevenshteinDistance() {
-        return maxLevenshteinDistance;
-    }
-
-    @Override
-    public boolean caseInsensitive() {
-        return caseInsensitive;
-    }
-
-    @Override
-    public FuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
-        return getIterativeMatcher(text, fromIndex, toIndex);
-    }
-
-    @Override
     public IterativeFuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
         return new Matcher(text, fromIndex, toIndex);
     }
 
-    final class Matcher implements IterativeFuzzyMatcher {
-        private CharSequence text;
-        private final int[] lengthChanges;
-        private final int[] lengthChangesCopy;
+    final class Matcher extends BaseBitap.Matcher {
         private int[] previousMatchings;
         private int[] currentMatchings;
-        private int levenshteinDistance;
-        private int maxDistance;
-        private int index;
-        private int maxIndex;
 
         private Matcher(CharSequence text, int fromIndex, int toIndex) {
-            this.text = text;
-            maxDistance = maxLevenshteinDistance;
-            final int n = maxDistance + 1;
-            currentMatchings = new int[n];
-            previousMatchings = new int[n];
-            lengthChanges = new int[n];
-            lengthChangesCopy = new int[n];
-            index = Math.max(0, fromIndex) - 1;
-            maxIndex = Math.min(text.length(), toIndex);
-        }
-
-        @Override
-        public CharSequence text() {
-            return text;
-        }
-
-        @Override
-        public void reset(CharSequence text, int fromIndex, int toIndex) {
-            this.text = text;
-            index = Math.max(0, fromIndex) - 1;
-            maxIndex = Math.min(text.length(), maxIndex);
-        }
-
-        @Override
-        public boolean find() {
-            resetState();
-
-            while (++index < maxIndex) {
-                if (testNextSymbol()) {
-                    int _maxDistance = maxDistance;
-                    improveResult(Math.min(index + patternLength, maxIndex));
-                    maxDistance = _maxDistance;
-                    return true;
-                }
-            }
-
-            //insert at the end
-            for (int appendCount = 1; appendCount <= maxDistance; appendCount++) {
-                if (testNextInsert(appendCount)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        @SuppressWarnings("ManualArrayCopy")
-        public void improveResult(final int maxIndex) {
-            if (levenshteinDistance == 0)
-                return;
-            if (index + 1 == maxIndex)
-                return;
-            //store
-            int _index = index;
-            int _levenshteinDistance = levenshteinDistance;
-            for (int i = 1; i < _levenshteinDistance; i++) lengthChangesCopy[i] = lengthChanges[i];
-
-            maxDistance = levenshteinDistance - 1;
-            while (++index < maxIndex) {
-                if (testNextSymbol()) {
-                    improveResult(maxIndex);
-                    return;
-                }
-            }
-
-            //restore
-            index = _index;
-            levenshteinDistance = _levenshteinDistance;
-            for (int i = 1; i < _levenshteinDistance; i++) lengthChanges[i] = lengthChangesCopy[i];
-        }
-
-        @Override
-        public void setIndex(int index) {
-            this.index = index;
+            super(text, fromIndex, toIndex);
+            this.currentMatchings = new int[super.maxDistance + 1];
+            this.previousMatchings = new int[super.maxDistance + 1];
         }
 
         @Override
         public void resetState() {
-            for (int i = 1; i <= maxDistance; i++) lengthChanges[i] = 0;
-            for (int i = 0; i <= maxDistance; i++) currentMatchings[i] = -1;
-        }
-
-        @Override
-        public int getMaxDistance() {
-            return maxDistance;
-        }
-
-        @Override
-        public void setMaxDistance(int maxDistance) {
-            this.maxDistance = maxDistance;
+            super.resetState();
+            for (int i = 0; i <= super.maxDistance; i++) this.currentMatchings[i] = -1;
         }
 
         @Override
         public boolean testNextSymbol() {
-            final int charPositions = positionBitMasks.getOrDefault(text.charAt(index), -1);
+            final int charPositions = Bitap32.this.positionBitMasks.getOrDefault(super.text.charAt(super.index), -1);
             swapMatching();
-            levenshteinDistance = 0;
-            currentMatchings[0] = (previousMatchings[0] << 1) | charPositions;
-            if (0 == (currentMatchings[0] & lastBitMask)) {
+            super.levenshteinDistance = 0;
+            this.currentMatchings[0] = (this.previousMatchings[0] << 1) | charPositions;
+            if (0 == (this.currentMatchings[0] & Bitap32.this.lastBitMask)) {
                 return true;
             }
-            while (levenshteinDistance < maxDistance) {
-                final int current = currentMatchings[levenshteinDistance];
+            while (super.levenshteinDistance < super.maxDistance) {
+                final int current = this.currentMatchings[super.levenshteinDistance];
                 // ignore current character
-                final int deletion = previousMatchings[levenshteinDistance++];
+                final int deletion = this.previousMatchings[super.levenshteinDistance++];
                 // replace current character with correct one
                 final int substitution = deletion << 1;
                 // insertion of missing correct character before current position
-                final int insertion = (deletion << 2) | charPositions;
+                final int insertion = (deletion << 2) | charPositions; // use out of order optimisation
 //                final int insertion = currentMatchings[levenshteinDistance - 1] << 1; // original Bitap insert
-                final int matching = (previousMatchings[levenshteinDistance] << 1) | charPositions;
-                currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
-                final boolean found = 0 == (currentMatchings[levenshteinDistance] & lastBitMask);
+                final int matching = (this.previousMatchings[super.levenshteinDistance] << 1) | charPositions;
+                this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
+                final boolean found = 0 == (this.currentMatchings[super.levenshteinDistance] & Bitap32.this.lastBitMask);
                 if (current >= deletion) {
                     if (insertion < substitution && insertion < matching) {
-                        lengthChanges[levenshteinDistance] = 1;
+                        super.lengthChanges[super.levenshteinDistance] = 1;
                     } else if (substitution < matching && deletion < current) {
-                        lengthChanges[levenshteinDistance] = 0;
+                        super.lengthChanges[super.levenshteinDistance] = 0;
                         if (found) {
-                            //try to change replacement of last character onto deletion of current if next is correct
-                            final int nextIndex = index + 1;
-                            if (nextIndex < maxIndex) {
-                                final int nextCharPositions = positionBitMasks.getOrDefault(text.charAt(nextIndex), -1);
-                                if ((nextCharPositions & lastBitMask) == 0) {
-                                    index = nextIndex;
-                                    lengthChanges[levenshteinDistance] = -1;
+                            //try to change a replacement of the last character to a deletion of the current one if the next character does match
+                            final int nextIndex = super.index + 1;
+                            if (nextIndex < super.maxIndex) {
+                                final int nextCharPositions = Bitap32.this.positionBitMasks.getOrDefault(super.text.charAt(nextIndex), -1);
+                                if ((nextCharPositions & Bitap32.this.lastBitMask) == 0) {
+                                    super.index = nextIndex;
+                                    super.lengthChanges[super.levenshteinDistance] = -1;
                                 }
                             }
                         }
                     } else if (matching < substitution) {
-                        if (-1 == (matching | (~previousMatchings[levenshteinDistance]))) {
-                            lengthChanges[levenshteinDistance] = -1;
+                        if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
+                            super.lengthChanges[super.levenshteinDistance] = -1;
                         }
                     }
                 }
@@ -221,14 +106,14 @@ class Bitap32 implements FuzzyPattern, IterativeFuzzyPattern {
 
         @Override
         public boolean testNextInsert(final int iteration) {
-            final int bitMask = lastBitMask >>> iteration;
-            final int limit = maxDistance - iteration;
-            for (levenshteinDistance = 0; levenshteinDistance <= limit; levenshteinDistance++) {
-                if (0 == (currentMatchings[levenshteinDistance] & bitMask)) {
-                    index--;
-                    final int end = levenshteinDistance + iteration;
-                    for (int i = levenshteinDistance + 1; i <= end; i++) lengthChanges[i] = 1;
-                    levenshteinDistance = end;
+            final int bitMask = Bitap32.this.lastBitMask >>> iteration;
+            final int limit = super.maxDistance - iteration;
+            for (super.levenshteinDistance = 0; super.levenshteinDistance <= limit; super.levenshteinDistance++) {
+                if (0 == (this.currentMatchings[super.levenshteinDistance] & bitMask)) {
+                    super.index--;
+                    final int end = super.levenshteinDistance + iteration;
+                    for (int i = super.levenshteinDistance + 1; i <= end; i++) super.lengthChanges[i] = 1;
+                    super.levenshteinDistance = end;
                     return true;
                 }
             }
@@ -236,41 +121,11 @@ class Bitap32 implements FuzzyPattern, IterativeFuzzyPattern {
         }
 
         private void swapMatching() {
-            final int[] tmp = currentMatchings;
-            currentMatchings = previousMatchings;
-            previousMatchings = tmp;
+            final int[] tmp = this.currentMatchings;
+            this.currentMatchings = this.previousMatchings;
+            this.previousMatchings = tmp;
         }
 
-        @Override
-        public int start() {
-            int lengthChange = 0;
-            for (int i = 1; i <= levenshteinDistance; i++) lengthChange += lengthChanges[i];
-            return end() - patternLength + lengthChange;
-        }
-
-        @Override
-        public int end() {
-            if (index == -1)
-                throw new IllegalStateException("find method must be called before index");
-            if (index >= maxIndex)
-                throw new IllegalStateException("no matches were found, last call of the find method returned false");
-            return index + 1;
-        }
-
-        @Override
-        public int distance() {
-            return levenshteinDistance;
-        }
-
-        @Override
-        public CharSequence foundText() {
-            return text.subSequence(start(), end());
-        }
-
-        @Override
-        public FuzzyPattern pattern() {
-            return Bitap32.this;
-        }
     }
 
 }
