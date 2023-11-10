@@ -15,7 +15,7 @@ class Bitap65PlusTest {
             "test,tetest,2,6",
     })
     void testFuzzy0(String test, String text, int start, int end) {
-        FuzzyPattern bitap = new Bitap65v2Plus(test, 0);
+        FuzzyPattern bitap = new Bitap65Plus(test, 0);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -28,7 +28,7 @@ class Bitap65PlusTest {
     void testFuzzy0Fail() {
         String test = "test";
         String text = "aaaa";
-        FuzzyPattern bitap = new Bitap65v2Plus(test, 0);
+        FuzzyPattern bitap = new Bitap65Plus(test, 0);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertFalse(matcher.find());
         assertThrows(IllegalStateException.class, matcher::start);
@@ -50,7 +50,7 @@ class Bitap65PlusTest {
             "test,tes_t,0,5,1"
     })
     void testFuzzy1(String test, String text, int start, int end, int d) {
-        FuzzyPattern bitap = new Bitap65v2Plus(test, 1);
+        FuzzyPattern bitap = new Bitap65Plus(test, 1);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -71,7 +71,7 @@ class Bitap65PlusTest {
             "test,_es_t"
     })
     void testFuzzy1Fail(String test, String text) {
-        FuzzyPattern bitap = new Bitap65v2Plus(test, 1);
+        FuzzyPattern bitap = new Bitap65Plus(test, 1);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertFalse(matcher.find());
     }
@@ -94,7 +94,7 @@ class Bitap65PlusTest {
             "Result,__esul_t,1,8,2"
     })
     void testFuzzy2(String test, String text, int start, int end, int d) {
-        FuzzyPattern bitap = new Bitap65v2Plus(test, 2);
+        FuzzyPattern bitap = new Bitap65Plus(test, 2);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -104,7 +104,7 @@ class Bitap65PlusTest {
 
     @Test
     void testAllMatches() {
-        FuzzyPattern bitap = new Bitap65v2Plus("test", 1);
+        FuzzyPattern bitap = new Bitap65Plus("test", 1);
         String text = "Test string to test all matches. tes";
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
@@ -136,7 +136,7 @@ class Bitap65PlusTest {
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
         {
-            FuzzyPattern dolore = new Bitap65v2Plus("dolore", 1);
+            FuzzyPattern dolore = new Bitap65Plus("dolore", 1);
             FuzzyMatcher matcher = dolore.matcher(text);
             int i = 0;
             String[] results = new String[]{"dolor ", "dolore", "dolor ", "dolore"};
@@ -148,7 +148,7 @@ class Bitap65PlusTest {
         }
         {
             int i = 0;
-            FuzzyPattern laboris = new Bitap65v2Plus("laboris", 3);
+            FuzzyPattern laboris = new Bitap65Plus("laboris", 3);
             FuzzyMatcher matcher = laboris.matcher(text);
             String[] results = new String[]{"labore ", "laboris", "laborum"};
             while (matcher.find()) {
@@ -163,7 +163,7 @@ class Bitap65PlusTest {
     void testAbnormal() {
         {
             int count = 0;
-            FuzzyMatcher matcher = new Bitap65v2Plus("aba", 1).matcher("aaba");
+            FuzzyMatcher matcher = new Bitap65Plus("aba", 1).matcher("aaba");
             while (matcher.find()) {
                 count++;
                 assertEquals("aba", matcher.foundText());
@@ -172,7 +172,7 @@ class Bitap65PlusTest {
         }
         {
             int count = 0;
-            FuzzyMatcher matcher = new Bitap65v2Plus("aba", 1).matcher("baba");
+            FuzzyMatcher matcher = new Bitap65Plus("aba", 1).matcher("baba");
             while (matcher.find()) {
                 count++;
                 assertEquals("aba", matcher.foundText());
@@ -199,7 +199,7 @@ class Bitap65PlusTest {
             "tEsT,Tes_t,0,5,1"
     })
     void caseInsensitive(String test, String text, int start, int end, int d) {
-        FuzzyPattern bitap = new Bitap65v2Plus(test, 1, true);
+        FuzzyPattern bitap = new Bitap65Plus(test, 1, true);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());

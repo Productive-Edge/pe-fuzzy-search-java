@@ -72,7 +72,7 @@ public class BitapsBenchmarkTest {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void benchmark64v2() {
-        FuzzyMatcher matcher = new Bitap64v2(PATTERN, 1).matcher(TEXT);
+        FuzzyMatcher matcher = new Bitap64(PATTERN, 1).matcher(TEXT);
         while (matcher.find()) {
             assertTrue(matcher.distance() <= 1);
         }
@@ -81,7 +81,7 @@ public class BitapsBenchmarkTest {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void benchmark32v2() {
-        FuzzyMatcher matcher = new Bitap32v2(PATTERN, 1).matcher(TEXT);
+        FuzzyMatcher matcher = new Bitap32(PATTERN, 1).matcher(TEXT);
         while (matcher.find()) {
             assertTrue(matcher.distance() <= 1);
         }
@@ -90,7 +90,7 @@ public class BitapsBenchmarkTest {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void benchmark65v2Plus() {
-        FuzzyMatcher matcher = new Bitap65v2Plus(PATTERN, 1).matcher(TEXT);
+        FuzzyMatcher matcher = new Bitap65Plus(PATTERN, 1).matcher(TEXT);
         while (matcher.find()) {
             assertTrue(matcher.distance() <= 1);
         }
