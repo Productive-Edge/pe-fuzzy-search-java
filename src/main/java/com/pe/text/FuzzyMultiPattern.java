@@ -24,7 +24,7 @@ import java.util.Arrays;
  * <p>
  * <p>
  * For case where all matches have to be found and order is not important,
- * it is slightly faster iterate through all findings for each pattern one-by-one
+ * it is slightly faster to iterate through all findings for each pattern one-by-one
  * rather than {@link FuzzyMultiPattern#combine(FuzzyPattern, FuzzyPattern, FuzzyPattern...)}
  * <pre>{@code
  *
