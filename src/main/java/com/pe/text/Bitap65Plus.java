@@ -109,7 +109,7 @@ class Bitap65Plus extends BaseBitap {
                         if (found) {
                             //try to change a replacement of the last character to a deletion of the current one if the next character does match
                             final int nextIndex = super.index + 1;
-                            if (nextIndex < super.maxIndex) {
+                            if (nextIndex < super.toIndex) {
                                 final BitVector nextCharPositions = Bitap65Plus.this.positionBitMasks.get(super.text.charAt(nextIndex));
                                 if (nextCharPositions != null && nextCharPositions.hasZeroAtLastBit()) {
                                     super.index = nextIndex;
@@ -140,7 +140,6 @@ class Bitap65Plus extends BaseBitap {
             final int limit = super.maxDistance - iteration;
             for (super.levenshteinDistance = 0; super.levenshteinDistance <= limit; super.levenshteinDistance++) {
                 if (this.currentMatchings[super.levenshteinDistance].leftShift1().hasZeroAtLastBit()) {
-                    super.index--;
                     final int end = super.levenshteinDistance + iteration;
                     for (int i = super.levenshteinDistance + 1; i <= end; i++) super.lengthChanges[i] = 1;
                     super.levenshteinDistance = end;

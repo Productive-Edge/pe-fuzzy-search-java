@@ -14,7 +14,6 @@ class FuzzyResultRecord implements FuzzyResult {
         this.end = matcher.end();
         this.distance = matcher.distance();
         this.foundText = matcher.foundText();
-
     }
 
     @Override
@@ -40,5 +39,16 @@ class FuzzyResultRecord implements FuzzyResult {
     @Override
     public CharSequence foundText() {
         return foundText;
+    }
+
+    @Override
+    public String toString() {
+        return "FuzzyResultRecord{" +
+                "pattern=" + pattern.text() +
+                ", start=" + start +
+                ", end=" + end +
+                ", distance=" + distance +
+                ", foundText=" + foundText +
+                '}';
     }
 }

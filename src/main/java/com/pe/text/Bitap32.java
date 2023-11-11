@@ -83,7 +83,7 @@ class Bitap32 extends BaseBitap {
                         if (found) {
                             //try to change a replacement of the last character to a deletion of the current one if the next character does match
                             final int nextIndex = super.index + 1;
-                            if (nextIndex < super.maxIndex) {
+                            if (nextIndex < super.toIndex) {
                                 final int nextCharPositions = Bitap32.this.positionBitMasks.getOrDefault(super.text.charAt(nextIndex), -1);
                                 if ((nextCharPositions & Bitap32.this.lastBitMask) == 0) {
                                     super.index = nextIndex;
@@ -110,7 +110,6 @@ class Bitap32 extends BaseBitap {
             final int limit = super.maxDistance - iteration;
             for (super.levenshteinDistance = 0; super.levenshteinDistance <= limit; super.levenshteinDistance++) {
                 if (0 == (this.currentMatchings[super.levenshteinDistance] & bitMask)) {
-                    super.index--;
                     final int end = super.levenshteinDistance + iteration;
                     for (int i = super.levenshteinDistance + 1; i <= end; i++) super.lengthChanges[i] = 1;
                     super.levenshteinDistance = end;

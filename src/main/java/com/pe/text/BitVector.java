@@ -6,7 +6,7 @@ class BitVector {
 
     BitVector(final int length) {
         bits = new long[((length - 1) >>> 6) + 1];
-        lastBitMask = 1L << ((length - 1) & 63L);
+        lastBitMask = 1L << ((length - 1) & 63);
     }
 
     BitVector setZeroAt(final int bitIndex) {
@@ -66,7 +66,7 @@ class BitVector {
 
     BitVector leftShift(final int bitsCount) {
         final int words = bitsCount >>> 6;
-        for(int i = 0; i < words; i++) bits[i] = 0L;
+        for (int i = 0; i < words; i++) bits[i] = 0L;
         long bit = 0;
         final int reminder = 64 - (bitsCount & 63);
         for (int i = words, l = bits.length; i < l; i++) {
@@ -82,7 +82,7 @@ class BitVector {
         for (int i = bits.length - 1; i >= 0; i--) {
             final long delta = bits[i] - vector.bits[i];
             if (delta == 0L) continue;
-            return  delta < 0L;
+            return delta < 0L;
         }
         return false;
     }

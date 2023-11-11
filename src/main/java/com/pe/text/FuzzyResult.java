@@ -2,7 +2,7 @@ package com.pe.text;
 
 /**
  * Interface of the successfully matched result.
- *
+ * <p>
  * {@link FuzzyMatcher} itself implements this interface to reduce heap memory usage
  * when search is done via {@link FuzzyMatcher#find()} method in the {@code while} loop:
  * <pre>{@code
@@ -11,7 +11,7 @@ package com.pe.text;
  *      System.out.println("Found text: " + text.substring(matcher.start(), matcher.end());
  *     }
  * }</pre>
- *
+ * <p>
  * Internal class {@link FuzzyResultRecord} also implements this interface to store matching results produced by
  * {@link FuzzyMatcher#stream()} and {@link FuzzyMatcher#findTheBestMatching()}
  */
@@ -28,11 +28,9 @@ public interface FuzzyResult {
      * Returns the start index of the match.
      *
      * @return The index of the first character matched.
-     *
      * @throws IllegalStateException in case {@link FuzzyMatcher#start()} was called when no current matching was found.
      */
     int start();
-
 
     /**
      * Returns the offset after the last character matched.
@@ -44,7 +42,6 @@ public interface FuzzyResult {
      * }</pre>
      *
      * @return The offset after the last character matched.
-     *
      * @throws IllegalStateException in case {@link FuzzyMatcher#end()} was called when no current matching was found.
      */
     int end();
@@ -54,7 +51,6 @@ public interface FuzzyResult {
      * Returns Levenshtein distance between the pattern text and found one.
      *
      * @return The Levenshtein distance between the pattern text and found one.
-     *
      * @throws IllegalStateException in case {@link FuzzyMatcher#distance()} was called when no current matching was found.
      */
     int distance();
@@ -64,7 +60,6 @@ public interface FuzzyResult {
      * For a matcher <code>m</code> with input sequence <code>s</code>, the expressions <code>m.foundText()</code> and <code>s.subSequence(m.start(), m.end())</code> are equivalent.
      *
      * @return The found subsequence in the input text.
-     *
      * @throws IllegalStateException in case {@link FuzzyMatcher#foundText()} was called when no current matching was found.
      */
     CharSequence foundText();
