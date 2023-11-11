@@ -30,7 +30,6 @@ public class MultiPatternBenchmarkTest {
             DOLOR
     );
 
-    @Deprecated
     public static final FuzzyMultiPattern multiPattern = new MultiplePatterns(new FuzzyPattern[]{
             UT,
             DUIS,

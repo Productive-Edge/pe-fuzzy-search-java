@@ -76,6 +76,7 @@ public interface FuzzyMultiPattern extends MatcherProvider {
         FuzzyPattern[] patterns = new FuzzyPattern[others.length + 2];
         patterns[0] = first;
         patterns[1] = second;
+        //noinspection ManualArrayCopy
         for (int i = 0; i < others.length; i++) patterns[i + 2] = others[i];
         boolean isIterative = true;
         for (int i = 0; i < patterns.length; i++) {
