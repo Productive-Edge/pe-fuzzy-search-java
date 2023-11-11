@@ -1,6 +1,7 @@
 package com.pe.text;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -11,6 +12,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -22,14 +24,14 @@ public class MultiPatternBenchmarkTest {
     public static final FuzzyPattern DUIS = FuzzyPattern.pattern("Duis", 1);
     public static final FuzzyPattern DOLOR = FuzzyPattern.pattern("dolor", 1);
 
-    public static final FuzzyMultiPattern patterns = FuzzyMultiPattern.combine(
+    public static final FuzzyMultiPattern iterativeMultiPattern = FuzzyMultiPattern.combine(
             UT,
             DUIS,
             DOLOR
     );
 
     @Deprecated
-    public static final FuzzyMultiPattern patternsV2 = new MultiplePatterns(new FuzzyPattern[]{
+    public static final FuzzyMultiPattern multiPattern = new MultiplePatterns(new FuzzyPattern[]{
             UT,
             DUIS,
             DOLOR
@@ -41,7 +43,7 @@ public class MultiPatternBenchmarkTest {
             "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
             "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
-    public static final String TEXT_LONG = StringUtils.repeat(TEXT, 100);
+    public static final String LONG_TEXT = StringUtils.repeat(TEXT, 100);
 
     @Disabled("benchmarks have to be run manually")
     @Test
@@ -61,94 +63,92 @@ public class MultiPatternBenchmarkTest {
         ).run();
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public void multiPatternInSingleScanAll() {
-        Stream<FuzzyResult> resultStream = patterns.matcher(TEXT).stream();
-        resultStream.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+    public void iterativeMultiPattern_FindAll() {
+        Stream<FuzzyResult> resultStream = iterativeMultiPattern.matcher(TEXT).stream();
+        Assertions.assertFalse(
+                resultStream.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    @Deprecated
-    public void multiPattern2InSingleScanAll() {
-        Stream<FuzzyResult> resultStream = patternsV2.matcher(TEXT).stream();
-        resultStream.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+    public void multiPattern_FindAll() {
+        Stream<FuzzyResult> resultStream = multiPattern.matcher(TEXT).stream();
+        Assertions.assertFalse(
+                resultStream.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public void usualPatternInMultiScansAll() {
+    public void oneByOne_FindAll() {
         Stream<FuzzyResult> uts = UT.matcher(TEXT).stream();
-        uts.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+        Assertions.assertFalse(
+                uts.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
 
         Stream<FuzzyResult> duis = DUIS.matcher(TEXT).stream();
-        duis.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+        Assertions.assertFalse(
+                duis.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
 
         Stream<FuzzyResult> $ = DOLOR.matcher(TEXT).stream();
-        $.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+        Assertions.assertFalse(
+                $.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public void multiPatternInSingleScanLongAll() {
-        Stream<FuzzyResult> resultStream = patterns.matcher(TEXT_LONG).stream();
-        resultStream.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+    public void iterativeMultiPattern_FindAll_LongText() {
+        Stream<FuzzyResult> resultStream = iterativeMultiPattern.matcher(LONG_TEXT).stream();
+        Assertions.assertFalse(
+                resultStream.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    @Deprecated
-    public void multiPattern2InSingleScanLongAll() {
-        Stream<FuzzyResult> resultStream = patternsV2.matcher(TEXT_LONG).stream();
-        resultStream.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+    public void multiPattern_FindAll_LongText() {
+        Stream<FuzzyResult> resultStream = multiPattern.matcher(LONG_TEXT).stream();
+        Assertions.assertFalse(
+                resultStream.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public void usualPatternInMultiScansLongAll() {
-        Stream<FuzzyResult> uts = UT.matcher(TEXT).stream();
-        uts.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+    public void oneByOne_FindAll_LongText() {
+        Stream<FuzzyResult> uts = UT.matcher(LONG_TEXT).stream();
+        Assertions.assertFalse(
+                uts.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
 
-        Stream<FuzzyResult> duis = DUIS.matcher(TEXT).stream();
-        duis.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+        Stream<FuzzyResult> duis = DUIS.matcher(LONG_TEXT).stream();
+        Assertions.assertFalse(
+                duis.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
 
-        Stream<FuzzyResult> $ = DOLOR.matcher(TEXT).stream();
-        $.map(FuzzyResult::foundText).collect(Collectors.joining(","));
+        Stream<FuzzyResult> $ = DOLOR.matcher(LONG_TEXT).stream();
+        Assertions.assertFalse(
+                $.map(FuzzyResult::foundText).collect(Collectors.joining(",")).isEmpty());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public void multiPatternInSingleScanLongFirst() {
-        Stream<FuzzyResult> resultStream = patterns.matcher(TEXT_LONG).stream();
-        resultStream.findFirst().get();
+    public void iterativeMultiPattern_FindFirst_LongText() {
+        Stream<FuzzyResult> resultStream = iterativeMultiPattern.matcher(LONG_TEXT).stream();
+        Assertions.assertTrue(resultStream.findFirst().isPresent());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    @Deprecated
-    public void multiPattern2InSingleScanLongFirst() {
-        Stream<FuzzyResult> resultStream = patternsV2.matcher(TEXT_LONG).stream();
-        resultStream.findFirst().get();
+    public void multiPattern_FindFirst_LongText() {
+        Stream<FuzzyResult> resultStream = multiPattern.matcher(LONG_TEXT).stream();
+        Assertions.assertTrue(resultStream.findFirst().isPresent());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public void usualPatternInMultiScansLongFirst() {
-        Stream<FuzzyResult> uts = UT.matcher(TEXT).stream().limit(1);
-        Stream<FuzzyResult> duis = DUIS.matcher(TEXT).stream().limit(1);
-        Stream<FuzzyResult> $ = DOLOR.matcher(TEXT).stream().limit(1);
-        Stream.of(uts, duis, $).flatMap(Function.identity())
-                .min(Comparator.comparingInt(FuzzyResult::start))
-                .get();
+    public void oneByOne_FindFirst_LongText() {
+        Stream<FuzzyResult> uts = UT.matcher(LONG_TEXT).stream().limit(1);
+        Stream<FuzzyResult> duis = DUIS.matcher(LONG_TEXT).stream().limit(1);
+        Stream<FuzzyResult> $ = DOLOR.matcher(LONG_TEXT).stream().limit(1);
+        Optional<FuzzyResult> first = Stream.of(uts, duis, $).flatMap(Function.identity())
+                .min(Comparator.comparingInt(FuzzyResult::start));
+        Assertions.assertTrue(first.isPresent());
     }
 }

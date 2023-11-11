@@ -5,60 +5,27 @@ import com.pe.ordinal.Ordinal;
 import java.util.Arrays;
 
 /**
- * Interface for the multiple pattern search instance.
+ * Fuzzy Pattern created as combination of the other multiple fuzzy patterns,
+ * it returns non overlapping matchings in order they are in text.
+ *
  * <p>
- * It might be useful to search multiple patterns in the single scan of the input text to get one or few first matchings:
+ * This combined pattern is faster in case only one or few first matchings needed:
  *
  * <pre>{@code
  *   private static final FuzzyMultiPattern INGREDIENTS_TO_EXCLUDE = FuzzyMultiPattern.combine(
- *      FuzzyPattern.pattern("Corn Syrup", 3, true),
- *      FuzzyPattern.pattern("Tomato Concentrate", 4, true)
+ *      FuzzyPattern.pattern("Corn Syrup", 3, true), //maximum 3 OCR errors, case insensitive
+ *      FuzzyPattern.pattern("Tomato Concentrate", 4, true) //maximum 4 OCR errors, case insensitive
  *   );
  *
- *   public static boolean hasUnwantedIngredients(String ketchupIngredients) {
+ *   public static boolean hasUnwantedIngredientIn(String ketchupIngredientsWithOcrErrors) {
  *       return INGREDIENTS_TO_EXCLUDE.matcher(ketchupIngredients).find();
  *   }
  * }</pre>
  * <p>
- * <b>NOTE:</b> It is better to not use FuzzyMultiPattern to find all matchings on big documents in case performance is important,
- * because it can be significantly slower due to CPU cache misses in comparison with full scan per each FuzzyMatcher.
- * E.g. following code will be slower
- * <pre>{@code
- *
- *     private static final FuzzyMultiPattern KEYWORDS = FuzzyMultiPattern.combine(
- *         FuzzyPattern.pattern("56a. Provider", 3),
- *         FuzzyPattern.pattern("Speciality Code", 4),
- *         FuzzyPattern.pattern("57. Phone", 3),
- *         FuzzyPattern.pattern("52. Phone", 3),
- *         FuzzyPattern.pattern("49. NPI", 2),
- *         FuzzyPattern.pattern("50. License Number", 5),
- *         FuzzyPattern.pattern("57. License Number", 5),
- *         FuzzyPattern.pattern("51. SSN or TIN", 3),
- *         //inside address
- *         FuzzyPattern.pattern("Street", 2, true),
- *         FuzzyPattern.pattern("Suite", 2, true),
- *         FuzzyPattern.pattern("Floor", 2, true),
- *         FuzzyPattern.pattern("Drive", 2, true)
- *      );
- *
- *      public void process(Document document) {
- *          final String text = document.getText();
- *          final int startFrom = (text.length() * 3) / 4;
- *          // It is better to not use FuzzyMultiPattern
- *          // to mark all matchings where they order is not important,
- *          // but performance factor is critical
- *          KEYWORDS.matcher(text, startFrom).stream().forEach(result ->
- *              document.add(
- *                   NamedEntity.descriptor()
- *                       .setType("W56_"+result.pattern().text())
- *                       .setScore(1)
- *                       .setBegin(result.start())
- *                       .setEnd(result.end()))
- *          );
- *      }
- * }</pre>
- *
- * <b>Faster</b> approach, which do the same:
+ * <p>
+ * For case where all matches have to be found and order is not important,
+ * it is slightly faster iterate through all findings for each pattern one-by-one
+ * rather than {@link FuzzyMultiPattern#combine(FuzzyPattern, FuzzyPattern, FuzzyPattern...)}
  * <pre>{@code
  *
  *     private static final FuzzyPattern[] KEYWORDS = {
@@ -80,6 +47,8 @@ import java.util.Arrays;
  *      public void process(Document document) {
  *          final String text = document.getText();
  *          final int startFrom = (text.length() * 3) / 4;
+ *          // here order of found matches is not important, so we can simply iterate over each FuzzyPattern,
+ *          // to have slightly better performance
  *          Arrays.stream(KEYWORDS)
  *              .flatMap(pattern -> pattern.matcher(text, startFrom).stream())
  *              .forEach(result ->
