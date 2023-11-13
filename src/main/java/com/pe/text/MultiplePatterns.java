@@ -11,7 +11,8 @@ import java.util.PriorityQueue;
 class MultiplePatterns implements FuzzyMultiPattern {
 
     private static final Comparator<FuzzyMatcher> START_POSITION_COMPARATOR =
-            Comparator.comparing(MultiplePatterns::getStartPositionSafely);
+            Comparator.comparing(MultiplePatterns::getStartPositionSafely)
+                    .thenComparing(MultiplePatterns::getEndPositionSafely);
     private final FuzzyPattern[] patterns;
 
     public MultiplePatterns(FuzzyPattern[] patterns) {
@@ -20,6 +21,10 @@ class MultiplePatterns implements FuzzyMultiPattern {
 
     private static int getStartPositionSafely(FuzzyMatcher matcher) {
         return matcher.started() ? matcher.start() : -1;
+    }
+
+    private static int getEndPositionSafely(FuzzyMatcher matcher) {
+        return matcher.started() ? matcher.end() : -1;
     }
 
     @Override
@@ -71,9 +76,9 @@ class MultiplePatterns implements FuzzyMultiPattern {
                     this.queue.add(matcher);
                 // get the next matcher and keep it in the queue
                 matcher = this.queue.peek();
-                // no matchers in the queue - no more matching, search stopped
+                // no matchers in the queue - search is stopped
                 if (matcher == null) return false;
-                // if next matcher was not initialized, continue looping to initialize all of them
+                // continue looping to initialize (start) all matchers in the queue
                 if (!matcher.started()) continue;
                 // remove overlapping matchings
                 while (matcher.start() < position) {

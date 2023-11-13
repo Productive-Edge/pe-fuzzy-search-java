@@ -147,4 +147,31 @@ class MultiplePatternsTest {
         String results = resultStream.peek(System.out::println).map(FuzzyResult::foundText).collect(Collectors.joining(","));
         assertEquals("dolor,ut,dolor,Ut,quis,ut,Duis,ut,dolor,dolor", results);
     }
+
+    @Test
+    void testMatchingOrder() {
+        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{
+                FuzzyPattern.pattern("aaa", 1),
+                FuzzyPattern.pattern("aa", 1)
+        });
+
+        FuzzyMatcher matcher = patterns.matcher("aaaaa");
+        assertTrue(matcher.find());
+        assertEquals(0, matcher.start());
+        assertEquals(2, matcher.end());
+        assertEquals(0, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertTrue(matcher.find());
+        assertEquals(2, matcher.start());
+        assertEquals(4, matcher.end());
+        assertEquals(0, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertTrue(matcher.find());
+        assertEquals(4, matcher.start());
+        assertEquals(5, matcher.end());
+        assertEquals(1, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertFalse(matcher.find());
+    }
+
 }

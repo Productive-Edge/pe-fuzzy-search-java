@@ -127,6 +127,10 @@ class Bitap65Plus extends BaseBitap {
                             super.lengthChanges[super.levenshteinDistance] = -1;
                         }
                     }
+                } else {
+                    if (insertion.lessThan(substitution) && insertion.lessThan(matching)) {
+                        super.lengthChanges[super.levenshteinDistance] = 1;
+                    }
                 }
                 if (found) {
                     return true;
