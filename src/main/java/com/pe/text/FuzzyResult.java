@@ -18,13 +18,6 @@ package com.pe.text;
 public interface FuzzyResult {
 
     /**
-     * The reference of the fuzzy search pattern was successfully matched.
-     *
-     * @return The reference of the fuzzy search pattern.
-     */
-    FuzzyPattern pattern();
-
-    /**
      * Returns the start index of the match.
      *
      * @return The index of the first character matched.
@@ -46,15 +39,6 @@ public interface FuzzyResult {
      */
     int end();
 
-
-    /**
-     * Returns Levenshtein distance between the pattern text and found one.
-     *
-     * @return The Levenshtein distance between the pattern text and found one.
-     * @throws IllegalStateException in case {@link FuzzyMatcher#distance()} was called when no current matching was found.
-     */
-    int distance();
-
     /**
      * Returns the found subsequence in the input text.
      * For a matcher <code>m</code> with input sequence <code>s</code>, the expressions <code>m.foundText()</code> and <code>s.subSequence(m.start(), m.end())</code> are equivalent.
@@ -63,4 +47,29 @@ public interface FuzzyResult {
      * @throws IllegalStateException in case {@link FuzzyMatcher#foundText()} was called when no current matching was found.
      */
     CharSequence foundText();
+
+    /**
+     * Returns similarity of the found subsequence with the pattern, which value is between 0.0f and 1.0f calculated as
+     * {@code (pattern.length - distance) / pattern.length}
+     *
+     * @return similarity of the found subsequence with the pattern, which value is between 0.0f and 1.0f
+     */
+    default float similarity() {
+        return pattern().text().length() - distance() / (float) pattern().text().length();
+    }
+
+    /**
+     * The reference of the fuzzy search pattern was successfully matched.
+     *
+     * @return The reference of the fuzzy search pattern.
+     */
+    FuzzyPattern pattern();
+
+    /**
+     * Returns Levenshtein distance between the pattern text and found one.
+     *
+     * @return The Levenshtein distance between the pattern text and found one.
+     * @throws IllegalStateException in case {@link FuzzyMatcher#distance()} was called when no current matching was found.
+     */
+    int distance();
 }
