@@ -98,20 +98,30 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             while (++this.index < this.toIndex) {
                 if (testNextSymbol()) {
                     final int maxDistanceCopy = this.maxDistance;
-                    improveResult(Math.min(this.index + BaseBitap.this.pattern.length(), this.toIndex));
+                    improveResult(Math.min(this.index + BaseBitap.this.pattern.length() + maxLevenshteinDistance + 1 - this.levenshteinDistance, this.toIndex));
                     maxDistance = maxDistanceCopy;
                     return true;
                 }
             }
+            if (maxDistance == 0)
+                return false;
+
+            //test inserts before the last char
             this.index--;
-            for (int i = 1; i < this.lengthChanges.length; i++) {
+            for (int i = 1; i <= this.maxDistance; i++) {
                 this.lengthChanges[i - 1] = this.lengthChanges[i];
             }
             if (testNextSymbol()) {
                 return true;
             }
             this.index++;
+
             return false;
+        }
+
+        @Override
+        public int to() {
+            return this.toIndex;
         }
 
         @Override
@@ -125,18 +135,13 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         }
 
         @Override
+        public int from() {
+            return this.fromIndex;
+        }
+
+        @Override
         public void resetState() {
-            for (int i = 1; i <= this.maxDistance; i++) this.lengthChanges[i] = 0;
-        }
-
-        @Override
-        public int getMaxDistance() {
-            return this.maxDistance;
-        }
-
-        @Override
-        public void setMaxDistance(int maxDistance) {
-            this.maxDistance = maxDistance;
+            for (int i = 0; i <= this.maxDistance; i++) this.lengthChanges[i] = 0;
         }
 
         @Override
@@ -152,7 +157,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             // loop is faster on small arrays
             for (int i = 1; i <= levenshteinDistanceCopy; i++) this.lengthChangesCopy[i] = this.lengthChanges[i];
 
-            this.maxDistance = this.levenshteinDistance;// - 1;
+            this.maxDistance = this.levenshteinDistance;
             while (++this.index < maxIndex) {
                 if (testNextSymbol()) {
                     if (this.levenshteinDistance < levenshteinDistanceCopy || this.totalLengthChanges() < totalLengthChangesCopy) {
@@ -177,9 +182,20 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         }
 
         @Override
+        public int getMaxDistance() {
+            return this.maxDistance;
+        }
+
+        @Override
+        public void setMaxDistance(int maxDistance) {
+            this.maxDistance = maxDistance;
+        }
+
+        @Override
         public FuzzyPattern pattern() {
             return BaseBitap.this;
         }
+
 
         @Override
         public int start() {
@@ -203,10 +219,11 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         }
 
         protected int totalLengthChanges() {
-            int lengthChange = this.levenshteinDistance == 0 ? 0 : this.lengthChanges[1];
-            for (int i = 2; i <= this.levenshteinDistance; i++) lengthChange += this.lengthChanges[i];
-            return lengthChange;
+            int result = 0;
+            for (int i = 0; i <= this.levenshteinDistance; i++) result += this.lengthChanges[i];
+            return result;
         }
+
 
     }
 }

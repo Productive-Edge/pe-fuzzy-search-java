@@ -97,6 +97,11 @@ class MultiplePatterns implements FuzzyMultiPattern {
         }
 
         @Override
+        public int to() {
+            return this.toIndex;
+        }
+
+        @Override
         public boolean started() {
             return this.matchers[0].started();
         }
@@ -107,8 +112,8 @@ class MultiplePatterns implements FuzzyMultiPattern {
         }
 
         @Override
-        public FuzzyPattern pattern() {
-            return ensureFound().pattern();
+        public int from() {
+            return this.matchers[0].from();
         }
 
         @Override
@@ -122,13 +127,18 @@ class MultiplePatterns implements FuzzyMultiPattern {
         }
 
         @Override
-        public int distance() {
-            return ensureFound().distance();
+        public CharSequence foundText() {
+            return ensureFound().foundText();
         }
 
         @Override
-        public CharSequence foundText() {
-            return ensureFound().foundText();
+        public FuzzyPattern pattern() {
+            return ensureFound().pattern();
+        }
+
+        @Override
+        public int distance() {
+            return ensureFound().distance();
         }
 
         @Override

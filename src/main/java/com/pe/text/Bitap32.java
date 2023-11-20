@@ -65,30 +65,30 @@ class Bitap32 extends BaseBitap {
             }
             while (super.levenshteinDistance < super.maxDistance) {
                 final int current = this.currentMatchings[super.levenshteinDistance];
-                // ignore current character
+                // delete current character
                 final int deletion = this.previousMatchings[super.levenshteinDistance++];
                 // replace current character with correct one
                 final int substitution = deletion << 1;
-                // insertion of correct character after current position
+                // insert correct character after the current
                 final int insertion = current << 1;
+                // get current character as is
                 final int matching = (this.previousMatchings[super.levenshteinDistance] << 1) | charPositions;
                 final int combined = this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
                 if (current > deletion) {
-                    if (insertion < substitution && insertion < matching && matching < 0) {
-                        super.lengthChanges[super.levenshteinDistance] = 1;
-                    } else if (substitution < matching) {
-                        super.lengthChanges[super.levenshteinDistance] = 0;
-                    } else if (matching < substitution) {
-                        if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
-                            super.lengthChanges[super.levenshteinDistance]--;
-                        }
+                    if (substitution < matching) {
+                        // replacement or deletion
+                        super.lengthChanges[super.levenshteinDistance]--;
                     }
+                    //otherwise skip matched
                 } else {
                     if (insertion < substitution && insertion < matching && matching < 0) {
+                        //insert operation
                         super.lengthChanges[super.levenshteinDistance] = 1;
-                    } else if (matching < substitution) {
+                    } else if (matching <= substitution) {
+                        //matching operation
                         if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
+                            //previous operation was deletion not replacement
                             super.lengthChanges[super.levenshteinDistance]--;
                         }
                     }

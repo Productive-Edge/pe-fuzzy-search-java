@@ -343,7 +343,7 @@ class Bitap64Test {
         FuzzyPattern pattern = FuzzyPattern.pattern(" (if both, complete 5-11 for dental only.)", 10);
         assertEquals(
                 " (!f both, complete 3-11 for dental oniy.i",
-                pattern.matcher(text).findTheBestMatching().map(FuzzyResult::foundText).orElse("")
+                pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse("")
         );
 
     }

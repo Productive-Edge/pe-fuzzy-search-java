@@ -56,12 +56,12 @@ public class LevenshteinDistanceBenchmarkTest {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void bitap1m() {
-        noLimitPattern.matcher(test1a).findTheBestMatching();
+        noLimitPattern.matcher(test1a).findTheBest();
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void bitap1l() {
-        limit3Pattern.matcher(test1a).findTheBestMatching();
+        limit3Pattern.matcher(test1a).findTheBest();
     }
 }

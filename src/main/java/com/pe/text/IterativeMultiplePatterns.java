@@ -68,6 +68,11 @@ class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPatt
         }
 
         @Override
+        public int to() {
+            return this.maxIndex;
+        }
+
+        @Override
         public boolean started() {
             return this.index != -1;
         }
@@ -75,6 +80,11 @@ class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPatt
         @Override
         public boolean completed() {
             return this.matched == null;
+        }
+
+        @Override
+        public int from() {
+            return index;
         }
 
         @Override
@@ -137,11 +147,6 @@ class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPatt
         }
 
         @Override
-        public FuzzyPattern pattern() {
-            return ensureFound().pattern();
-        }
-
-        @Override
         public int start() {
             return ensureFound().start();
         }
@@ -152,13 +157,18 @@ class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPatt
         }
 
         @Override
-        public int distance() {
-            return ensureFound().distance();
+        public CharSequence foundText() {
+            return ensureFound().foundText();
         }
 
         @Override
-        public CharSequence foundText() {
-            return ensureFound().foundText();
+        public FuzzyPattern pattern() {
+            return ensureFound().pattern();
+        }
+
+        @Override
+        public int distance() {
+            return ensureFound().distance();
         }
     }
 

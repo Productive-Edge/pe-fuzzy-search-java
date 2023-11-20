@@ -11,6 +11,28 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class Bitap32Test {
 
+    @Test
+    void testNoDistance() {
+        FuzzyPattern pattern = FuzzyPattern.pattern("123", 0);
+        FuzzyMatcher matcher = pattern.matcher("0123");
+        assertTrue(matcher.find());
+        assertEquals(0, matcher.distance());
+        assertEquals("123", matcher.foundText());
+        assertEquals(1, matcher.start());
+        assertEquals(4, matcher.end());
+    }
+
+    @Test
+    void testFullDistance() {
+        FuzzyPattern pattern = FuzzyPattern.pattern("12", 2);
+        FuzzyMatcher matcher = pattern.matcher("0123");
+        assertTrue(matcher.find());
+        assertEquals(0, matcher.distance());
+        assertEquals("12", matcher.foundText());
+        assertEquals(1, matcher.start());
+        assertEquals(3, matcher.end());
+    }
+
     @ParameterizedTest
     @CsvSource({
             "test,tst,0,3",
@@ -338,7 +360,7 @@ class Bitap32Test {
         assertEquals(2, m.distance(), "distance");
         assertFalse(m.find());
     }
-    
+
     @Test
     void testEdgeCase3() {
         FuzzyPattern p = new Bitap32(" abbc ", 2);
@@ -481,8 +503,16 @@ class Bitap32Test {
         FuzzyPattern pattern = FuzzyPattern.pattern(" (if both, complete 5-11 for ", 10);
         assertEquals(
                 " (!f both, complete 3-11 for ",
-                pattern.matcher(text).findTheBestMatching().map(FuzzyResult::foundText).orElse("")
+                pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse("")
         );
+    }
+
+    @Test
+    void testTheBest() {
+        String text = "AABAAA";
+        FuzzyPattern pattern = FuzzyPattern.pattern("AAA", 2);
+        assertEquals("AABA", pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse(null));
+        assertEquals("AAA", pattern.matcher(text).findTheBest(true).map(FuzzyResult::foundText).orElse(null));
     }
 
 }

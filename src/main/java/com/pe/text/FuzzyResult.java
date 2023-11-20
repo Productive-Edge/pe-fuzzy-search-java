@@ -13,7 +13,7 @@ package com.pe.text;
  * }</pre>
  * <p>
  * Internal class {@link FuzzyResultRecord} also implements this interface to store matching results produced by
- * {@link FuzzyMatcher#stream()} and {@link FuzzyMatcher#findTheBestMatching()}
+ * {@link FuzzyMatcher#stream()} and {@link FuzzyMatcher#findTheBest()}
  */
 public interface FuzzyResult {
 
