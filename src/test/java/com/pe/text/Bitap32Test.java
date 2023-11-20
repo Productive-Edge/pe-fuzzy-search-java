@@ -173,23 +173,23 @@ class Bitap32Test {
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
         {
-            FuzzyPattern dolore = new Bitap32("dolore", 1);
-            FuzzyMatcher matcher = dolore.matcher(text);
             int i = 0;
-            String[] results = new String[]{"dolor ", "dolore", "dolor ", "dolore"};
+            FuzzyPattern laboris = new Bitap32("laboris", 2);
+            FuzzyMatcher matcher = laboris.matcher(text);
+            String[] results = new String[]{"labore ", "laboris", "laborum"};
             while (matcher.find()) {
-                assertEquals(results[i], text.subSequence(matcher.start(), matcher.end()));
+                assertEquals(results[i], matcher.foundText());
                 i++;
             }
             assertEquals(results.length, i);
         }
         {
+            FuzzyPattern dolore = new Bitap32("dolore", 1);
+            FuzzyMatcher matcher = dolore.matcher(text);
             int i = 0;
-            FuzzyPattern laboris = new Bitap32("laboris", 3);
-            FuzzyMatcher matcher = laboris.matcher(text);
-            String[] results = new String[]{"labore ", "laboris", "laborum"};
+            String[] results = new String[]{"dolor ", "dolore", "dolor ", "dolore"};
             while (matcher.find()) {
-                assertEquals(results[i], text.subSequence(matcher.start(), matcher.end()));
+                assertEquals(results[i], matcher.foundText());
                 i++;
             }
             assertEquals(results.length, i);
@@ -225,21 +225,21 @@ class Bitap32Test {
     void testMaxLen() {
         FuzzyPattern pattern = FuzzyPattern.pattern("12345678901234567890123456789012", 1);
         assertTrue(pattern instanceof Bitap32);
-        //insert
-        {
-            List<FuzzyResult> results = pattern.matcher("0123456789123456789012345678901234567890")
-                    .stream().collect(Collectors.toList());
-            assertEquals(1, results.size());
-            assertEquals(1, results.get(0).start());
-            assertEquals(1, results.get(0).distance());
-            assertEquals(32, results.get(0).end());
-        }
         //insert 2
         {
             List<FuzzyResult> results = pattern.matcher("0234567890123456789012345678901234567890")
                     .stream().collect(Collectors.toList());
             assertEquals(1, results.size());
             assertEquals(0, results.get(0).start());
+            assertEquals(1, results.get(0).distance());
+            assertEquals(32, results.get(0).end());
+        }
+        //insert
+        {
+            List<FuzzyResult> results = pattern.matcher("0123456789123456789012345678901234567890")
+                    .stream().collect(Collectors.toList());
+            assertEquals(1, results.size());
+            assertEquals(1, results.get(0).start());
             assertEquals(1, results.get(0).distance());
             assertEquals(32, results.get(0).end());
         }
@@ -270,6 +270,74 @@ class Bitap32Test {
             assertEquals(1, results.get(0).distance());
             assertEquals(34, results.get(0).end());
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "c",
+            "b",
+            "a"
+    })
+    void testEdgeCaseS3x1(String text) {
+        FuzzyPattern p = new Bitap32("abc", 2);
+        FuzzyMatcher m = p.matcher(text);
+        assertTrue(m.find());
+        assertEquals(0, m.start(), "start");
+        assertEquals(1, m.end(), "end");
+        assertEquals(text, m.foundText().toString(), "foundText");
+        assertEquals(2, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+
+    @Test
+    void testEdgeCaseS3x2() {
+        FuzzyPattern p = new Bitap32("abc", 2);
+        {
+            FuzzyMatcher m = p.matcher("ac");
+            assertTrue(m.find());
+            assertEquals("ac", m.foundText().toString(), "foundText");
+            assertEquals(0, m.start(), "start");
+            assertEquals(2, m.end(), "end");
+            assertEquals(1, m.distance(), "distance");
+            assertFalse(m.find());
+        }
+    }
+
+    @Test
+    void testEdgeCaseS3x3() {
+        FuzzyPattern p = new Bitap32("abc", 2);
+        FuzzyMatcher m = p.matcher("acc");
+        assertTrue(m.find());
+        assertEquals("acc", m.foundText().toString(), "foundText");
+        assertEquals(0, m.start(), "start");
+        assertEquals(3, m.end(), "end");
+        assertEquals(1, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+
+    @Test
+    void testEdgeCase2() {
+        FuzzyPattern p = new Bitap32(" abc ", 2);
+        FuzzyMatcher m = p.matcher(" AbC ");
+        assertTrue(m.find());
+        assertEquals(0, m.start(), "start");
+        assertEquals(5, m.end(), "end");
+        assertEquals(" AbC ", m.foundText().toString(), "foundText");
+        assertEquals(2, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+
+
+    @Test
+    void testEdgeCaseSR() {
+        FuzzyPattern p = new Bitap32("cba", 2);
+        FuzzyMatcher m = p.matcher("a");
+        assertTrue(m.find());
+        assertEquals(0, m.start(), "start");
+        assertEquals(1, m.end(), "end");
+        assertEquals("a", m.foundText().toString(), "foundText");
+        assertEquals(2, m.distance(), "distance");
+        assertFalse(m.find());
     }
 
     @Test
@@ -314,9 +382,9 @@ class Bitap32Test {
         FuzzyMatcher matcher = pattern.matcher("abc");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
-        assertEquals(1, matcher.end());
+        assertEquals(2, matcher.end());
         assertEquals(1, matcher.distance());
-        assertEquals("aa", matcher.pattern().text());
+        assertEquals("ab", matcher.foundText());
         assertFalse(matcher.find());
     }
 
@@ -369,6 +437,16 @@ class Bitap32Test {
         assertEquals(1, matcher.distance());
         assertEquals("aa", matcher.pattern().text());
         assertFalse(matcher.find());
+    }
+
+    @Test
+    void testRealCase() {
+        String text = "4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i";
+        FuzzyPattern pattern = FuzzyPattern.pattern(" (if both, complete 5-11 for ", 10);
+        assertEquals(
+                " (!f both, complete 3-11 for ",
+                pattern.matcher(text).findTheBestMatching().map(FuzzyResult::foundText).orElse("")
+        );
     }
 
 }

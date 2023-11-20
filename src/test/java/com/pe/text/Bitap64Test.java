@@ -337,5 +337,15 @@ class Bitap64Test {
         assertFalse(matcher.find());
     }
 
+    @Test
+    void testRealCase() {
+        String text = "4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i";
+        FuzzyPattern pattern = FuzzyPattern.pattern(" (if both, complete 5-11 for dental only.)", 10);
+        assertEquals(
+                " (!f both, complete 3-11 for dental oniy.i",
+                pattern.matcher(text).findTheBestMatching().map(FuzzyResult::foundText).orElse("")
+        );
+
+    }
 
 }

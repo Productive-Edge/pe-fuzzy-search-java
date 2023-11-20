@@ -32,6 +32,10 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
     abstract class Matcher implements IterativeFuzzyMatcher {
 
         /**
+         * temporal copy of values in the {@link #lengthChanges}
+         */
+        private final int[] lengthChangesCopy;
+        /**
          * contains changes in length (or applied operations DELETION, REPLACEMENT, INSERT) for the matched text:
          * <ul>
          *     <li><b>-1</b> symbol was deleted</li>
@@ -40,12 +44,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
          * </ul>
          * values starts from 1st index to match with count of operations (Levenshtein distance)
          */
-        protected final int[] lengthChanges;
-        /**
-         * temporal copy of values in the {@link #lengthChanges}
-         */
-        private final int[] lengthChangesCopy;
-
+        protected int[] lengthChanges;
         protected CharSequence text;
         /**
          * current Levenshtein distance
@@ -95,6 +94,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         @Override
         public boolean find() {
             resetState();
+            if (this.toIndex - this.index <= 1) return false;
             while (++this.index < this.toIndex) {
                 if (testNextSymbol()) {
                     final int maxDistanceCopy = this.maxDistance;
@@ -103,14 +103,17 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
                     return true;
                 }
             }
-
-            //insert at the end
-            for (int appendCount = 1; appendCount <= this.maxDistance; appendCount++) {
-                if (testNextInsert(appendCount)) {
-                    this.index--;
-                    return true;
-                }
+            this.index--;
+            for (int i = 1; i < this.lengthChanges.length; i++) {
+                this.lengthChanges[i - 1] = this.lengthChanges[i];
             }
+            if (testNextSymbol()) {
+                final int maxDistanceCopy = this.maxDistance;
+                improveResult(Math.min(this.index + BaseBitap.this.pattern.length(), this.toIndex));
+                maxDistance = maxDistanceCopy;
+                return true;
+            }
+            this.index++;
             return false;
         }
 
@@ -148,14 +151,19 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             // store
             final int indexCopy = this.index;
             final int levenshteinDistanceCopy = this.levenshteinDistance;
+            final int totalLengthChangesCopy = this.totalLengthChanges();
             // loop is faster on small arrays
-            for (int i = 1; i < levenshteinDistanceCopy; i++) this.lengthChangesCopy[i] = this.lengthChanges[i];
+            for (int i = 1; i <= levenshteinDistanceCopy; i++) this.lengthChangesCopy[i] = this.lengthChanges[i];
 
-            this.maxDistance = this.levenshteinDistance - 1;
+            this.maxDistance = this.levenshteinDistance;// - 1;
             while (++this.index < maxIndex) {
                 if (testNextSymbol()) {
-                    improveResult(maxIndex);
-                    return;
+                    if (this.levenshteinDistance < levenshteinDistanceCopy || this.totalLengthChanges() < totalLengthChangesCopy) {
+                        improveResult(maxIndex);
+                        return;
+                    }
+                } else {
+                    break;
                 }
             }
 
@@ -163,7 +171,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             this.index = indexCopy;
             this.levenshteinDistance = levenshteinDistanceCopy;
             // loop is faster on small arrays
-            for (int i = 1; i < levenshteinDistanceCopy; i++) this.lengthChanges[i] = this.lengthChangesCopy[i];
+            for (int i = 1; i <= levenshteinDistanceCopy; i++) this.lengthChanges[i] = this.lengthChangesCopy[i];
         }
 
         @Override

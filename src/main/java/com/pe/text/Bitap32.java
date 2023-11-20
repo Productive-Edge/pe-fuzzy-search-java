@@ -70,35 +70,28 @@ class Bitap32 extends BaseBitap {
                 // replace current character with correct one
                 final int substitution = deletion << 1;
                 // insertion of missing correct character before current position
-                final int insertion = (deletion << 2) | charPositions; // use out of order optimisation
+                final int insertion = current << 1;
 //                final int insertion = currentMatchings[levenshteinDistance - 1] << 1; // original Bitap insert
                 final int matching = (this.previousMatchings[super.levenshteinDistance] << 1) | charPositions;
-                this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
-                final boolean found = 0 == (this.currentMatchings[super.levenshteinDistance] & Bitap32.this.lastBitMask);
-                if (current >= deletion) {
-                    if (insertion < substitution && insertion < matching) {
+                final int combined = this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
+                final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
+                if (current > deletion) {
+                    if (insertion < substitution && insertion < matching && matching < 0) {
                         super.lengthChanges[super.levenshteinDistance] = 1;
-                    } else if (substitution < matching && deletion < current) {
+                    } else if (substitution < matching) {
                         super.lengthChanges[super.levenshteinDistance] = 0;
-                        if (found) {
-                            //try to change a replacement of the last character to a deletion of the current one if the next character does match
-                            final int nextIndex = super.index + 1;
-                            if (nextIndex < super.toIndex) {
-                                final int nextCharPositions = Bitap32.this.positionBitMasks.getOrDefault(super.text.charAt(nextIndex), -1);
-                                if ((nextCharPositions & Bitap32.this.lastBitMask) == 0) {
-                                    super.index = nextIndex;
-                                    super.lengthChanges[super.levenshteinDistance] = -1;
-                                }
-                            }
-                        }
                     } else if (matching < substitution) {
                         if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
-                            super.lengthChanges[super.levenshteinDistance] = -1;
+                            super.lengthChanges[super.levenshteinDistance]--;
                         }
                     }
                 } else {
-                    if (insertion < substitution && insertion < matching) {
+                    if (insertion < substitution && insertion < matching && matching < 0) {
                         super.lengthChanges[super.levenshteinDistance] = 1;
+                    } else if (matching < substitution) {
+                        if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
+                            super.lengthChanges[super.levenshteinDistance]--;
+                        }
                     }
                 }
                 if (found) {
