@@ -327,6 +327,42 @@ class Bitap32Test {
         assertFalse(m.find());
     }
 
+    @Test
+    void testEdgeCase2a() {
+        FuzzyPattern p = new Bitap32("_abc ", 2);
+        FuzzyMatcher m = p.matcher("_AbC ");
+        assertTrue(m.find());
+        assertEquals(0, m.start(), "start");
+        assertEquals(5, m.end(), "end");
+        assertEquals("_AbC ", m.foundText().toString(), "foundText");
+        assertEquals(2, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+    
+    @Test
+    void testEdgeCase3() {
+        FuzzyPattern p = new Bitap32(" abbc ", 2);
+        FuzzyMatcher m = p.matcher(" AbbC ");
+        assertTrue(m.find());
+        assertEquals(0, m.start(), "start");
+        assertEquals(5, m.end(), "end");
+        assertEquals(" AbbC", m.foundText().toString(), "foundText");
+        assertEquals(2, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+
+    @Test
+    void testEdgeCase4() {
+        FuzzyPattern p = new Bitap32(" abbc", 2);
+        FuzzyMatcher m = p.matcher(" AbbC");
+        assertTrue(m.find());
+        assertEquals(0, m.start(), "start");
+        assertEquals(5, m.end(), "end");
+        assertEquals(" AbbC", m.foundText().toString(), "foundText");
+        assertEquals(2, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+
 
     @Test
     void testEdgeCaseSR() {

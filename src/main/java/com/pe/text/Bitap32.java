@@ -69,9 +69,8 @@ class Bitap32 extends BaseBitap {
                 final int deletion = this.previousMatchings[super.levenshteinDistance++];
                 // replace current character with correct one
                 final int substitution = deletion << 1;
-                // insertion of missing correct character before current position
+                // insertion of correct character after current position
                 final int insertion = current << 1;
-//                final int insertion = currentMatchings[levenshteinDistance - 1] << 1; // original Bitap insert
                 final int matching = (this.previousMatchings[super.levenshteinDistance] << 1) | charPositions;
                 final int combined = this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
@@ -103,17 +102,7 @@ class Bitap32 extends BaseBitap {
 
         @Override
         public boolean testNextInsert(final int iteration) {
-            final int bitMask = Bitap32.this.lastBitMask >>> iteration;
-            final int limit = super.maxDistance - iteration;
-            for (super.levenshteinDistance = 0; super.levenshteinDistance <= limit; super.levenshteinDistance++) {
-                if (0 == (this.currentMatchings[super.levenshteinDistance] & bitMask)) {
-                    final int end = super.levenshteinDistance + iteration;
-                    for (int i = super.levenshteinDistance + 1; i <= end; i++) super.lengthChanges[i] = 1;
-                    super.levenshteinDistance = end;
-                    return true;
-                }
-            }
-            return false;
+            throw new IllegalStateException();
         }
 
         private void swapMatching() {

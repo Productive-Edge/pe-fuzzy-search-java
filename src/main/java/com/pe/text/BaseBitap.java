@@ -108,9 +108,6 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
                 this.lengthChanges[i - 1] = this.lengthChanges[i];
             }
             if (testNextSymbol()) {
-                final int maxDistanceCopy = this.maxDistance;
-                improveResult(Math.min(this.index + BaseBitap.this.pattern.length(), this.toIndex));
-                maxDistance = maxDistanceCopy;
                 return true;
             }
             this.index++;
@@ -205,7 +202,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             return this.text.subSequence(start(), end());
         }
 
-        private int totalLengthChanges() {
+        protected int totalLengthChanges() {
             int lengthChange = this.levenshteinDistance == 0 ? 0 : this.lengthChanges[1];
             for (int i = 2; i <= this.levenshteinDistance; i++) lengthChange += this.lengthChanges[i];
             return lengthChange;
