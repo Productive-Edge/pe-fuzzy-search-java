@@ -14,6 +14,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.concurrent.TimeUnit;
 
+@Deprecated
 public class LevenshteinDistanceBenchmarkTest {
 
     public static final String test1a = "This is a test text of testing";
