@@ -67,40 +67,35 @@ class Bitap32 extends BaseBitap {
                 final int current = this.currentMatchings[super.levenshteinDistance];
                 // delete current character
                 final int deletion = this.previousMatchings[super.levenshteinDistance++];
-                // replace current character with correct one
-                final int substitution = deletion << 1;
                 // insert correct character after the current
                 final int insertion = current << 1;
+                // replace current character with correct one
+                final int substitution = deletion << 1;
                 // get current character as is
                 final int matching = (this.previousMatchings[super.levenshteinDistance] << 1) | charPositions;
                 final int combined = this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
-                if (current > deletion) {
-                    if (substitution < matching) {
-                        // replacement or deletion
+                if (deletion <= current) {
+                    if (matching <= substitution) {
+                        if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
+                            super.lengthChanges[super.levenshteinDistance]--;
+                        }
+                    } else /*if (substitution < charPositions)*/ {
                         super.lengthChanges[super.levenshteinDistance] = 0;
-//                        super.lengthChanges[super.levenshteinDistance]--;
                     }
                     //otherwise skip matched
                 } else {
-                    if (insertion < substitution && insertion < matching && matching < 0) {
+                    if (matching <= insertion) {
+//                        //matching operation
+                        if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
+                            super.lengthChanges[super.levenshteinDistance]--;
+                        }
+                    } else {
                         //insert operation
                         super.lengthChanges[super.levenshteinDistance] = 1;
-                    } else if (matching <= substitution) {
-                        //matching operation
-//                        if (matching < this.previousMatchings[super.levenshteinDistance]) {
-                        if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
-                            //insert -> replacement or replacement -> deletion
-                            super.lengthChanges[super.levenshteinDistance]--;
-                        }/* else if (0 == (charPositions & (Bitap32.this.lastBitMask | 1))) {
-                            super.lengthChanges[super.levenshteinDistance]--;
-                        }*/
                     }
                 }
                 if (found) {
-//                    if (((Bitap32.this.lastBitMask << 1) & combined) == 0) {
-//                        this.lengthChanges[1] = 0;
-//                    }
                     return true;
                 }
             }
