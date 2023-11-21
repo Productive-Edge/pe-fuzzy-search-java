@@ -45,6 +45,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
          * values starts from 1st index to match with count of operations (Levenshtein distance)
          */
         protected int[] lengthChanges;
+
         protected CharSequence text;
         /**
          * current Levenshtein distance
@@ -108,8 +109,9 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
 
             //test inserts before the last char
             this.index--;
-            for (int i = 1; i <= this.maxDistance; i++) {
-                this.lengthChanges[i - 1] = this.lengthChanges[i];
+            for (int i = 0; i < this.maxDistance; ) {
+                final int p = i++;
+                this.lengthChanges[p] = this.lengthChanges[i];
             }
             if (testNextSymbol()) {
                 return true;
@@ -223,7 +225,6 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             for (int i = 0; i <= this.levenshteinDistance; i++) result += this.lengthChanges[i];
             return result;
         }
-
 
     }
 }

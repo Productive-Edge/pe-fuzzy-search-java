@@ -78,7 +78,8 @@ class Bitap32 extends BaseBitap {
                 if (current > deletion) {
                     if (substitution < matching) {
                         // replacement or deletion
-                        super.lengthChanges[super.levenshteinDistance]--;
+                        super.lengthChanges[super.levenshteinDistance] = 0;
+//                        super.lengthChanges[super.levenshteinDistance]--;
                     }
                     //otherwise skip matched
                 } else {
@@ -87,13 +88,19 @@ class Bitap32 extends BaseBitap {
                         super.lengthChanges[super.levenshteinDistance] = 1;
                     } else if (matching <= substitution) {
                         //matching operation
+//                        if (matching < this.previousMatchings[super.levenshteinDistance]) {
                         if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
-                            //previous operation was deletion not replacement
+                            //insert -> replacement or replacement -> deletion
                             super.lengthChanges[super.levenshteinDistance]--;
-                        }
+                        }/* else if (0 == (charPositions & (Bitap32.this.lastBitMask | 1))) {
+                            super.lengthChanges[super.levenshteinDistance]--;
+                        }*/
                     }
                 }
                 if (found) {
+//                    if (((Bitap32.this.lastBitMask << 1) & combined) == 0) {
+//                        this.lengthChanges[1] = 0;
+//                    }
                     return true;
                 }
             }
