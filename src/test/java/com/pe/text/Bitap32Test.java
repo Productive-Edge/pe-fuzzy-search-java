@@ -185,6 +185,13 @@ class Bitap32Test {
         assertFalse(matcher.find());
     }
 
+    @Test
+    void testBestMatchingEdgeCase() {
+        FuzzyPattern laboris = new Bitap32("laboris", 2);
+        FuzzyMatcher matcher = laboris.matcher("ut labore et");
+        assertTrue(matcher.find());
+        assertEquals("labore ", matcher.foundText());
+    }
 
     @Test
     void testBestMatching() {
