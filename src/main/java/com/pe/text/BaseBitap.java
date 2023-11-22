@@ -104,15 +104,6 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
                     return true;
                 }
             }
-            if (maxDistance == 0)
-                return false;
-
-            //test inserts before the last char
-            this.index--;
-            if (testNextSymbol()) {
-                return true;
-            }
-            this.index++;
 
             return false;
         }
@@ -218,7 +209,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
 
         protected int totalLengthChanges() {
             int result = 0;
-            for (int i = 0; i <= this.levenshteinDistance; i++) result += this.lengthChanges[i];
+            for (int i = 1; i <= this.levenshteinDistance; i++) result += this.lengthChanges[i];
             return result;
         }
 
