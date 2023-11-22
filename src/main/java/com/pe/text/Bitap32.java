@@ -82,11 +82,12 @@ class Bitap32 extends BaseBitap {
                             super.lengthChanges[super.levenshteinDistance]--;
                         }
                     } else {
-                        super.lengthChanges[super.levenshteinDistance] = 0;
+                        if (previousMatchings[levenshteinDistance] <= substitution) {
+                            super.lengthChanges[super.levenshteinDistance] = 0;
+                        }
                     }
                 } else {
-                    if (matching < current) { //matching < current ?
-//                    if (matching <= insertion) { //matching < current ?
+                    if (matching <= insertion) { //matching < current ?
 //                        //matching operation
                         if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
                             super.lengthChanges[super.levenshteinDistance]--;
