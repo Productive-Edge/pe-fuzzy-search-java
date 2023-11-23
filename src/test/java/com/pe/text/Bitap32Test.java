@@ -591,33 +591,18 @@ class Bitap32Test {
         assertEquals("b aa ba a", matcher.foundText());
     }
 
-    @Test
-    void insertionBeforeReplacementAndDeletion() {
-        String pattern = "insert replace delete";
-        String text = "nsert rrplace ddelete";
-        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, 3)
+
+    @ParameterizedTest
+    @CsvSource({
+            "insert replace delete,nsert rrplace ddelete,3",
+            "insert replace delete re,nsert rrplace ddelete rr,4",
+            "insert replace delete dde,nsert rrplace ddelete de,5",
+    })
+    void insertionBeforeReplacementAndDeletion(String pattern, String text, int maxDiff) {
+        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, maxDiff)
                 .matcher(text);
         assertTrue(matcher.find());
         assertEquals(text, matcher.foundText());
     }
 
-    @Test
-    void insertionBeforeReplacementAndDeletionAndReplacement() {
-        String pattern = "insert replace delete re";
-        String text = "nsert rrplace ddelete rr";
-        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, 4)
-                .matcher(text);
-        assertTrue(matcher.find());
-        assertEquals(text, matcher.foundText());
-    }
-
-    @Test
-    void insertionBeforeReplacementAndDeletionAndReplacementAndDelete() {
-        String pattern = "insert replace delete re dde";
-        String text = "nsert rrplace ddelete rr de";
-        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, 5)
-                .matcher(text);
-        assertTrue(matcher.find());
-        assertEquals(text, matcher.foundText());
-    }
 }
