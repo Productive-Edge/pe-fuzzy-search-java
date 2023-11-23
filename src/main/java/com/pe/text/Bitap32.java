@@ -77,41 +77,41 @@ class Bitap32 extends BaseBitap {
                 final int combined = this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
                 if (!applied) {
-                    boolean replacement = (deletion < current) && (~(deletion ^ current)) < current;
-                    if (replacement) {
-                        if (matching <= substitution) {
-                            if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
-                                super.lengthChanges[super.levenshteinDistance]--;
-                            }
-                        } else {
+                    if (deletion < current) {
+                        // skip previous operation
+                        final boolean skip = matching <= substitution
+                                || super.lengthChanges[super.levenshteinDistance] != 1;
+                        if (!skip) {
                             super.lengthChanges[super.levenshteinDistance] = 0;
                             setInsertsAfter(super.levenshteinDistance);
                             applied = true;
                         }
                     } else {
-                        if (matching <= insertion || matching >= 0) { //matching < current ?
-//                        //matching operation
+                        if (matching <= insertion || matching >= 0) {
+                            // skip previous operation, otherwise transform it: replacement -> deletion | insert -> replacement (decrease length)
                             if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
+                                //
                                 super.lengthChanges[super.levenshteinDistance]--;
                                 setInsertsAfter(super.levenshteinDistance);
                                 applied = true;
                             }
-                        } else if (current < deletion) {
-                            if (insertion <= (((previousMatchings[maxDistance] << 1) /*& (~Bitap32.this.lastBitMask)*/) | charPositions)) {
+                        } else if (current < deletion) { // most likely insertion
+                            // skip it if character can match later
+                            if (insertion <= ((previousMatchings[maxDistance] << 1) | charPositions)) {
                                 super.lengthChanges[super.levenshteinDistance] = 1;
                                 setInsertsAfter(super.levenshteinDistance);
                                 applied = true;
                             }
-                        } else if (combined > previousMatchings[levenshteinDistance]) {
-                            //skip
-                        } else if (((previousMatchings[maxDistance] & (~Bitap32.this.lastBitMask)) | charPositions) >= combined) {
-                            //replace
-                            if (super.lengthChanges[super.levenshteinDistance] == 1) {
+                        } else {
+                            final boolean isReplacement = super.lengthChanges[super.levenshteinDistance] == 1
+                                    && ((previousMatchings[maxDistance] & (~Bitap32.this.lastBitMask)) | charPositions) >= combined;
+                            // can be insertion or replacement
+                            if (isReplacement) {
                                 super.lengthChanges[super.levenshteinDistance] = 0;
                                 setInsertsAfter(super.levenshteinDistance);
                                 applied = true;
                             }
-                        } // otherwise skip
+                        }
                     }
                 }
                 if (found) {
