@@ -6,28 +6,25 @@ class Bitap65Plus extends BaseBitap {
 
     private final Char2ObjectOpenHashMap<BitVector> positionBitMasks;
 
-    private final int patternLength;
-
     Bitap65Plus(CharSequence pattern, int maxLevenshteinDistance) {
         this(pattern, maxLevenshteinDistance, false);
     }
 
     Bitap65Plus(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
         super(pattern, maxLevenshteinDistance, caseInsensitive);
-        this.patternLength = pattern.length();
-        this.positionBitMasks = new Char2ObjectOpenHashMap<>(pattern.length() << 1);
+        positionBitMasks = new Char2ObjectOpenHashMap<>(pattern.length() << 1);
         if (!caseInsensitive) {
-            for (int i = 0; i < this.patternLength; i++) {
+            for (int i = 0; i < pattern.length(); i++) {
                 final char c = pattern.charAt(i);
-                this.positionBitMasks.computeIfAbsent(c, k -> new BitVector(this.patternLength).setMinusOne())
+                positionBitMasks.computeIfAbsent(c, k -> new BitVector(pattern.length()).setMinusOne())
                         .setZeroAt(i);
             }
         } else {
-            for (int i = 0; i < this.patternLength; i++) {
+            for (int i = 0; i < pattern.length(); i++) {
                 final char lc = Character.toLowerCase(pattern.charAt(i));
-                final BitVector mask = this.positionBitMasks.computeIfAbsent(lc, k -> new BitVector(this.patternLength).setMinusOne())
+                final BitVector mask = positionBitMasks.computeIfAbsent(lc, k -> new BitVector(pattern.length()).setMinusOne())
                         .setZeroAt(i);
-                this.positionBitMasks.put(Character.toUpperCase(lc), mask);
+                positionBitMasks.put(Character.toUpperCase(lc), mask);
             }
         }
     }
@@ -39,114 +36,113 @@ class Bitap65Plus extends BaseBitap {
 
     final class Matcher extends BaseBitap.Matcher {
 
-        private final BitVector substitution = new BitVector(Bitap65Plus.this.patternLength);
-        private final BitVector insertion = new BitVector(Bitap65Plus.this.patternLength);
-        private final BitVector matching = new BitVector(Bitap65Plus.this.patternLength);
-        private final BitVector testDeletion = new BitVector(Bitap65Plus.this.patternLength);
+        private final BitVector substitution = new BitVector(Bitap65Plus.this.text().length());
+        private final BitVector insertion = new BitVector(Bitap65Plus.this.text().length());
+        private final BitVector matching = new BitVector(Bitap65Plus.this.text().length());
+        private final BitVector highBitDiff = new BitVector(Bitap65Plus.this.text().length());
+        private final BitVector previousMatchingMax = new BitVector(Bitap65Plus.this.text().length());
 
         private BitVector[] previousMatchings;
         private BitVector[] currentMatchings;
 
         private Matcher(CharSequence text, int fromIndex, int toIndex) {
             super(text, fromIndex, toIndex);
-            this.currentMatchings = createVectors(super.maxDistance + 1);
-            this.previousMatchings = createVectors(super.maxDistance + 1);
+            currentMatchings = createVectors(maxDistance + 1);
+            previousMatchings = createVectors(maxDistance + 1);
         }
 
         private BitVector[] createVectors(int n) {
             BitVector[] result = new BitVector[n];
-            for (int i = 0; i < n; i++) result[i] = new BitVector(patternLength);
+            for (int i = 0; i < n; i++) result[i] = new BitVector(Bitap65Plus.this.text().length());
             return result;
         }
 
         @Override
         public void resetState() {
             super.resetState();
-            for (int i = 0; i <= maxDistance; i++) currentMatchings[i].setMinusOne();
+            for (int i = 0; i <= maxDistance; i++) currentMatchings[i].setMinusOne().leftShift(i);
         }
 
         @Override
         public boolean testNextSymbol() {
-            final BitVector charPositions = Bitap65Plus.this.positionBitMasks.getOrDefault(super.text.charAt(super.index), null);
+            final BitVector charPositions = Bitap65Plus.this.positionBitMasks.getOrDefault(text.charAt(index), null);
             swapMatching();
-            super.levenshteinDistance = 0;
+            levenshteinDistance = 0;
             if (charPositions == null) {
-                this.currentMatchings[0].setMinusOne();
+                currentMatchings[0].setMinusOne();
             } else {
-                this.currentMatchings[0].setBitsFrom(this.previousMatchings[0])
+                currentMatchings[0].setBitsFrom(previousMatchings[0])
                         .leftShift1().or(charPositions);
             }
-            if (this.currentMatchings[0].hasZeroAtLastBit()) {
+            if (currentMatchings[0].hasZeroAtLastBit()) {
                 return true;
             }
-            while (super.levenshteinDistance < super.maxDistance) {
-                final BitVector current = this.currentMatchings[super.levenshteinDistance];
+            boolean applied = false;
+            while (levenshteinDistance < maxDistance) {
+                final BitVector current = currentMatchings[levenshteinDistance];
                 // ignore current character
-                final BitVector deletion = this.previousMatchings[super.levenshteinDistance++];
+                final BitVector deletion = previousMatchings[levenshteinDistance++];
+                // insert correct character after the current
+                insertion.setBitsFrom(current).leftShift1();
                 // replace current character with correct one
-                this.substitution.setBitsFrom(deletion).leftShift1();
-                // insertion of missing correct character before current position
-                if (charPositions == null) {
-                    this.insertion.setMinusOne();
-                } else {
-                    this.insertion.setBitsFrom(this.substitution).leftShift1().or(charPositions);
-                }
+                substitution.setBitsFrom(deletion).leftShift1();
 
+                BitVector previousMatching = previousMatchings[levenshteinDistance];
                 if (charPositions == null) {
-                    this.matching.setMinusOne();
+                    matching.setMinusOne();
                 } else {
-                    this.matching.setBitsFrom(this.previousMatchings[super.levenshteinDistance])
+                    matching.setBitsFrom(previousMatching)
                             .leftShift1().or(charPositions);
                 }
-                this.currentMatchings[super.levenshteinDistance].setBitsFrom(this.insertion)
-                        .and(deletion).and(this.substitution).and(this.matching);
-                final boolean found = this.currentMatchings[super.levenshteinDistance].hasZeroAtLastBit();
-                if (!current.lessThan(deletion)) {
-                    if (this.insertion.lessThan(this.substitution) && this.insertion.lessThan(this.matching)) {
-                        super.lengthChanges[super.levenshteinDistance] = 1;
-                    } else if (this.substitution.lessThan(this.matching) && deletion.lessThan(current)) {
-                        super.lengthChanges[super.levenshteinDistance] = 0;
-                        if (found) {
-                            //try to change a replacement of the last character to a deletion of the current one if the next character does match
-                            final int nextIndex = super.index + 1;
-                            if (nextIndex < super.toIndex) {
-                                final BitVector nextCharPositions = Bitap65Plus.this.positionBitMasks.get(super.text.charAt(nextIndex));
-                                if (nextCharPositions != null && nextCharPositions.hasZeroAtLastBit()) {
-                                    super.index = nextIndex;
-                                    super.lengthChanges[super.levenshteinDistance] = -1;
+
+                final BitVector combined = currentMatchings[levenshteinDistance].setBitsFrom(insertion)
+                        .and(deletion).and(substitution).and(matching);
+
+                final boolean found = combined.hasZeroAtLastBit();
+                if (!applied) {
+                    if (deletion.lessThan(current)) {
+                        // skip previous operation
+                        if (substitution.lessThan(matching) && lengthChanges[levenshteinDistance] == 1) {
+                            lengthChanges[levenshteinDistance] = 0;
+                            setInsertsAfter(levenshteinDistance);
+                            applied = true;
+                        }
+                    } else {
+                        if (insertion.notLessThan(matching) || matching.isPositive()) {
+                            // skip previous operation, otherwise transform it: replacement -> deletion | insert -> replacement (decrease length)
+                            // matching < previousMatching
+                            highBitDiff.setBitsFrom(matching).xor(previousMatching).invert();
+                            boolean invert = matching.isNegative() != previousMatching.isNegative();
+                            if (invert == highBitDiff.lessThan(previousMatching)) {
+                                lengthChanges[levenshteinDistance]--;
+                                setInsertsAfter(levenshteinDistance);
+                                applied = true;
+                            }
+                        } else if (current.lessThan(deletion)) { // most likely insertion
+                            // skip it if character can match later
+                            if (insertion.lessThan(previousMatching)) {
+                                previousMatchingMax.setBitsFrom(previousMatchings[maxDistance]).leftShift1().or(charPositions);
+                                if (previousMatchingMax.notLessThan(insertion)) {
+                                    lengthChanges[levenshteinDistance] = 1;
+                                    setInsertsAfter(levenshteinDistance);
+                                    applied = true;
+                                }
+                            }
+                        } else {
+                            // can be insertion or replacement
+                            if (lengthChanges[levenshteinDistance] == 1 && lengthChanges[maxDistance] != -1) {
+                                final boolean isReplacement = charPositions == null
+                                        || getMaxMatchingMask(charPositions).notLessThan(combined);
+                                if (isReplacement) {
+                                    lengthChanges[levenshteinDistance] = 0;
+                                    setInsertsAfter(levenshteinDistance);
+                                    applied = true;
                                 }
                             }
                         }
-                    } else if (this.matching.lessThan(this.substitution)) {
-                        final boolean wasDeleted = this.testDeletion
-                                .setBitsFrom(this.previousMatchings[super.levenshteinDistance])
-                                .invert()
-                                .or(this.matching)
-                                .isMinusOne();
-                        if (wasDeleted) {
-                            super.lengthChanges[super.levenshteinDistance] = -1;
-                        }
-                    }
-                } else {
-                    if (insertion.lessThan(substitution) && insertion.lessThan(matching)) {
-                        super.lengthChanges[super.levenshteinDistance] = 1;
                     }
                 }
                 if (found) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public boolean testNextInsert(final int iteration) {
-            final int limit = super.maxDistance - iteration;
-            for (super.levenshteinDistance = 0; super.levenshteinDistance <= limit; super.levenshteinDistance++) {
-                if (this.currentMatchings[super.levenshteinDistance].leftShift1().hasZeroAtLastBit()) {
-                    final int end = super.levenshteinDistance + iteration;
-                    for (int i = super.levenshteinDistance + 1; i <= end; i++) super.lengthChanges[i] = 1;
-                    super.levenshteinDistance = end;
                     return true;
                 }
             }
@@ -158,6 +154,14 @@ class Bitap65Plus extends BaseBitap {
             currentMatchings = previousMatchings;
             previousMatchings = tmp;
         }
+
+        private BitVector getMaxMatchingMask(BitVector charPositions) {
+            return previousMatchingMax
+                    .setBitsFrom(previousMatchings[maxDistance])
+                    .andInvertedLastBitMask()
+                    .or(charPositions);
+        }
+
     }
 
 }

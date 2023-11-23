@@ -18,7 +18,7 @@ import java.util.stream.StreamSupport;
  * Once created, a matcher can be used to perform following search operations:
  * <ul>
  *     <li>The {@link #find()} method scans the input sequence looking for the next subsequence that matches the pattern</li>
- *     <li>The {@link #findTheBestMatching()} method scans the input sequence looking for the best subsequence that matches the pattern</li>
+ *     <li>The {@link #findTheBest()} method scans the input sequence looking for the best subsequence that matches the pattern</li>
  *     <li>The {@link #stream()}  method scans the input sequence and streams all subsequences that match the pattern</li>
  * </ul>
  * <p>
@@ -34,7 +34,7 @@ import java.util.stream.StreamSupport;
 public interface FuzzyMatcher extends FuzzyResult {
 
     /**
-     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBestMatching()}, or
+     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBest()}, or
      * {@link #stream()} starts scanning from the first character in the input text up to the last one.
      */
     default void reset() {
@@ -42,7 +42,7 @@ public interface FuzzyMatcher extends FuzzyResult {
     }
 
     /**
-     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBestMatching()}, or
+     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBest()}, or
      * {@link #stream()} starts scanning new text from the specified offset up to the specified last index.
      *
      * @param text      new text to scan.
@@ -59,7 +59,7 @@ public interface FuzzyMatcher extends FuzzyResult {
     CharSequence text();
 
     /**
-     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBestMatching()}, or
+     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBest()}, or
      * {@link #stream()} starts scanning from the specified offset in the input text up to the last character.
      *
      * @param fromIndex start of scanning for the next search operation.
@@ -69,7 +69,7 @@ public interface FuzzyMatcher extends FuzzyResult {
     }
 
     /**
-     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBestMatching()}, or
+     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBest()}, or
      * {@link #stream()} starts scanning from the specified offset in the input text up to the specified last index.
      *
      * @param fromIndex start of scanning for the next search operation.
@@ -80,7 +80,7 @@ public interface FuzzyMatcher extends FuzzyResult {
     }
 
     /**
-     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBestMatching()}, or
+     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBest()}, or
      * {@link #stream()} starts scanning new specified input text from the first character in the input text up to the last one.
      *
      * @param text new text to scan.
@@ -90,7 +90,7 @@ public interface FuzzyMatcher extends FuzzyResult {
     }
 
     /**
-     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBestMatching()}, or
+     * Resets the internal state of the matcher, so the next call of {@link #find()}, {@link #findTheBest()}, or
      * {@link #stream()} starts scanning new text from the specified offset up to the last character.
      *
      * @param text      new text to scan.
@@ -114,32 +114,45 @@ public interface FuzzyMatcher extends FuzzyResult {
 
     /**
      * Attempts to find the best match in the text. Result will be the first matching in the text in case there are
+     * more than one matching with the minimal Levenshtein distance, without overlapping matching
+     * (i.e. next search will start from the end position of the previous matching).
+     * <p>
+     * This method is faster than
+     * {@code matcher.stream().min(Comparator.comparingInt(FuzzyResult::distance))}
+     *
+     * @return the first best matching (i.e. with minimal Levenshtein distance) or {{@link Optional#empty()}} if no matches.
+     * @see #findTheBest(boolean)
+     */
+    default Optional<FuzzyResult> findTheBest() {
+        return findTheBest(false);
+    }
+
+    /**
+     * Attempts to find the best match in the text. Result will be the first matching in the text in case there are
      * more than one matching with the minimal Levenshtein distance.
      * <p>
      * It is faster equivalent to the
      * {@code matcher.stream().min(Comparator.comparingInt(FuzzyResult::distance))}
      *
+     * @param includeOverlapped if true next search will start from the (start + 1) position of the previous matching
+     *                          to try to find better matching within range of previous one
+     *                          (might be useful in rare specific cases i.e. for DNA subsequence search, where long pattern consists of few repeating characters),
+     *                          otherwise it will start from the end position of the previous matching (usual case for OCR-ed text)
      * @return the first best matching (i.e. with minimal Levenshtein distance) or {{@link Optional#empty()}} if no matches.
      */
-    default Optional<FuzzyResult> findTheBestMatching() {
+    default Optional<FuzzyResult> findTheBest(boolean includeOverlapped) {
         FuzzyResultRecord best = null;
-        if (this instanceof IterativeFuzzyMatcher) {
-            while (find()) {
+        while (this.find()) {
+            if (best == null || best.distance() > this.distance()) {
                 best = new FuzzyResultRecord(this);
                 if (best.distance() == 0)
-                    break;
-                ((IterativeFuzzyMatcher) this).setMaxDistance(best.distance() - 1);
+                    return Optional.of(best);
             }
-        } else {
-            while (find()) {
-                if (best == null || best.distance() > distance()) {
-                    best = new FuzzyResultRecord(this);
-                    if (distance() == 0)
-                        break;
-                }
+            if (includeOverlapped) {
+                this.reset(this.text(), this.start() + 1, this.to());
             }
         }
-        return Optional.ofNullable(best);
+        return Optional.empty();
     }
 
     /**
@@ -156,6 +169,13 @@ public interface FuzzyMatcher extends FuzzyResult {
     boolean find();
 
     /**
+     * Returns end of the search range, which can be changed via {@link #reset(CharSequence, int, int)}
+     *
+     * @return end of the search range (exclusive index, i.e. maximal can be {@link #text()}.length() )
+     */
+    int to();
+
+    /**
      * Returns true if this matcher instance has search started, otherwise - false
      *
      * @return true if this matcher instance has search started, otherwise - false
@@ -168,4 +188,11 @@ public interface FuzzyMatcher extends FuzzyResult {
      * @return true if this matcher instance has search completed, otherwise - false
      */
     boolean completed();
+
+    /**
+     * Returns start of the search range, which can be changed via {@link #reset(CharSequence, int, int)}
+     *
+     * @return start of the search range (inclusive index)
+     */
+    int from();
 }

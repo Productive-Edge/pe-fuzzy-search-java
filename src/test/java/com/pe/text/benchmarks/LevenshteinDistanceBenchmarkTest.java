@@ -14,6 +14,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.concurrent.TimeUnit;
 
+@Deprecated
 public class LevenshteinDistanceBenchmarkTest {
 
     public static final String test1a = "This is a test text of testing";
@@ -56,12 +57,12 @@ public class LevenshteinDistanceBenchmarkTest {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void bitap1m() {
-        noLimitPattern.matcher(test1a).findTheBestMatching();
+        noLimitPattern.matcher(test1a).findTheBest();
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void bitap1l() {
-        limit3Pattern.matcher(test1a).findTheBestMatching();
+        limit3Pattern.matcher(test1a).findTheBest();
     }
 }
