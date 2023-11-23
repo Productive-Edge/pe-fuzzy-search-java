@@ -28,18 +28,8 @@ final class BitVector {
         return this;
     }
 
-    BitVector or(final long firstBits) {
-        bits[0] |= firstBits;
-        return this;
-    }
-
     BitVector or(final BitVector vector) {
         for (int i = 0; i < bits.length; i++) bits[i] |= vector.bits[i];
-        return this;
-    }
-
-    BitVector and(final long firstBits) {
-        bits[0] &= firstBits;
         return this;
     }
 
@@ -89,13 +79,6 @@ final class BitVector {
             return delta < 0L;
         }
         return false;
-    }
-
-    boolean isMinusOne() {
-        for (final long bit : bits) {
-            if (bit != -1L) return false;
-        }
-        return true;
     }
 
     public BitVector xor(BitVector vector) {

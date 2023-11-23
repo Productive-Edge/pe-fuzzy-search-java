@@ -160,6 +160,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             // restore
             index = indexCopy;
             levenshteinDistance = levenshteinDistanceCopy;
+            // loop is faster on small arrays
             for (int i = 1; i <= levenshteinDistanceCopy; i++) lengthChanges[i] = lengthChangesCopy[i];
 
         }
