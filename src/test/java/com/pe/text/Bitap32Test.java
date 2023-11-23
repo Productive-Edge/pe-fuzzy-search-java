@@ -590,4 +590,14 @@ class Bitap32Test {
         assertEquals(expl, explanation.toString());
         assertEquals("b aa ba a", matcher.foundText());
     }
+
+    @Test
+    void testInsertBeforeReplacementAndDeletion() {
+        String pattern = "insert before replacement and deletion";
+        String text = "nsert before rrplacement and ddeletion";
+        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, 3)
+                .matcher(text);
+        assertTrue(matcher.find());
+        assertEquals(text, matcher.foundText());
+    }
 }
