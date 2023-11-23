@@ -64,6 +64,7 @@ class Bitap32 extends BaseBitap {
             if (0 == (this.currentMatchings[0] & Bitap32.this.lastBitMask)) {
                 return true;
             }
+            boolean replaced = false;
             while (super.levenshteinDistance < super.maxDistance) {
                 final int current = this.currentMatchings[super.levenshteinDistance];
                 // delete current character
@@ -83,7 +84,10 @@ class Bitap32 extends BaseBitap {
                             super.lengthChanges[super.levenshteinDistance]--;
                         }
                     } else {
-                        super.lengthChanges[super.levenshteinDistance] = 0;
+                        if (!replaced) {
+                            super.lengthChanges[super.levenshteinDistance] = 0;
+                            replaced = true;
+                        }
                     }
                 } else {
                     if (matching <= insertion || matching >= 0) { //matching < current ?
@@ -95,15 +99,16 @@ class Bitap32 extends BaseBitap {
                         if (current < matching) {
                             //insert operation
                             super.lengthChanges[super.levenshteinDistance] = 1;
-                        } else if (insertion <= previousMatchings[maxDistance]) {
+                        } else if (insertion <= (((previousMatchings[maxDistance] << 1) & (~Bitap32.this.lastBitMask)) | charPositions)) {
                             super.lengthChanges[super.levenshteinDistance] = 1;
                         }
-                    } /*else if (combined >= previousMatchings[levenshteinDistance]) {
+                    } else if (combined > previousMatchings[levenshteinDistance]) {
                         //skip
-                    }*/ else if (((previousMatchings[maxDistance] & (~Bitap32.this.lastBitMask)) | charPositions) >= matching) {
+                    } else if (((previousMatchings[maxDistance] & (~Bitap32.this.lastBitMask)) | charPositions) >= matching) {
                         //replace
-                        if (deletion >= current) {
+                        if (!replaced) {
                             super.lengthChanges[super.levenshteinDistance] = 0;
+                            replaced = true;
                         }
                     } // otherwise skip
                 }
