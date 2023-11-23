@@ -73,15 +73,14 @@ class Bitap32 extends BaseBitap {
                 // replace current character with correct one
                 final int substitution = deletion << 1;
                 // get current character as is
-                final int matching = (this.previousMatchings[super.levenshteinDistance] << 1) | charPositions;
+                final int previousMatching = this.previousMatchings[super.levenshteinDistance];
+                final int matching = (previousMatching << 1) | charPositions;
                 final int combined = this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
                 if (!applied) {
                     if (deletion < current) {
                         // skip previous operation
-                        final boolean skip = matching <= substitution
-                                || super.lengthChanges[super.levenshteinDistance] != 1;
-                        if (!skip) {
+                        if (substitution < matching && lengthChanges[levenshteinDistance] == 1) {
                             super.lengthChanges[super.levenshteinDistance] = 0;
                             setInsertsAfter(super.levenshteinDistance);
                             applied = true;
@@ -89,8 +88,10 @@ class Bitap32 extends BaseBitap {
                     } else {
                         if (matching <= insertion || matching >= 0) {
                             // skip previous operation, otherwise transform it: replacement -> deletion | insert -> replacement (decrease length)
-                            if (-1 == (matching | (~this.previousMatchings[super.levenshteinDistance]))) {
-                                //
+                            // matching < previousMatching
+                            final int highBitDiff = ~(matching ^ previousMatching);
+                            final int invert = (Integer.MAX_VALUE | matching) ^ (Integer.MAX_VALUE | previousMatching);
+                            if (invert < 0 ? highBitDiff <= previousMatching : highBitDiff > previousMatching) {
                                 super.lengthChanges[super.levenshteinDistance]--;
                                 setInsertsAfter(super.levenshteinDistance);
                                 applied = true;
@@ -106,7 +107,7 @@ class Bitap32 extends BaseBitap {
                             final boolean isReplacement = super.lengthChanges[super.levenshteinDistance] == 1
                                     && ((previousMatchings[maxDistance] & (~Bitap32.this.lastBitMask)) | charPositions) >= combined;
                             // can be insertion or replacement
-                            if (isReplacement) {
+                            if (isReplacement && lengthChanges[maxDistance] != -1) {
                                 super.lengthChanges[super.levenshteinDistance] = 0;
                                 setInsertsAfter(super.levenshteinDistance);
                                 applied = true;

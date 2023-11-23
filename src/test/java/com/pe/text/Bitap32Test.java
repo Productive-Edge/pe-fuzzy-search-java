@@ -592,10 +592,30 @@ class Bitap32Test {
     }
 
     @Test
-    void testInsertBeforeReplacementAndDeletion() {
-        String pattern = "insert before replacement and deletion";
-        String text = "nsert before rrplacement and ddeletion";
+    void insertionBeforeReplacementAndDeletion() {
+        String pattern = "insert replace delete";
+        String text = "nsert rrplace ddelete";
         FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, 3)
+                .matcher(text);
+        assertTrue(matcher.find());
+        assertEquals(text, matcher.foundText());
+    }
+
+    @Test
+    void insertionBeforeReplacementAndDeletionAndReplacement() {
+        String pattern = "insert replace delete re";
+        String text = "nsert rrplace ddelete rr";
+        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, 4)
+                .matcher(text);
+        assertTrue(matcher.find());
+        assertEquals(text, matcher.foundText());
+    }
+
+    @Test
+    void insertionBeforeReplacementAndDeletionAndReplacementAndDelete() {
+        String pattern = "insert replace delete re dde";
+        String text = "nsert rrplace ddelete rr de";
+        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, 5)
                 .matcher(text);
         assertTrue(matcher.find());
         assertEquals(text, matcher.foundText());
