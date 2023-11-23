@@ -91,7 +91,7 @@ class Bitap32 extends BaseBitap {
                             // matching < previousMatching
                             final int highBitDiff = ~(matching ^ previousMatching);
                             final int invert = (Integer.MAX_VALUE | matching) ^ (Integer.MAX_VALUE | previousMatching);
-                            if (invert < 0 ? highBitDiff <= previousMatching : highBitDiff > previousMatching) {
+                            if ((invert < 0) == (highBitDiff <= previousMatching)) {
                                 super.lengthChanges[super.levenshteinDistance]--;
                                 setInsertsAfter(super.levenshteinDistance);
                                 applied = true;
