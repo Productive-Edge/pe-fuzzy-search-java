@@ -1,6 +1,6 @@
 package com.pe.text;
 
-class BitVector {
+final class BitVector {
     final long[] bits;
     final long lastBitMask;
 
@@ -34,7 +34,7 @@ class BitVector {
     }
 
     BitVector or(final BitVector vector) {
-        for (int i = 0, l = bits.length; i < l; i++) bits[i] |= vector.bits[i];
+        for (int i = 0; i < bits.length; i++) bits[i] |= vector.bits[i];
         return this;
     }
 
@@ -44,12 +44,12 @@ class BitVector {
     }
 
     BitVector and(final BitVector vector) {
-        for (int i = 0, l = bits.length; i < l; i++) bits[i] &= vector.bits[i];
+        for (int i = 0; i < bits.length; i++) bits[i] &= vector.bits[i];
         return this;
     }
 
     BitVector invert() {
-        for (int i = 0, l = bits.length; i < l; i++) bits[i] = ~bits[i];
+        for (int i = 0; i < bits.length; i++) bits[i] = ~bits[i];
         return this;
     }
 
@@ -78,6 +78,10 @@ class BitVector {
         return this;
     }
 
+    boolean notLessThan(BitVector vector) {
+        return !lessThan(vector);
+    }
+
     boolean lessThan(BitVector vector) {
         for (int i = bits.length - 1; i >= 0; i--) {
             final long delta = bits[i] - vector.bits[i];
@@ -92,5 +96,23 @@ class BitVector {
             if (bit != -1L) return false;
         }
         return true;
+    }
+
+    public BitVector xor(BitVector vector) {
+        for (int i = 0; i < bits.length; i++) bits[i] ^= vector.bits[i];
+        return this;
+    }
+
+    public boolean isPositive() {
+        return !isNegative();
+    }
+
+    public boolean isNegative() {
+        return bits[bits.length - 1] < 0L;
+    }
+
+    public BitVector andInvertedLastBitMask() {
+        bits[bits.length - 1] &= ~lastBitMask;
+        return this;
     }
 }

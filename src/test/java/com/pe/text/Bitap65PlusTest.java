@@ -148,7 +148,7 @@ class Bitap65PlusTest {
         }
         {
             int i = 0;
-            FuzzyPattern laboris = new Bitap65Plus("laboris", 3);
+            FuzzyPattern laboris = new Bitap65Plus("laboris", 2);
             FuzzyMatcher matcher = laboris.matcher(text);
             String[] results = new String[]{"labore ", "laboris", "laborum"};
             while (matcher.find()) {
@@ -231,7 +231,7 @@ class Bitap65PlusTest {
         FuzzyMatcher matcher = pattern.matcher("abc");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
-        assertEquals(1, matcher.end());
+        assertEquals(2, matcher.end());
         assertEquals(1, matcher.distance());
         assertEquals("aa", matcher.pattern().text());
         assertFalse(matcher.find());

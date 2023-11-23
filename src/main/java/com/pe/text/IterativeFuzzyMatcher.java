@@ -22,14 +22,6 @@ interface IterativeFuzzyMatcher extends DefaultFuzzyMatcher {
     boolean testNextSymbol();
 
     /**
-     * Check if the matching can be found at the ond of text by appending characters from pattern (i.e. INSERT operation)
-     *
-     * @param iteration current iteration (i.e. amount of appended symbols)
-     * @return {@code true} if the next match was found, otherwise - {@code false}.
-     */
-    boolean testNextInsert(int iteration);
-
-    /**
      * Improve region of matching, to prioritize REPLACEMENT over DELETION.
      *
      * @param maxIndex maximum allowed end position to expand region

@@ -72,10 +72,10 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         private int fromIndex;
 
         protected Matcher(CharSequence text, int fromIndex, int toIndex) {
-            this.maxDistance = maxLevenshteinDistance;
-            final int n = this.maxDistance + 1;
-            this.lengthChanges = new int[n];
-            this.lengthChangesCopy = new int[n];
+            maxDistance = maxLevenshteinDistance;
+            final int n = maxDistance + 1;
+            lengthChanges = new int[n];
+            lengthChangesCopy = new int[n];
             reset(text, fromIndex, toIndex);
         }
 
@@ -84,48 +84,47 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             this.text = text;
             this.fromIndex = Math.max(0, fromIndex);
             this.index = this.fromIndex - 1;
-            this.toIndex = Math.max(this.fromIndex, Math.min(text.length(), toIndex));
+            this.toIndex = Math.max(fromIndex, Math.min(text.length(), toIndex));
         }
 
         @Override
         public CharSequence text() {
-            return this.text;
+            return text;
         }
 
         @Override
         public boolean find() {
             resetState();
-            if (this.toIndex - this.index <= 1) return false;
-            while (++this.index < this.toIndex) {
+            if (toIndex - index <= 1) return false;
+            while (++index < toIndex) {
                 if (testNextSymbol()) {
-                    final int maxDistanceCopy = this.maxDistance;
-                    improveResult(Math.min(this.index + BaseBitap.this.pattern.length() + maxLevenshteinDistance + 1 - this.levenshteinDistance, this.toIndex));
+                    final int maxDistanceCopy = maxDistance;
+                    improveResult(Math.min(index + BaseBitap.this.pattern.length() + maxLevenshteinDistance + 1 - levenshteinDistance, toIndex));
                     maxDistance = maxDistanceCopy;
                     return true;
                 }
             }
-
             return false;
         }
 
         @Override
         public int to() {
-            return this.toIndex;
+            return toIndex;
         }
 
         @Override
         public boolean started() {
-            return this.index >= this.fromIndex;
+            return index >= fromIndex;
         }
 
         @Override
         public boolean completed() {
-            return this.index >= this.toIndex;
+            return index >= toIndex;
         }
 
         @Override
         public int from() {
-            return this.fromIndex;
+            return fromIndex;
         }
 
         @Override
@@ -136,21 +135,21 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
 
         @Override
         public void improveResult(int maxIndex) {
-            if (this.levenshteinDistance == 0)
+            if (levenshteinDistance == 0)
                 return;
-            if (this.index + 1 == maxIndex)
+            if (index + 1 == maxIndex)
                 return;
             // store
-            final int indexCopy = this.index;
-            final int levenshteinDistanceCopy = this.levenshteinDistance;
-            final int totalLengthChangesCopy = this.totalLengthChanges();
+            final int indexCopy = index;
+            final int levenshteinDistanceCopy = levenshteinDistance;
+            final int totalLengthChangesCopy = totalLengthChanges();
             // loop is faster on small arrays
-            for (int i = 1; i <= levenshteinDistanceCopy; i++) this.lengthChangesCopy[i] = this.lengthChanges[i];
+            for (int i = 1; i <= levenshteinDistanceCopy; i++) lengthChangesCopy[i] = lengthChanges[i];
 
-            this.maxDistance = this.levenshteinDistance;
-            while (++this.index < maxIndex) {
+            maxDistance = levenshteinDistance;
+            while (++index < maxIndex) {
                 if (testNextSymbol()) {
-                    if (this.levenshteinDistance < levenshteinDistanceCopy || this.totalLengthChanges() < totalLengthChangesCopy) {
+                    if (levenshteinDistance < levenshteinDistanceCopy || totalLengthChanges() < totalLengthChangesCopy) {
                         improveResult(maxIndex);
                         return;
                     }
@@ -159,9 +158,9 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
                 }
             }
             // restore
-            this.index = indexCopy;
-            this.levenshteinDistance = levenshteinDistanceCopy;
-            for (int i = 1; i <= levenshteinDistanceCopy; i++) this.lengthChanges[i] = this.lengthChangesCopy[i];
+            index = indexCopy;
+            levenshteinDistance = levenshteinDistanceCopy;
+            for (int i = 1; i <= levenshteinDistanceCopy; i++) lengthChanges[i] = lengthChangesCopy[i];
 
         }
 
@@ -172,7 +171,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
 
         @Override
         public int getMaxDistance() {
-            return this.maxDistance;
+            return maxDistance;
         }
 
         @Override
@@ -181,7 +180,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         }
 
         protected final void setInsertsAfter(int index) {
-            for (int i = index + 1; i <= this.maxDistance; i++) this.lengthChanges[i] = 1;
+            for (int i = index + 1; i <= maxDistance; i++) lengthChanges[i] = 1;
         }
 
         @Override
@@ -198,22 +197,22 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         @Override
         public int end() {
             ensureFound();
-            return this.index + 1;
+            return index + 1;
         }
 
         @Override
         public int distance() {
-            return this.levenshteinDistance;
+            return levenshteinDistance;
         }
 
         @Override
         public CharSequence foundText() {
-            return this.text.subSequence(start(), end());
+            return text.subSequence(start(), end());
         }
 
         protected int totalLengthChanges() {
             int result = 0;
-            for (int i = 1; i <= this.levenshteinDistance; i++) result += this.lengthChanges[i];
+            for (int i = 1; i <= levenshteinDistance; i++) result += lengthChanges[i];
             return result;
         }
 

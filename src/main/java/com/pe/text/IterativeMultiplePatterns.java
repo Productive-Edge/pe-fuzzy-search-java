@@ -40,46 +40,33 @@ class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPatt
 
         @Override
         public CharSequence text() {
-            return this.text;
+            return text;
         }
 
         @Override
         public boolean find() {
             resetState();
-
-            while (++this.index < this.maxIndex) {
+            while (++index < maxIndex) {
                 if (testNextSymbol()) {
                     return true;
                 }
-            }
-
-            //insert at the end
-            int maxDistance = 0;
-            for (IterativeFuzzyMatcher matcher : this.matchers) {
-                final int max = matcher.pattern().maxLevenshteinDistance();
-                if (maxDistance < max) maxDistance = max;
-            }
-
-            for (int appendCount = 1; appendCount <= maxDistance; appendCount++) {
-                if (testNextInsert(appendCount))
-                    return true;
             }
             return false;
         }
 
         @Override
         public int to() {
-            return this.maxIndex;
+            return maxIndex;
         }
 
         @Override
         public boolean started() {
-            return this.index != -1;
+            return index != -1;
         }
 
         @Override
         public boolean completed() {
-            return this.matched == null;
+            return matched == null;
         }
 
         @Override
@@ -89,41 +76,20 @@ class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPatt
 
         @Override
         public void resetState() {
-            this.matched = null;
-            for (IterativeFuzzyMatcher matcher : this.matchers) matcher.resetState();
-        }
-
-        @Override
-        public int getMaxDistance() {
-            return ensureFound().getMaxDistance();
-        }
-
-        @Override
-        public void setMaxDistance(int maxDistance) {
-            for (IterativeFuzzyMatcher matcher : this.matchers) matcher.setMaxDistance(maxDistance);
+            matched = null;
+            for (IterativeFuzzyMatcher matcher : matchers) matcher.resetState();
         }
 
         @Override
         public boolean testNextSymbol() {
-            for (IterativeFuzzyMatcher matcher : this.matchers) {
-                matcher.setIndex(this.index);
+            for (IterativeFuzzyMatcher matcher : matchers) {
+                matcher.setIndex(index);
                 if (matcher.testNextSymbol()) {
-                    this.matched = matcher;
+                    matched = matcher;
                     int maxDistance = matcher.getMaxDistance();
-                    matcher.improveResult(Math.min(this.index + matcher.pattern().text().length(), maxIndex));
+                    matcher.improveResult(Math.min(index + matcher.pattern().text().length(), maxIndex));
                     matcher.setMaxDistance(maxDistance);
-                    this.index = matcher.end() - 1;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public boolean testNextInsert(final int iteration) {
-            for (IterativeFuzzyMatcher matcher : this.matchers) {
-                if (iteration <= matcher.pattern().maxLevenshteinDistance() && matcher.testNextInsert(iteration)) {
-                    this.matched = matcher;
+                    index = matcher.end() - 1;
                     return true;
                 }
             }
@@ -141,9 +107,19 @@ class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPatt
         }
 
         @Override
+        public int getMaxDistance() {
+            return ensureFound().getMaxDistance();
+        }
+
+        @Override
+        public void setMaxDistance(int maxDistance) {
+            for (IterativeFuzzyMatcher matcher : matchers) matcher.setMaxDistance(maxDistance);
+        }
+
+        @Override
         public IterativeFuzzyMatcher ensureFound() {
             IterativeFuzzyMatcher.super.ensureFound();
-            return this.matched;
+            return matched;
         }
 
         @Override

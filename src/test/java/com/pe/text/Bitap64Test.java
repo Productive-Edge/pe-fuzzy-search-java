@@ -355,7 +355,52 @@ class Bitap64Test {
                 " (!f both, complete 3-11 for dental oniy.i",
                 pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse("")
         );
+    }
 
+    @Test
+    void testTheBest() {
+        String text = "AABAAA";
+        FuzzyPattern pattern = new Bitap64("AAA", 2);
+        assertEquals("AABA", pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse(null));
+        assertEquals("AAA", pattern.matcher(text).findTheBest(true).map(FuzzyResult::foundText).orElse(null));
+    }
+
+    @Test
+    void testRepeated() {
+        String text = "b aa ba a a a";
+        String expl = "0____0_1__";
+        String ptrn = "a aa aaa a";
+        FuzzyPattern pattern = new Bitap64(ptrn, 6);
+        BaseBitap.Matcher matcher = (BaseBitap.Matcher) pattern.matcher(text);
+        assertTrue(matcher.find());
+        assertEquals(3, matcher.distance());
+        assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 1}, matcher.lengthChanges);
+        StringBuilder explanation = new StringBuilder(expl.length());
+        for (int i = 0, j = 0, l = 1; i < ptrn.length(); i++) {
+            if (ptrn.charAt(i) != text.charAt(j++)) {
+                final int op = matcher.lengthChanges[l++];
+                j += op;
+                explanation.append(op == -1 ? 'd' : (char) (op + 48));
+            } else {
+                explanation.append('_');
+            }
+        }
+        assertEquals(expl, explanation.toString());
+        assertEquals("b aa ba a", matcher.foundText());
+    }
+
+
+    @ParameterizedTest
+    @CsvSource({
+            "insert replace delete,nsert rrplace ddelete,3",
+            "insert replace delete re,nsert rrplace ddelete rr,4",
+            "insert replace delete dde,nsert rrplace ddelete de,5",
+    })
+    void insertionBeforeReplacementAndDeletion(String pattern, String text, int maxDiff) {
+        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, maxDiff)
+                .matcher(text);
+        assertTrue(matcher.find());
+        assertEquals(text, matcher.foundText());
     }
 
 }

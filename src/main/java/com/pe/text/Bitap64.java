@@ -43,46 +43,46 @@ class Bitap64 extends BaseBitap {
 
         private Matcher(CharSequence text, int fromIndex, int toIndex) {
             super(text, fromIndex, toIndex);
-            this.currentMatchings = new long[super.maxDistance + 1];
-            this.previousMatchings = new long[super.maxDistance + 1];
+            currentMatchings = new long[maxDistance + 1];
+            previousMatchings = new long[maxDistance + 1];
         }
 
         @Override
         public void resetState() {
             super.resetState();
             long mask = -1L;
-            for (int i = 0; i <= super.maxDistance; i++, mask <<= 1) this.currentMatchings[i] = mask;
+            for (int i = 0; i <= maxDistance; i++, mask <<= 1) currentMatchings[i] = mask;
         }
 
         @Override
         public boolean testNextSymbol() {
-            final long charPositions = Bitap64.this.positionBitMasks.getOrDefault(super.text.charAt(super.index), -1L);
+            final long charPositions = Bitap64.this.positionBitMasks.getOrDefault(text.charAt(index), -1L);
             swapMatching();
-            super.levenshteinDistance = 0;
-            this.currentMatchings[0] = (this.previousMatchings[0] << 1) | charPositions;
-            if (0L == (this.currentMatchings[0] & Bitap64.this.lastBitMask)) {
+            levenshteinDistance = 0;
+            currentMatchings[0] = (previousMatchings[0] << 1) | charPositions;
+            if (0L == (currentMatchings[0] & Bitap64.this.lastBitMask)) {
                 return true;
             }
             boolean applied = false;
-            while (super.levenshteinDistance < super.maxDistance) {
-                final long current = this.currentMatchings[super.levenshteinDistance];
+            while (levenshteinDistance < maxDistance) {
+                final long current = currentMatchings[levenshteinDistance];
                 // ignore current character
-                final long deletion = this.previousMatchings[super.levenshteinDistance++];
+                final long deletion = previousMatchings[levenshteinDistance++];
                 // insert correct character after the current
                 final long insertion = current << 1;
                 // replace current character with correct one
                 final long substitution = deletion << 1;
-                final long previousMatching = this.previousMatchings[super.levenshteinDistance];
+                final long previousMatching = previousMatchings[levenshteinDistance];
                 // get current character as is
                 final long matching = (previousMatching << 1) | charPositions;
-                final long combined = this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
+                final long combined = currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
                 final boolean found = 0L == (combined & Bitap64.this.lastBitMask);
                 if (!applied) {
                     if (deletion < current) {
                         // skip previous operation
                         if (substitution < matching && lengthChanges[levenshteinDistance] == 1) {
-                            super.lengthChanges[super.levenshteinDistance] = 0;
-                            setInsertsAfter(super.levenshteinDistance);
+                            lengthChanges[levenshteinDistance] = 0;
+                            setInsertsAfter(levenshteinDistance);
                             applied = true;
                         }
                     } else {
@@ -92,26 +92,25 @@ class Bitap64 extends BaseBitap {
                             final long highBitDiff = ~(matching ^ previousMatching);
                             final long invert = (Long.MAX_VALUE | matching) ^ (Long.MAX_VALUE | previousMatching);
                             if ((invert < 0L) == (highBitDiff < previousMatching)) {
-                                super.lengthChanges[super.levenshteinDistance]--;
-                                setInsertsAfter(super.levenshteinDistance);
+                                lengthChanges[levenshteinDistance]--;
+                                setInsertsAfter(levenshteinDistance);
                                 applied = true;
                             }
                         } else if (current < deletion) { // most likely insertion
                             // skip it if character can match later
-                            if (insertion <= ((previousMatchings[maxDistance] << 1) | charPositions)) {
-                                if (insertion < previousMatchings[levenshteinDistance]) {
-                                    super.lengthChanges[super.levenshteinDistance] = 1;
-                                    setInsertsAfter(super.levenshteinDistance);
-                                    applied = true;
-                                }
+                            if (insertion < previousMatching && insertion <= ((previousMatchings[maxDistance] << 1) | charPositions)) {
+                                lengthChanges[levenshteinDistance] = 1;
+                                setInsertsAfter(levenshteinDistance);
+                                applied = true;
                             }
                         } else {
-                            final boolean isReplacement = super.lengthChanges[super.levenshteinDistance] == 1
-                                    && ((previousMatchings[maxDistance] & (~Bitap64.this.lastBitMask)) | charPositions) >= combined;
                             // can be insertion or replacement
-                            if (isReplacement && lengthChanges[maxDistance] != -1) {
-                                super.lengthChanges[super.levenshteinDistance] = 0;
-                                setInsertsAfter(super.levenshteinDistance);
+                            final boolean isReplacement = lengthChanges[levenshteinDistance] == 1
+                                    && lengthChanges[maxDistance] != -1
+                                    && ((previousMatchings[maxDistance] & (~Bitap64.this.lastBitMask)) | charPositions) >= combined;
+                            if (isReplacement) {
+                                lengthChanges[levenshteinDistance] = 0;
+                                setInsertsAfter(levenshteinDistance);
                                 applied = true;
                             }
                         }
@@ -122,11 +121,6 @@ class Bitap64 extends BaseBitap {
                 }
             }
             return false;
-        }
-
-        @Override
-        public boolean testNextInsert(final int iteration) {
-            throw new IllegalStateException();
         }
 
         private void swapMatching() {
