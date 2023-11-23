@@ -131,7 +131,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         @Override
         public void resetState() {
             //fill with insertions
-            for (int i = 1; i <= this.maxDistance; i++) this.lengthChanges[i] = 1;
+            setInsertsAfter(0);
         }
 
         @Override
@@ -178,6 +178,10 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         @Override
         public void setMaxDistance(int maxDistance) {
             this.maxDistance = maxDistance;
+        }
+
+        protected final void setInsertsAfter(int index) {
+            for (int i = index + 1; i <= this.maxDistance; i++) this.lengthChanges[i] = 1;
         }
 
         @Override
