@@ -1,75 +1,119 @@
 package com.pe.text;
 
-// it looks like there is no performance benefits for multiple patterns
-class MultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPattern {
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.PriorityQueue;
 
-    private final IterativeFuzzyPattern[] patterns;
+/**
+ * Fallback implementation of the {@link FuzzyMultiPattern} if one of the patterns doesn't implement {@link IterativeFuzzyPattern}
+ * This implementation calls find for all patterns at the begging and then lazily continues searching using priority queue.
+ */
+class MultiplePatterns implements FuzzyMultiPattern {
 
-    MultiplePatterns(IterativeFuzzyPattern[] patterns) {
+    private static final Comparator<FuzzyMatcher> START_POSITION_COMPARATOR =
+            Comparator.comparing(MultiplePatterns::getStartPositionSafely)
+                    .thenComparing(MultiplePatterns::getEndPositionSafely);
+    private final FuzzyPattern[] patterns;
+
+    public MultiplePatterns(FuzzyPattern[] patterns) {
         this.patterns = patterns;
+    }
+
+    private static int getStartPositionSafely(FuzzyMatcher matcher) {
+        return matcher.started() ? matcher.start() : -1;
+    }
+
+    private static int getEndPositionSafely(FuzzyMatcher matcher) {
+        return matcher.started() ? matcher.end() : -1;
     }
 
     @Override
     public FuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
-        return getIterativeMatcher(text, fromIndex, toIndex);
-    }
-
-    @Override
-    public IterativeFuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
         return new Matcher(text, fromIndex, toIndex);
     }
 
-    class Matcher implements IterativeFuzzyMatcher {
+    class Matcher implements DefaultFuzzyMatcher {
+        final FuzzyMatcher[] matchers;
+        final PriorityQueue<FuzzyMatcher> queue;
         private CharSequence text;
-        final IterativeFuzzyMatcher[] matchers;
-        IterativeFuzzyMatcher matched;
-        private int index;
-        private int maxIndex;
+
+        private int toIndex;
 
         Matcher(CharSequence text, int fromIndex, int toIndex) {
             this.text = text;
-            index = Math.max(0, fromIndex) - 1;
-            maxIndex = Math.min(text.length(), toIndex);
-            matchers = new IterativeFuzzyMatcher[patterns.length];
-            for (int i = 0, l = matchers.length; i < l; i++) matchers[i] = patterns[i].getIterativeMatcher(text, index, maxIndex);
-        }
-
-        @Override
-        public CharSequence text() {
-            return text;
+            this.toIndex = toIndex;
+            this.matchers = new IterativeFuzzyMatcher[patterns.length];
+            this.queue = new PriorityQueue<>(patterns.length, START_POSITION_COMPARATOR);
+            for (int i = 0, l = this.matchers.length; i < l; i++) {
+                this.matchers[i] = MultiplePatterns.this.patterns[i].matcher(text, fromIndex, toIndex);
+                this.queue.add(matchers[i]);
+            }
         }
 
         @Override
         public void reset(CharSequence text, int fromIndex, int toIndex) {
             this.text = text;
-            index = Math.max(0, fromIndex) - 1;
-            maxIndex = Math.min(text.length(), maxIndex);
-            for (IterativeFuzzyMatcher matcher : matchers) matcher.reset(text, fromIndex, toIndex);
+            this.toIndex = toIndex;
+            this.queue.clear();
+            for (FuzzyMatcher matcher : this.matchers) {
+                matcher.reset(text, fromIndex, toIndex);
+            }
+        }
+
+        @Override
+        public CharSequence text() {
+            return this.text;
         }
 
         @Override
         public boolean find() {
-            resetState();
-
-            while (++index < maxIndex) {
-                if (testNextSymbol()) {
-                    return true;
+            while (!this.queue.isEmpty()) {
+                FuzzyMatcher matcher = this.queue.poll();
+                // end position of the current matching
+                final int position = !matcher.started() ? -1 : matcher.end();
+                // return matcher to the queue if it has next matching
+                if (matcher.find())
+                    this.queue.add(matcher);
+                // get the next matcher and keep it in the queue
+                matcher = this.queue.peek();
+                // no matchers in the queue - search is stopped
+                if (matcher == null) return false;
+                // continue looping to initialize (start) all matchers in the queue
+                if (!matcher.started()) continue;
+                // remove overlapping matchings
+                while (matcher.start() < position) {
+                    matcher = Objects.requireNonNull(this.queue.poll());
+                    matcher.reset(this.text, position, this.toIndex);
+                    if (matcher.find()) {
+                        this.queue.add(matcher);
+                    }
+                    matcher = this.queue.peek();
+                    if (matcher == null)
+                        return false;
                 }
-            }
-
-            //insert at the end
-            int maxDistance = 0;
-            for (IterativeFuzzyMatcher matcher : matchers) {
-                matcher.reset(text, index + 1, maxIndex);
-                final int max = matcher.pattern().maxLevenshteinDistance();
-                if(maxDistance < max) maxDistance = max;
-            }
-
-            for (int appendCount = 1; appendCount <= maxDistance; appendCount++) {
-                if (testNextInsert(appendCount))
-                    return true;
+                return true;
             }
             return false;
+        }
+
+        @Override
+        public int to() {
+            return this.toIndex;
+        }
+
+        @Override
+        public boolean started() {
+            return this.matchers[0].started();
+        }
+
+        @Override
+        public boolean completed() {
+            return started() && this.queue.isEmpty();
+        }
+
+        @Override
+        public int from() {
+            return this.matchers[0].from();
         }
 
         @Override
@@ -83,11 +127,6 @@ class MultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPattern {
         }
 
         @Override
-        public int distance() {
-            return ensureFound().distance();
-        }
-
-        @Override
         public CharSequence foundText() {
             return ensureFound().foundText();
         }
@@ -98,65 +137,14 @@ class MultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPattern {
         }
 
         @Override
-        public void resetState() {
-            matched = null;
-            for (IterativeFuzzyMatcher matcher : matchers) matcher.resetState();
+        public int distance() {
+            return ensureFound().distance();
         }
 
         @Override
-        public int getMaxDistance() {
-            return ensureFound().getMaxDistance();
-        }
-
-        @Override
-        public void setMaxDistance(int maxDistance) {
-            for (IterativeFuzzyMatcher matcher : matchers) matcher.setMaxDistance(maxDistance);
-        }
-
-        @Override
-        public boolean testNextSymbol() {
-            for (IterativeFuzzyMatcher matcher : matchers) {
-                matcher.setIndex(index);
-                if (matcher.testNextSymbol()) {
-                    matched = matcher;
-                    int maxDistance = matcher.getMaxDistance();
-                    matcher.improveResult(Math.min(index + matcher.pattern().text().length(), maxIndex));
-                    matcher.setMaxDistance(maxDistance);
-                    index = matcher.end() - 1;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public boolean testNextInsert(final int iteration) {
-            for (IterativeFuzzyMatcher matcher : matchers) {
-                if (iteration <= matcher.pattern().maxLevenshteinDistance() && matcher.testNextInsert(iteration)) {
-                    matched = matcher;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public void improveResult(int maxIndex) {
-            ensureFound().improveResult(maxIndex);
-        }
-
-        @Override
-        public void setIndex(int index) {
-            this.index = index;
-        }
-
-        private IterativeFuzzyMatcher ensureFound() {
-            if(index == -1)
-                throw new IllegalStateException("find method must be called before");
-            if(matched == null)
-                throw new IllegalStateException("no matches were found, last call of find method returned false");
-            return matched;
+        public FuzzyMatcher ensureFound() {
+            DefaultFuzzyMatcher.super.ensureFound();
+            return this.queue.peek();
         }
     }
-
 }

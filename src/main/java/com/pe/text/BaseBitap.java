@@ -1,6 +1,9 @@
 package com.pe.text;
 
-public abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
+/**
+ * base abstract implementation of Bitap pattern and matcher
+ */
+abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
     private final CharSequence pattern;
     private final int maxLevenshteinDistance;
     private final boolean caseInsensitive;
@@ -26,66 +29,78 @@ public abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         return caseInsensitive;
     }
 
-    @Override
-    public FuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
-        return getIterativeMatcher(text, fromIndex, toIndex);
-    }
-
     abstract class Matcher implements IterativeFuzzyMatcher {
 
-        protected CharSequence text;
-        protected final int[] lengthChanges;
+        /**
+         * temporal copy of values in the {@link #lengthChanges}
+         */
         private final int[] lengthChangesCopy;
+        /**
+         * contains changes in length (or applied operations DELETION, REPLACEMENT, INSERT) for the matched text:
+         * <ul>
+         *     <li><b>-1</b> symbol was deleted</li>
+         *     <li><b> 0</b> symbol was replaced or matched</li>
+         *     <li><b> 1</b> symbol was inserted</li>
+         * </ul>
+         * values starts from 1st index to match with count of operations (Levenshtein distance)
+         */
+        protected int[] lengthChanges;
+
+        protected CharSequence text;
+        /**
+         * current Levenshtein distance
+         */
         protected int levenshteinDistance;
+        /**
+         * maximum allowed Levenshtein distance
+         */
         protected int maxDistance;
+
+        /**
+         * current search index (i.e. end) in the {@link #text}
+         */
         protected int index;
-        protected int maxIndex;
+
+        /**
+         * stop search index (search is stopped by reaching this position in the {@link #text})
+         */
+        protected int toIndex;
+
+        /**
+         * start search index (search begins from this position in the {@link #text})
+         */
+        private int fromIndex;
 
         protected Matcher(CharSequence text, int fromIndex, int toIndex) {
-            this.text = text;
-            this.maxDistance = maxLevenshteinDistance;
-            final int n = this.maxDistance + 1;
-            this.lengthChanges = new int[n];
-            this.lengthChangesCopy = new int[n];
-            this.index = Math.max(0, fromIndex) - 1;
-            this.maxIndex = Math.min(text.length(), toIndex);
+            maxDistance = maxLevenshteinDistance;
+            final int n = maxDistance + 1;
+            lengthChanges = new int[n];
+            lengthChangesCopy = new int[n];
+            reset(text, fromIndex, toIndex);
         }
 
         @Override
         public void reset(CharSequence text, int fromIndex, int toIndex) {
             this.text = text;
-            this.index = Math.max(0, fromIndex) - 1;
-            this.maxIndex = Math.min(text.length(), toIndex);
+            this.fromIndex = Math.max(0, fromIndex);
+            this.index = this.fromIndex - 1;
+            this.toIndex = Math.max(fromIndex, Math.min(text.length(), toIndex));
         }
 
         @Override
-        public void resetState() {
-            for (int i = 1; i <= this.maxDistance; i++) this.lengthChanges[i] = 0;
-        }
-
-        public int getMaxDistance() {
-            return this.maxDistance;
-        }
-
-        public void setMaxDistance(int maxDistance) {
-            this.maxDistance = maxDistance;
+        public CharSequence text() {
+            return text;
         }
 
         @Override
         public boolean find() {
             resetState();
-            while (++this.index < this.maxIndex) {
+            if (toIndex - index <= 1) return false;
+            while (++index < toIndex) {
                 if (testNextSymbol()) {
-                    final int maxDistanceCopy = this.maxDistance;
-                    improveResult(Math.min(this.index + BaseBitap.this.pattern.length(), this.maxIndex));
+                    final int maxDistanceCopy = maxDistance;
+                    improveResult(Math.min(index + BaseBitap.this.pattern.length() + maxLevenshteinDistance + 1 - levenshteinDistance, toIndex));
                     maxDistance = maxDistanceCopy;
-                    return true;
-                }
-            }
-
-            //insert at the end
-            for (int appendCount = 1; appendCount <= this.maxDistance; appendCount++) {
-                if (testNextInsert(appendCount)) {
                     return true;
                 }
             }
@@ -93,30 +108,61 @@ public abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         }
 
         @Override
+        public int to() {
+            return toIndex;
+        }
+
+        @Override
+        public boolean started() {
+            return index >= fromIndex;
+        }
+
+        @Override
+        public boolean completed() {
+            return index >= toIndex;
+        }
+
+        @Override
+        public int from() {
+            return fromIndex;
+        }
+
+        @Override
+        public void resetState() {
+            //fill with insertions
+            setInsertsAfter(0);
+        }
+
+        @Override
         public void improveResult(int maxIndex) {
-            if (this.levenshteinDistance == 0)
+            if (levenshteinDistance == 0)
                 return;
-            if (this.index + 1 == maxIndex)
+            if (index + 1 == maxIndex)
                 return;
             // store
-            final int indexCopy = this.index;
-            final int levenshteinDistanceCopy = this.levenshteinDistance;
+            final int indexCopy = index;
+            final int levenshteinDistanceCopy = levenshteinDistance;
+            final int totalLengthChangesCopy = totalLengthChanges();
             // loop is faster on small arrays
-            for (int i = 1; i < levenshteinDistanceCopy; i++) this.lengthChangesCopy[i] = this.lengthChanges[i];
+            for (int i = 1; i <= levenshteinDistanceCopy; i++) lengthChangesCopy[i] = lengthChanges[i];
 
-            this.maxDistance = this.levenshteinDistance - 1;
-            while (++this.index < maxIndex) {
+            maxDistance = levenshteinDistance;
+            while (++index < maxIndex) {
                 if (testNextSymbol()) {
-                    improveResult(maxIndex);
-                    return;
+                    if (levenshteinDistance < levenshteinDistanceCopy || totalLengthChanges() < totalLengthChangesCopy) {
+                        improveResult(maxIndex);
+                        return;
+                    }
+                } else {
+                    break;
                 }
             }
-
             // restore
-            this.index = indexCopy;
-            this.levenshteinDistance = levenshteinDistanceCopy;
+            index = indexCopy;
+            levenshteinDistance = levenshteinDistanceCopy;
             // loop is faster on small arrays
-            for (int i = 1; i < levenshteinDistanceCopy; i++) this.lengthChanges[i] = this.lengthChangesCopy[i];
+            for (int i = 1; i <= levenshteinDistanceCopy; i++) lengthChanges[i] = lengthChangesCopy[i];
+
         }
 
         @Override
@@ -125,33 +171,17 @@ public abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         }
 
         @Override
-        public int start() {
-            return end() - BaseBitap.this.pattern.length() + totalLengthChanges();
-        }
-
-        private int totalLengthChanges() {
-            int lengthChange = this.levenshteinDistance == 0 ? 0 : this.lengthChanges[1];
-            for (int i = 2; i <= this.levenshteinDistance; i++) lengthChange += this.lengthChanges[i];
-            return lengthChange;
+        public int getMaxDistance() {
+            return maxDistance;
         }
 
         @Override
-        public int end() {
-            if (this.index == -1)
-                throw new IllegalStateException("find method must be called before index");
-            if (this.index >= this.maxIndex)
-                throw new IllegalStateException("no matches were found, last call of the find method returned false");
-            return this.index + 1;
+        public void setMaxDistance(int maxDistance) {
+            this.maxDistance = maxDistance;
         }
 
-        @Override
-        public int distance() {
-            return this.levenshteinDistance;
-        }
-
-        @Override
-        public CharSequence foundText() {
-            return this.text.subSequence(start(), end());
+        protected final void setInsertsAfter(int index) {
+            for (int i = index + 1; i <= maxDistance; i++) lengthChanges[i] = 1;
         }
 
         @Override
@@ -159,9 +189,32 @@ public abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             return BaseBitap.this;
         }
 
+
         @Override
-        public CharSequence text() {
-            return this.text;
+        public int start() {
+            return end() - BaseBitap.this.pattern.length() + totalLengthChanges();
+        }
+
+        @Override
+        public int end() {
+            ensureFound();
+            return index + 1;
+        }
+
+        @Override
+        public int distance() {
+            return levenshteinDistance;
+        }
+
+        @Override
+        public CharSequence foundText() {
+            return text.subSequence(start(), end());
+        }
+
+        protected int totalLengthChanges() {
+            int result = 0;
+            for (int i = 1; i <= levenshteinDistance; i++) result += lengthChanges[i];
+            return result;
         }
 
     }

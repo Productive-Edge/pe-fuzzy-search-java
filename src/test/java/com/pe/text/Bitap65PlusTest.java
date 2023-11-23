@@ -148,7 +148,7 @@ class Bitap65PlusTest {
         }
         {
             int i = 0;
-            FuzzyPattern laboris = new Bitap65Plus("laboris", 3);
+            FuzzyPattern laboris = new Bitap65Plus("laboris", 2);
             FuzzyMatcher matcher = laboris.matcher(text);
             String[] results = new String[]{"labore ", "laboris", "laborum"};
             while (matcher.find()) {
@@ -223,6 +223,69 @@ class Bitap65PlusTest {
             assertEquals(0, matcher.distance());
             assertEquals(pattern.text(), matcher.foundText().toString());
         }
+    }
+
+    @Test
+    void testAbcBy2a() {
+        FuzzyPattern pattern = new Bitap65Plus("aa", 1);
+        FuzzyMatcher matcher = pattern.matcher("abc");
+        assertTrue(matcher.find());
+        assertEquals(0, matcher.start());
+        assertEquals(2, matcher.end());
+        assertEquals(1, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertFalse(matcher.find());
+    }
+
+    @Test
+    void test1aBy2a() {
+        FuzzyPattern pattern = new Bitap65Plus("aa", 1);
+        FuzzyMatcher matcher = pattern.matcher("a");
+        assertTrue(matcher.find());
+        assertEquals(0, matcher.start());
+        assertEquals(1, matcher.end());
+        assertEquals(1, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertFalse(matcher.find());
+    }
+
+    @Test
+    void test3aBy2a() {
+        FuzzyPattern pattern = new Bitap65Plus("aa", 1);
+        FuzzyMatcher matcher = pattern.matcher("aaa");
+        assertTrue(matcher.find());
+        assertEquals(0, matcher.start());
+        assertEquals(2, matcher.end());
+        assertEquals(0, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertTrue(matcher.find());
+        assertEquals(2, matcher.start());
+        assertEquals(3, matcher.end());
+        assertEquals(1, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertFalse(matcher.find());
+    }
+
+    @Test
+    void test5aBy2a() {
+        FuzzyPattern pattern = new Bitap65Plus("aa", 1);
+        FuzzyMatcher matcher = pattern.matcher("aaaaa");
+        assertTrue(matcher.find());
+        assertEquals(0, matcher.start());
+        assertEquals(2, matcher.end());
+        assertEquals(0, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertTrue(matcher.find());
+        assertEquals(2, matcher.start());
+        assertEquals(4, matcher.end());
+        assertEquals(0, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertTrue(matcher.find());
+        assertEquals(4, matcher.start());
+        assertEquals(5, matcher.end());
+        assertEquals(1, matcher.distance());
+        assertEquals("aa", matcher.pattern().text());
+        assertFalse(matcher.find());
     }
 
 }

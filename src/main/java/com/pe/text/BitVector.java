@@ -1,12 +1,12 @@
 package com.pe.text;
 
-class BitVector {
+final class BitVector {
     final long[] bits;
     final long lastBitMask;
 
     BitVector(final int length) {
         bits = new long[((length - 1) >>> 6) + 1];
-        lastBitMask = 1L << ((length - 1) & 63L);
+        lastBitMask = 1L << ((length - 1) & 63);
     }
 
     BitVector setZeroAt(final int bitIndex) {
@@ -28,28 +28,18 @@ class BitVector {
         return this;
     }
 
-    BitVector or(final long firstBits) {
-        bits[0] |= firstBits;
-        return this;
-    }
-
     BitVector or(final BitVector vector) {
-        for (int i = 0, l = bits.length; i < l; i++) bits[i] |= vector.bits[i];
-        return this;
-    }
-
-    BitVector and(final long firstBits) {
-        bits[0] &= firstBits;
+        for (int i = 0; i < bits.length; i++) bits[i] |= vector.bits[i];
         return this;
     }
 
     BitVector and(final BitVector vector) {
-        for (int i = 0, l = bits.length; i < l; i++) bits[i] &= vector.bits[i];
+        for (int i = 0; i < bits.length; i++) bits[i] &= vector.bits[i];
         return this;
     }
 
     BitVector invert() {
-        for (int i = 0, l = bits.length; i < l; i++) bits[i] = ~bits[i];
+        for (int i = 0; i < bits.length; i++) bits[i] = ~bits[i];
         return this;
     }
 
@@ -66,7 +56,7 @@ class BitVector {
 
     BitVector leftShift(final int bitsCount) {
         final int words = bitsCount >>> 6;
-        for(int i = 0; i < words; i++) bits[i] = 0L;
+        for (int i = 0; i < words; i++) bits[i] = 0L;
         long bit = 0;
         final int reminder = 64 - (bitsCount & 63);
         for (int i = words, l = bits.length; i < l; i++) {
@@ -78,19 +68,34 @@ class BitVector {
         return this;
     }
 
+    boolean notLessThan(BitVector vector) {
+        return !lessThan(vector);
+    }
+
     boolean lessThan(BitVector vector) {
         for (int i = bits.length - 1; i >= 0; i--) {
             final long delta = bits[i] - vector.bits[i];
             if (delta == 0L) continue;
-            return  delta < 0L;
+            return delta < 0L;
         }
         return false;
     }
 
-    boolean isMinusOne() {
-        for (final long bit : bits) {
-            if (bit != -1L) return false;
-        }
-        return true;
+    public BitVector xor(BitVector vector) {
+        for (int i = 0; i < bits.length; i++) bits[i] ^= vector.bits[i];
+        return this;
+    }
+
+    public boolean isPositive() {
+        return !isNegative();
+    }
+
+    public boolean isNegative() {
+        return bits[bits.length - 1] < 0L;
+    }
+
+    public BitVector andInvertedLastBitMask() {
+        bits[bits.length - 1] &= ~lastBitMask;
+        return this;
     }
 }

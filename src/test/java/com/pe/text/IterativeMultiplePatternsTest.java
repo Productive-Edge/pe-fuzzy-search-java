@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MultiplePatternsTest {
+class IterativeMultiplePatternsTest {
 
     @ParameterizedTest
     @CsvSource({
@@ -18,7 +18,7 @@ class MultiplePatternsTest {
             "test,tetest,2,6",
     })
     void testFuzzy0(String test, String text, int start, int end) {
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
+        MatcherProvider patterns = new IterativeMultiplePatterns(new IterativeFuzzyPattern[]{new Bitap65Plus(test, 0)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -31,7 +31,7 @@ class MultiplePatternsTest {
     void testFuzzy0Fail() {
         String test = "test";
         String text = "aaaa";
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
+        MatcherProvider patterns = new IterativeMultiplePatterns(new IterativeFuzzyPattern[]{new Bitap65Plus(test, 0)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertFalse(matcher.find());
         assertThrows(IllegalStateException.class, matcher::start);
@@ -53,7 +53,7 @@ class MultiplePatternsTest {
             "test,tes_t,0,5,1"
     })
     void testFuzzy1(String test, String text, int start, int end, int d) {
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 1)});
+        MatcherProvider patterns = new IterativeMultiplePatterns(new IterativeFuzzyPattern[]{new Bitap65Plus(test, 1)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -74,7 +74,7 @@ class MultiplePatternsTest {
             "test,_es_t"
     })
     void testFuzzy1Fail(String test, String text) {
-        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
+        FuzzyMultiPattern patterns = new IterativeMultiplePatterns(new IterativeFuzzyPattern[]{new Bitap65Plus(test, 0)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertFalse(matcher.find());
     }
@@ -97,7 +97,7 @@ class MultiplePatternsTest {
             "Result,__esul_t,1,8,2"
     })
     void testFuzzy2(String test, String text, int start, int end, int d) {
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 2)});
+        MatcherProvider patterns = new IterativeMultiplePatterns(new IterativeFuzzyPattern[]{new Bitap65Plus(test, 2)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -107,7 +107,7 @@ class MultiplePatternsTest {
 
     @Test
     void testAllMatches() {
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus("test", 1)});
+        MatcherProvider patterns = new IterativeMultiplePatterns(new IterativeFuzzyPattern[]{new Bitap65Plus("test", 1)});
         String text = "Test string to test all matches. tes";
         FuzzyMatcher matcher = patterns.matcher(text);
         assertTrue(matcher.find());
@@ -131,11 +131,11 @@ class MultiplePatternsTest {
 
     @Test
     void testLongPattern() {
-        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{
+        FuzzyMultiPattern patterns = FuzzyMultiPattern.combine(
                 FuzzyPattern.pattern("ut", 0, true),
                 FuzzyPattern.pattern("Duis", 1),
                 FuzzyPattern.pattern("dolor", 1)
-        });
+        );
 
         Stream<FuzzyResult> resultStream = patterns.matcher("Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
                 "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
@@ -148,12 +148,52 @@ class MultiplePatternsTest {
         assertEquals("dolor,ut,dolor,Ut,quis,ut,Duis,ut,dolor,dolor", results);
     }
 
+
+    @Test
+    void testInvalidPatterns() {
+        try {
+            FuzzyMultiPattern matcher = FuzzyMultiPattern.combine(FuzzyPattern.pattern("1", 0), null);
+            assertNull(matcher);
+        } catch (IllegalArgumentException e) {
+            assertEquals("2nd pattern is null", e.getMessage());
+        }
+
+        try {
+            FuzzyMultiPattern matcher = FuzzyMultiPattern.combine(new FuzzyPattern() {
+                @Override
+                public CharSequence text() {
+                    return null;
+                }
+
+                @Override
+                public int maxLevenshteinDistance() {
+                    return 0;
+                }
+
+                @Override
+                public boolean caseInsensitive() {
+                    return false;
+                }
+
+                @Override
+                public FuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
+                    return null;
+                }
+            }, null);
+
+            assertNull(matcher);
+
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().startsWith("2nd pattern is null"));
+        }
+    }
+
     @Test
     void testMatchingOrder() {
-        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{
+        FuzzyMultiPattern patterns = FuzzyMultiPattern.combine(
                 FuzzyPattern.pattern("aaa", 1),
                 FuzzyPattern.pattern("aa", 1)
-        });
+        );
 
         FuzzyMatcher matcher = patterns.matcher("aaaaa");
         assertTrue(matcher.find());
