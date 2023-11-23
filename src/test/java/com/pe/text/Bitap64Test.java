@@ -5,6 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -151,7 +152,7 @@ class Bitap64Test {
         }
         {
             int i = 0;
-            FuzzyPattern laboris = new Bitap64("laboris", 3);
+            FuzzyPattern laboris = new Bitap64("laboris", 2);
             FuzzyMatcher matcher = laboris.matcher(text);
             String[] results = new String[]{"labore ", "laboris", "laborum"};
             while (matcher.find()) {
@@ -191,6 +192,24 @@ class Bitap64Test {
     void testMaxLen() {
         FuzzyPattern pattern = FuzzyPattern.pattern("1234567890123456789012345678901234567890123456789012345678901234", 1);
         assertTrue(pattern instanceof Bitap64);
+        //replace
+        {
+            List<FuzzyResult> results = pattern.matcher("0123456789_12345678901234567890123456789012345678901234567890123456789012345")
+                    .stream().collect(Collectors.toList());
+            assertEquals(1, results.size());
+            assertEquals(1, results.get(0).start());
+            assertEquals(1, results.get(0).distance());
+            assertEquals(65, results.get(0).end());
+        }
+        //better than replace
+        {
+            Optional<FuzzyResult> results = pattern.matcher("0123456789_12345678901234567890123456789012345678901234567890123456789012345")
+                    .findTheBest(true);
+            assertTrue(results.isPresent());
+            assertEquals(11, results.get().start());
+            assertEquals(0, results.get().distance());
+            assertEquals(75, results.get().end());
+        }
         //exact
         {
             List<FuzzyResult> results = pattern.matcher("01234567890123456789012345678901234567890123456789012345678901234567890")
@@ -208,15 +227,6 @@ class Bitap64Test {
             assertEquals(1, results.get(0).start());
             assertEquals(1, results.get(0).distance());
             assertEquals(65, results.get(0).end());
-        }
-        //better than replace
-        {
-            List<FuzzyResult> results = pattern.matcher("0123456789_123456789012345678901234567890123456789012345678901234567890123456789")
-                    .stream().collect(Collectors.toList());
-            assertEquals(1, results.size());
-            assertEquals(11, results.get(0).start());
-            assertEquals(0, results.get(0).distance());
-            assertEquals(75, results.get(0).end());
         }
         //insert
         {
@@ -280,7 +290,7 @@ class Bitap64Test {
         FuzzyMatcher matcher = pattern.matcher("abc");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
-        assertEquals(1, matcher.end());
+        assertEquals(2, matcher.end());
         assertEquals(1, matcher.distance());
         assertEquals("aa", matcher.pattern().text());
         assertFalse(matcher.find());

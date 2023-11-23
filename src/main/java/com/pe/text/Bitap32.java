@@ -72,8 +72,8 @@ class Bitap32 extends BaseBitap {
                 final int insertion = current << 1;
                 // replace current character with correct one
                 final int substitution = deletion << 1;
-                // get current character as is
                 final int previousMatching = this.previousMatchings[super.levenshteinDistance];
+                // get current character as is
                 final int matching = (previousMatching << 1) | charPositions;
                 final int combined = this.currentMatchings[super.levenshteinDistance] = insertion & deletion & substitution & matching;
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
@@ -91,7 +91,7 @@ class Bitap32 extends BaseBitap {
                             // matching < previousMatching
                             final int highBitDiff = ~(matching ^ previousMatching);
                             final int invert = (Integer.MAX_VALUE | matching) ^ (Integer.MAX_VALUE | previousMatching);
-                            if ((invert < 0) == (highBitDiff <= previousMatching)) {
+                            if ((invert < 0) == (highBitDiff < previousMatching)) {
                                 super.lengthChanges[super.levenshteinDistance]--;
                                 setInsertsAfter(super.levenshteinDistance);
                                 applied = true;
@@ -99,9 +99,11 @@ class Bitap32 extends BaseBitap {
                         } else if (current < deletion) { // most likely insertion
                             // skip it if character can match later
                             if (insertion <= ((previousMatchings[maxDistance] << 1) | charPositions)) {
-                                super.lengthChanges[super.levenshteinDistance] = 1;
-                                setInsertsAfter(super.levenshteinDistance);
-                                applied = true;
+                                if (insertion < previousMatchings[levenshteinDistance]) {
+                                    super.lengthChanges[super.levenshteinDistance] = 1;
+                                    setInsertsAfter(super.levenshteinDistance);
+                                    applied = true;
+                                }
                             }
                         } else {
                             final boolean isReplacement = super.lengthChanges[super.levenshteinDistance] == 1
