@@ -38,6 +38,7 @@ class Bitap32 extends BaseBitap {
         return new Matcher(text, fromIndex, toIndex);
     }
 
+
     final class Matcher extends BaseBitap.Matcher {
         private int[] previousMatchings;
         private int[] currentMatchings;
@@ -122,7 +123,7 @@ class Bitap32 extends BaseBitap {
             }
             return false;
         }
-        
+
         private void swapMatching() {
             final int[] tmp = currentMatchings;
             currentMatchings = previousMatchings;
