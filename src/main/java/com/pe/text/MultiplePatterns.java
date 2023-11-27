@@ -3,6 +3,7 @@ package com.pe.text;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.PriorityQueue;
+import java.util.stream.Stream;
 
 /**
  * Fallback implementation of the {@link FuzzyMultiPattern} if one of the patterns doesn't implement {@link IterativeFuzzyPattern}
@@ -139,6 +140,11 @@ class MultiplePatterns implements FuzzyMultiPattern {
         @Override
         public int distance() {
             return ensureFound().distance();
+        }
+
+        @Override
+        public Stream<OperationType> streamEdits() {
+            return ensureFound().streamEdits();
         }
 
         @Override

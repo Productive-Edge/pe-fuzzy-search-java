@@ -1,5 +1,6 @@
 package com.pe.text;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
@@ -458,7 +459,49 @@ class Bitap32Test {
         assertEquals(3, m.end(), "end");
         assertEquals("aaa", m.foundText().toString(), "foundText");
         assertEquals(2, m.distance(), "distance");
-        assertArrayEquals(new int[]{0, 1, 1}, ((BaseBitap.Matcher) m).lengthChanges);
+        assertArrayEquals(
+                new OperationType[]{OperationType.INSERTION, OperationType.INSERTION},
+                m.streamEdits().toArray());
+        List<Operation> all = m.streamAllDetails().collect(Collectors.toList());
+        assertEquals(5, all.size());
+
+        assertEquals(OperationType.MATCHING, all.get(0).type());
+        assertNotNull(all.get(0).patternChar());
+        assertEquals('a', all.get(0).patternChar().value());
+        assertEquals(0, all.get(0).patternChar().index());
+        assertNotNull(all.get(0).textChar());
+        assertEquals('a', all.get(0).textChar().value());
+        assertEquals(0, all.get(0).textChar().index());
+
+        assertEquals(OperationType.MATCHING, all.get(1).type());
+        assertNotNull(all.get(1).patternChar());
+        assertEquals('a', all.get(1).patternChar().value());
+        assertEquals(1, all.get(1).patternChar().index());
+        assertNotNull(all.get(1).textChar());
+        assertEquals('a', all.get(1).textChar().value());
+        assertEquals(1, all.get(1).textChar().index());
+
+        assertEquals(OperationType.INSERTION, all.get(2).type());
+        assertNotNull(all.get(2).patternChar());
+        assertEquals('b', all.get(2).patternChar().value());
+        assertEquals(2, all.get(2).patternChar().index());
+        assertNull(all.get(2).textChar());
+
+
+        assertEquals(OperationType.MATCHING, all.get(3).type());
+        assertNotNull(all.get(3).patternChar());
+        assertEquals('a', all.get(3).patternChar().value());
+        assertEquals(3, all.get(3).patternChar().index());
+        assertNotNull(all.get(3).textChar());
+        assertEquals('a', all.get(3).textChar().value());
+        assertEquals(2, all.get(3).textChar().index());
+
+        assertEquals(OperationType.INSERTION, all.get(4).type());
+        assertNotNull(all.get(4).patternChar());
+        assertEquals('a', all.get(4).patternChar().value());
+        assertEquals(4, all.get(4).patternChar().index());
+        assertNull(all.get(4).textChar());
+
         assertFalse(m.find());
     }
 
@@ -495,6 +538,13 @@ class Bitap32Test {
         assertEquals(2, matcher.end());
         assertEquals(1, matcher.distance());
         assertEquals("ab", matcher.foundText());
+        List<Operation> all = matcher.streamAllDetails().collect(Collectors.toList());
+        assertEquals(2, all.size());
+        Assertions.assertEquals(OperationType.MATCHING, all.get(0).type());
+        Assertions.assertEquals(OperationType.REPLACEMENT, all.get(1).type());
+        Assertions.assertEquals('a', all.get(1).patternChar().value());
+        Assertions.assertEquals('b', all.get(1).textChar().value());
+        Assertions.assertEquals(0.5f, matcher.similarity());
         assertFalse(matcher.find());
     }
 
@@ -596,13 +646,18 @@ class Bitap32Test {
     @CsvSource({
             "insert replace delete,nsert rrplace ddelete,3",
             "insert replace delete re,nsert rrplace ddelete rr,4",
-            "insert replace delete dde,nsert rrplace ddelete de,5",
+            "insert replace delete dde,nsert rrplace ddelete de,4",
     })
     void insertionBeforeReplacementAndDeletion(String pattern, String text, int maxDiff) {
         FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, maxDiff)
                 .matcher(text);
         assertTrue(matcher.find());
         assertEquals(text, matcher.foundText());
+        List<Operation> edits = matcher.streamEditsDetails().collect(Collectors.toList());
+        assertEquals(maxDiff, edits.size());
+        assertEquals(OperationType.INSERTION, edits.get(0).type());
+        assertEquals(OperationType.REPLACEMENT, edits.get(1).type());
+        assertEquals(OperationType.DELETION, edits.get(2).type());
     }
 
 }

@@ -1,5 +1,8 @@
 package com.pe.text;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 /**
  * base abstract implementation of Bitap pattern and matcher
  */
@@ -29,23 +32,21 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         return caseInsensitive;
     }
 
+
+    @Override
+    public String toString() {
+        return getClass().getName() + "{pattern=" + pattern +
+                ", maxLevenshteinDistance=" + maxLevenshteinDistance +
+                ", caseInsensitive=" + caseInsensitive +
+                '}';
+    }
+
     abstract class Matcher implements IterativeFuzzyMatcher {
 
         /**
          * temporal copy of values in the {@link #lengthChanges}
          */
         private final int[] lengthChangesCopy;
-        /**
-         * contains changes in length (or applied operations DELETION, REPLACEMENT, INSERT) for the matched text:
-         * <ul>
-         *     <li><b>-1</b> symbol was deleted</li>
-         *     <li><b> 0</b> symbol was replaced or matched</li>
-         *     <li><b> 1</b> symbol was inserted</li>
-         * </ul>
-         * values starts from 1st index to match with count of operations (Levenshtein distance)
-         */
-        protected int[] lengthChanges;
-
         protected CharSequence text;
         /**
          * current Levenshtein distance
@@ -55,17 +56,24 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
          * maximum allowed Levenshtein distance
          */
         protected int maxDistance;
-
         /**
          * current search index (i.e. end) in the {@link #text}
          */
         protected int index;
-
         /**
          * stop search index (search is stopped by reaching this position in the {@link #text})
          */
         protected int toIndex;
-
+        /**
+         * contains changes in length (or applied operations DELETION, REPLACEMENT, INSERT) for the matched text:
+         * <ul>
+         *     <li><b>-1</b> symbol was deleted</li>
+         *     <li><b> 0</b> symbol was replaced or matched</li>
+         *     <li><b> 1</b> symbol was inserted</li>
+         * </ul>
+         * values starts from 1st index to match with count of operations (Levenshtein distance)
+         */
+        int[] lengthChanges;
         /**
          * start search index (search begins from this position in the {@link #text})
          */
@@ -185,6 +193,16 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         }
 
         @Override
+        public String toString() {
+            return getClass().getName() + '{' +
+                    "edits=" + Arrays.toString(streamEdits().toArray()) +
+                    ", text=" + text +
+                    ", distance={current=" + levenshteinDistance + ", max=" + maxDistance +
+                    "}, index=" + index +
+                    " in [" + fromIndex + '-' + toIndex + "]}";
+        }
+
+        @Override
         public FuzzyPattern pattern() {
             return BaseBitap.this;
         }
@@ -217,5 +235,13 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             return result;
         }
 
+        @Override
+        public Stream<OperationType> streamEdits() {
+            if (levenshteinDistance == 0)
+                return Stream.empty();
+            return Arrays.stream(lengthChanges, 1, levenshteinDistance + 1)
+                    .mapToObj(change -> OperationType.values[change + 2]);
+        }
     }
+
 }

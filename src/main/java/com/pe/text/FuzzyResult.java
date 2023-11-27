@@ -1,5 +1,8 @@
 package com.pe.text;
 
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 /**
  * Interface of the successfully matched result.
  * <p>
@@ -55,7 +58,7 @@ public interface FuzzyResult {
      * @return similarity of the found subsequence with the pattern, which value is between 0.0f and 1.0f
      */
     default float similarity() {
-        return pattern().text().length() - distance() / (float) pattern().text().length();
+        return (pattern().text().length() - distance()) / (float) pattern().text().length();
     }
 
     /**
@@ -72,4 +75,22 @@ public interface FuzzyResult {
      * @throws IllegalStateException in case {@link FuzzyMatcher#distance()} was called when no current matching was found.
      */
     int distance();
+
+    default Stream<Operation> streamEditsDetails() {
+        return StreamSupport.stream(
+                () -> new OperationsSpliterator(new OperationsIterator(this, false)),
+                OperationsSpliterator.CHARACTERISTICS,
+                false
+        );
+    }
+
+    default Stream<Operation> streamAllDetails() {
+        return StreamSupport.stream(
+                () -> new OperationsSpliterator(new OperationsIterator(this, true)),
+                OperationsSpliterator.CHARACTERISTICS,
+                false
+        );
+    }
+
+    Stream<OperationType> streamEdits();
 }

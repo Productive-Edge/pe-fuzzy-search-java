@@ -1,6 +1,8 @@
 package com.pe.text;
 
 
+import java.util.stream.Stream;
+
 class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPattern {
 
     private final IterativeFuzzyPattern[] patterns;
@@ -145,6 +147,11 @@ class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPatt
         @Override
         public int distance() {
             return ensureFound().distance();
+        }
+
+        @Override
+        public Stream<OperationType> streamEdits() {
+            return ensureFound().streamEdits();
         }
     }
 
