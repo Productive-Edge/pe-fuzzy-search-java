@@ -3,6 +3,9 @@ package com.pe.text;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+/**
+ * Record implements {@link FuzzyResult} interface to store a copy of a matcher state at each finding for safe streaming.
+ */
 class FuzzyResultRecord implements FuzzyResult {
 
     private final FuzzyPattern pattern;
@@ -18,7 +21,7 @@ class FuzzyResultRecord implements FuzzyResult {
         this.end = matcher.end();
         this.distance = matcher.distance();
         this.foundText = matcher.foundText();
-        this.edits = matcher.streamEdits().mapToInt(OperationType::ordinal).toArray();
+        this.edits = matcher.streamEditTypes().mapToInt(OperationType::ordinal).toArray();
     }
 
     @Override
@@ -47,7 +50,7 @@ class FuzzyResultRecord implements FuzzyResult {
     }
 
     @Override
-    public Stream<OperationType> streamEdits() {
+    public Stream<OperationType> streamEditTypes() {
         return Arrays.stream(edits).mapToObj(ordinal -> OperationType.values[ordinal]);
     }
 
@@ -58,6 +61,6 @@ class FuzzyResultRecord implements FuzzyResult {
                 ", end=" + end +
                 ", distance=" + distance +
                 ", foundText=\"" + foundText + '"' +
-                ", edits=" + Arrays.toString(streamEdits().toArray()) + "}";
+                ", edits=" + Arrays.toString(streamEditTypes().toArray()) + "}";
     }
 }

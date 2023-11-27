@@ -461,8 +461,8 @@ class Bitap32Test {
         assertEquals(2, m.distance(), "distance");
         assertArrayEquals(
                 new OperationType[]{OperationType.INSERTION, OperationType.INSERTION},
-                m.streamEdits().toArray());
-        List<Operation> all = m.streamAllDetails().collect(Collectors.toList());
+                m.streamEditTypes().toArray());
+        List<Operation> all = m.streamCharByCharOperations().collect(Collectors.toList());
         assertEquals(5, all.size());
 
         assertEquals(OperationType.MATCHING, all.get(0).type());
@@ -538,7 +538,7 @@ class Bitap32Test {
         assertEquals(2, matcher.end());
         assertEquals(1, matcher.distance());
         assertEquals("ab", matcher.foundText());
-        List<Operation> all = matcher.streamAllDetails().collect(Collectors.toList());
+        List<Operation> all = matcher.streamCharByCharOperations().collect(Collectors.toList());
         assertEquals(2, all.size());
         Assertions.assertEquals(OperationType.MATCHING, all.get(0).type());
         Assertions.assertEquals(OperationType.REPLACEMENT, all.get(1).type());

@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * base abstract implementation of Bitap pattern and matcher
+ * Base abstract implementation of the Fuzzy Pattern and Matcher
  */
 abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
     private final CharSequence pattern;
@@ -150,14 +150,15 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             // store
             final int indexCopy = index;
             final int levenshteinDistanceCopy = levenshteinDistance;
-            final int totalLengthChangesCopy = totalLengthChanges();
+            final int totalLengthChangesCopy = sumLengthChanges();
             // loop is faster on small arrays
+            //noinspection ManualArrayCopy
             for (int i = 1; i <= levenshteinDistanceCopy; i++) lengthChangesCopy[i] = lengthChanges[i];
 
             maxDistance = levenshteinDistance;
             while (++index < maxIndex) {
                 if (testNextSymbol()) {
-                    if (levenshteinDistance < levenshteinDistanceCopy || totalLengthChanges() < totalLengthChangesCopy) {
+                    if (levenshteinDistance < levenshteinDistanceCopy || sumLengthChanges() < totalLengthChangesCopy) {
                         improveResult(maxIndex);
                         return;
                     }
@@ -169,6 +170,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             index = indexCopy;
             levenshteinDistance = levenshteinDistanceCopy;
             // loop is faster on small arrays
+            //noinspection ManualArrayCopy
             for (int i = 1; i <= levenshteinDistanceCopy; i++) lengthChanges[i] = lengthChangesCopy[i];
 
         }
@@ -188,6 +190,12 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             this.maxDistance = maxDistance;
         }
 
+        /**
+         * Sets insertion operations after the specified operation by index
+         *
+         * @param index of the operation which should be unchanged,
+         *              all following operations have to be reset to the insertions
+         */
         protected final void setInsertsAfter(int index) {
             for (int i = index + 1; i <= maxDistance; i++) lengthChanges[i] = 1;
         }
@@ -195,7 +203,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         @Override
         public String toString() {
             return getClass().getName() + '{' +
-                    "edits=" + Arrays.toString(streamEdits().toArray()) +
+                    "edits=" + Arrays.toString(streamEditTypes().toArray()) +
                     ", text=" + text +
                     ", distance={current=" + levenshteinDistance + ", max=" + maxDistance +
                     "}, index=" + index +
@@ -210,7 +218,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
 
         @Override
         public int start() {
-            return end() - BaseBitap.this.pattern.length() + totalLengthChanges();
+            return end() - BaseBitap.this.pattern.length() + sumLengthChanges();
         }
 
         @Override
@@ -229,14 +237,19 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
             return text.subSequence(start(), end());
         }
 
-        protected int totalLengthChanges() {
+        /**
+         * Sum of the all length changes, which is the difference in length between pattern and this matching
+         *
+         * @return Sum of the all length changes
+         */
+        protected int sumLengthChanges() {
             int result = 0;
             for (int i = 1; i <= levenshteinDistance; i++) result += lengthChanges[i];
             return result;
         }
 
         @Override
-        public Stream<OperationType> streamEdits() {
+        public Stream<OperationType> streamEditTypes() {
             if (levenshteinDistance == 0)
                 return Stream.empty();
             return Arrays.stream(lengthChanges, 1, levenshteinDistance + 1)

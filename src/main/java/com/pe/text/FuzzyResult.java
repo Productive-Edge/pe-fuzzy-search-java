@@ -84,7 +84,13 @@ public interface FuzzyResult {
         );
     }
 
-    default Stream<Operation> streamAllDetails() {
+    /**
+     * Streams all operations for this result char-by-char including matchings.
+     *
+     * @return stream with all operations for this result char-by-char including matchings
+     * @see Operation
+     */
+    default Stream<Operation> streamCharByCharOperations() {
         return StreamSupport.stream(
                 () -> new OperationsSpliterator(new OperationsIterator(this, true)),
                 OperationsSpliterator.CHARACTERISTICS,
@@ -92,5 +98,24 @@ public interface FuzzyResult {
         );
     }
 
-    Stream<OperationType> streamEdits();
+    /**
+     * Streams edit operations applied to the found text to get pattern.
+     *
+     * @return stream with edit operations applied to the found text to get pattern
+     * @see Operation
+     */
+    default Stream<Operation> streamEditOperations() {
+        return StreamSupport.stream(
+                () -> new OperationsSpliterator(new OperationsIterator(this, false)),
+                OperationsSpliterator.CHARACTERISTICS,
+                false
+        );
+    }
+
+    /**
+     * Streams edit operations, without matching, applied to the text to match the pattern
+     *
+     * @return stream with applied edit operations, without matching.
+     */
+    Stream<OperationType> streamEditTypes();
 }

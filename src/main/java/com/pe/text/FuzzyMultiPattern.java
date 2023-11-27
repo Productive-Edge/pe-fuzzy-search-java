@@ -1,6 +1,6 @@
 package com.pe.text;
 
-import com.pe.ordinal.Ordinal;
+import com.pe.ordinal.OrdinalSuffix;
 
 import java.util.Arrays;
 
@@ -80,12 +80,14 @@ public interface FuzzyMultiPattern extends MatcherProvider {
         for (int i = 0; i < others.length; i++) patterns[i + 2] = others[i];
         boolean isIterative = true;
         for (int i = 0; i < patterns.length; i++) {
-            if (patterns[i] == null) throw new IllegalArgumentException(Ordinal.en(i + 1) + " pattern is null");
+            if (patterns[i] == null)
+                throw new IllegalArgumentException(OrdinalSuffix.EN.addTo(i + 1) + " pattern is null");
             isIterative = isIterative && patterns[i] instanceof IterativeFuzzyPattern;
         }
         if (isIterative) {
             return new IterativeMultiplePatterns(Arrays.copyOf(patterns, patterns.length, IterativeFuzzyPattern[].class));
         }
+        // fall back to not iterative implementation
         return new MultiplePatterns(patterns);
     }
 }

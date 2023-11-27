@@ -3,6 +3,9 @@ package com.pe.text;
 
 import java.util.stream.Stream;
 
+/**
+ * Internal implementation of the {@link IterativeFuzzyPattern} and {@link IterativeFuzzyMatcher}
+ */
 class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPattern {
 
     private final IterativeFuzzyPattern[] patterns;
@@ -150,8 +153,8 @@ class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPatt
         }
 
         @Override
-        public Stream<OperationType> streamEdits() {
-            return ensureFound().streamEdits();
+        public Stream<OperationType> streamEditTypes() {
+            return ensureFound().streamEditTypes();
         }
     }
 

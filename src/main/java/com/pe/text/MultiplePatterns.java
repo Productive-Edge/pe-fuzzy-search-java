@@ -143,8 +143,8 @@ class MultiplePatterns implements FuzzyMultiPattern {
         }
 
         @Override
-        public Stream<OperationType> streamEdits() {
-            return ensureFound().streamEdits();
+        public Stream<OperationType> streamEditTypes() {
+            return ensureFound().streamEditTypes();
         }
 
         @Override

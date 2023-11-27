@@ -2,9 +2,20 @@ package com.pe.text;
 
 import it.unimi.dsi.fastutil.chars.Char2IntOpenHashMap;
 
+/**
+ * Bitap implementation using 32-bit word, it is even slightly faster on the 64-bit CPUs.
+ */
 class Bitap32 extends BaseBitap {
 
-    private final Char2IntOpenHashMap positionBitMasks;
+    /**
+     * Positions inverted bitmask for every character in the pattern
+     */
+    private final Char2IntOpenHashMap positionMasks;
+
+    /**
+     * Position bitmask (not inverted) of the last pattern character,
+     * stores the stop condition for the matching
+     */
     private final int lastBitMask;
 
     public Bitap32(CharSequence pattern, int maxLevenshteinDistance) {
@@ -17,18 +28,18 @@ class Bitap32 extends BaseBitap {
             throw new IllegalArgumentException("Pattern length exceeds allowed maximum in 32 characters");
         }
         lastBitMask = 1 << (pattern.length() - 1);
-        positionBitMasks = new Char2IntOpenHashMap(pattern.length() << 1);
+        positionMasks = new Char2IntOpenHashMap(pattern.length() << 1);
         if (!caseInsensitive) {
             for (int i = 0; i < pattern.length(); i++) {
                 final char c = pattern.charAt(i);
-                positionBitMasks.put(c, positionBitMasks.getOrDefault(c, -1) & (~(1 << i)));
+                positionMasks.put(c, positionMasks.getOrDefault(c, -1) & (~(1 << i)));
             }
         } else {
             for (int i = 0; i < pattern.length(); i++) {
                 final char lc = Character.toLowerCase(pattern.charAt(i));
-                final int mask = positionBitMasks.getOrDefault(lc, -1) & (~(1 << i));
-                positionBitMasks.put(lc, mask);
-                positionBitMasks.put(Character.toUpperCase(lc), mask);
+                final int mask = positionMasks.getOrDefault(lc, -1) & (~(1 << i));
+                positionMasks.put(lc, mask);
+                positionMasks.put(Character.toUpperCase(lc), mask);
             }
         }
     }
@@ -37,10 +48,16 @@ class Bitap32 extends BaseBitap {
     public IterativeFuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
         return new Matcher(text, fromIndex, toIndex);
     }
-
-
+    
     final class Matcher extends BaseBitap.Matcher {
+
+        /**
+         * The best matching masks for each amount of edits at the previous index
+         */
         private int[] previousMatchings;
+        /**
+         * The best matching masks for each amount of edits at the current index
+         */
         private int[] currentMatchings;
 
         private Matcher(CharSequence text, int fromIndex, int toIndex) {
@@ -57,8 +74,8 @@ class Bitap32 extends BaseBitap {
 
         @Override
         public boolean testNextSymbol() {
-            final int charPositions = Bitap32.this.positionBitMasks.getOrDefault(text.charAt(index), -1);
-            swapMatching();
+            final int charPositions = Bitap32.this.positionMasks.getOrDefault(text.charAt(index), -1);
+            swapMatchings();
             levenshteinDistance = 0;
             currentMatchings[0] = (previousMatchings[0] << 1) | charPositions;
             if (0 == (currentMatchings[0] & Bitap32.this.lastBitMask)) {
@@ -124,7 +141,7 @@ class Bitap32 extends BaseBitap {
             return false;
         }
 
-        private void swapMatching() {
+        private void swapMatchings() {
             final int[] tmp = currentMatchings;
             currentMatchings = previousMatchings;
             previousMatchings = tmp;
