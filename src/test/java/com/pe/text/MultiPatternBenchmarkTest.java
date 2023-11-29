@@ -20,9 +20,9 @@ import java.util.stream.Stream;
 
 public class MultiPatternBenchmarkTest {
 
-    public static final FuzzyPattern UT = FuzzyPattern.pattern("ut", 0, true);
-    public static final FuzzyPattern DUIS = FuzzyPattern.pattern("Duis", 1);
-    public static final FuzzyPattern DOLOR = FuzzyPattern.pattern("dolor", 1);
+    public static final FuzzyPattern UT = FuzzyPattern.compile("ut", 0, true);
+    public static final FuzzyPattern DUIS = FuzzyPattern.compile("Duis", 1);
+    public static final FuzzyPattern DOLOR = FuzzyPattern.compile("dolor", 1);
 
     public static final FuzzyMultiPattern iterativeMultiPattern = FuzzyMultiPattern.combine(
             UT,

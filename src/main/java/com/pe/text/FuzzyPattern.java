@@ -1,8 +1,8 @@
 package com.pe.text;
 
 /**
- * Fuzzy pattern interface. Instance can be created via {@link FuzzyPattern#pattern(CharSequence, int)}
- * and {@link FuzzyPattern#pattern(CharSequence, int, boolean)}
+ * Fuzzy pattern interface. Instance can be created via {@link FuzzyPattern#compile(CharSequence, int)}
+ * and {@link FuzzyPattern#compile(CharSequence, int, boolean)}
  */
 public interface FuzzyPattern extends MatcherProvider {
 
@@ -14,8 +14,8 @@ public interface FuzzyPattern extends MatcherProvider {
      * @return Case-sensitive compiled fuzzy search pattern.
      * @throws IllegalArgumentException if specified text is null or empty
      */
-    static FuzzyPattern pattern(CharSequence pattern, int maxLevenshteinDistance) {
-        return pattern(pattern, maxLevenshteinDistance, false);
+    static FuzzyPattern compile(CharSequence pattern, int maxLevenshteinDistance) {
+        return compile(pattern, maxLevenshteinDistance, false);
     }
 
     /**
@@ -28,7 +28,7 @@ public interface FuzzyPattern extends MatcherProvider {
      * @return Compiled fuzzy search pattern with specified case-sensitivity.
      * @throws IllegalArgumentException if specified text is null or empty
      */
-    static FuzzyPattern pattern(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
+    static FuzzyPattern compile(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
         if (pattern == null)
             throw new IllegalArgumentException("pattern text can not be null");
         if (pattern.length() == 0)

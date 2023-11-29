@@ -19,8 +19,8 @@ public class LevenshteinDistanceBenchmarkTest {
 
     public static final String test1a = "This is a test text of testing";
     public static final String test1b = "teksting";
-    public static final FuzzyPattern noLimitPattern = FuzzyPattern.pattern(test1b, test1b.length());
-    public static final FuzzyPattern limit3Pattern = FuzzyPattern.pattern(test1b, 3);
+    public static final FuzzyPattern noLimitPattern = FuzzyPattern.compile(test1b, test1b.length());
+    public static final FuzzyPattern limit3Pattern = FuzzyPattern.compile(test1b, 3);
 
 
     @Disabled("benchmarks have to be run manually")

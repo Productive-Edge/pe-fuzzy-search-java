@@ -56,8 +56,8 @@ class FuzzyResultRecord implements FuzzyResult {
 
     @Override
     public String toString() {
-        return "FuzzyResultRecord{" + pattern.toString() +
-                ", start=\"" + start + '"' +
+        return "FuzzyResul{" + pattern.toString() +
+                ", start=" + start +
                 ", end=" + end +
                 ", distance=" + distance +
                 ", foundText=\"" + foundText + '"' +

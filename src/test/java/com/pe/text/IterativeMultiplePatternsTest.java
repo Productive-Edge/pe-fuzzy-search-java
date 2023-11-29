@@ -132,9 +132,9 @@ class IterativeMultiplePatternsTest {
     @Test
     void testLongPattern() {
         FuzzyMultiPattern patterns = FuzzyMultiPattern.combine(
-                FuzzyPattern.pattern("ut", 0, true),
-                FuzzyPattern.pattern("Duis", 1),
-                FuzzyPattern.pattern("dolor", 1)
+                FuzzyPattern.compile("ut", 0, true),
+                FuzzyPattern.compile("Duis", 1),
+                FuzzyPattern.compile("dolor", 1)
         );
 
         Stream<FuzzyResult> resultStream = patterns.matcher("Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
@@ -152,7 +152,7 @@ class IterativeMultiplePatternsTest {
     @Test
     void testInvalidPatterns() {
         try {
-            FuzzyMultiPattern matcher = FuzzyMultiPattern.combine(FuzzyPattern.pattern("1", 0), null);
+            FuzzyMultiPattern matcher = FuzzyMultiPattern.combine(FuzzyPattern.compile("1", 0), null);
             assertNull(matcher);
         } catch (IllegalArgumentException e) {
             assertEquals("2nd pattern is null", e.getMessage());
@@ -191,8 +191,8 @@ class IterativeMultiplePatternsTest {
     @Test
     void testMatchingOrder() {
         FuzzyMultiPattern patterns = FuzzyMultiPattern.combine(
-                FuzzyPattern.pattern("aaa", 1),
-                FuzzyPattern.pattern("aa", 1)
+                FuzzyPattern.compile("aaa", 1),
+                FuzzyPattern.compile("aa", 1)
         );
 
         FuzzyMatcher matcher = patterns.matcher("aaaaa");

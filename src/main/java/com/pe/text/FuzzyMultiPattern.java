@@ -13,8 +13,8 @@ import java.util.Arrays;
  *
  * <pre>{@code
  *   private static final FuzzyMultiPattern INGREDIENTS_TO_EXCLUDE = FuzzyMultiPattern.combine(
- *      FuzzyPattern.pattern("Corn Syrup", 3, true), //maximum 3 OCR errors, case insensitive
- *      FuzzyPattern.pattern("Tomato Concentrate", 4, true) //maximum 4 OCR errors, case insensitive
+ *      FuzzyPattern.compile("Corn Syrup", 3, true), //maximum 3 OCR errors, case insensitive
+ *      FuzzyPattern.compile("Tomato Concentrate", 4, true) //maximum 4 OCR errors, case insensitive
  *   );
  *
  *   public static boolean hasUnwantedIngredientIn(String ketchupIngredientsWithOcrErrors) {
@@ -29,19 +29,19 @@ import java.util.Arrays;
  * <pre>{@code
  *
  *     private static final FuzzyPattern[] KEYWORDS = {
- *         FuzzyPattern.pattern("56a. Provider", 3),
- *         FuzzyPattern.pattern("Speciality Code", 4),
- *         FuzzyPattern.pattern("57. Phone", 3),
- *         FuzzyPattern.pattern("52. Phone", 3),
- *         FuzzyPattern.pattern("49. NPI", 2),
- *         FuzzyPattern.pattern("50. License Number", 5),
- *         FuzzyPattern.pattern("57. License Number", 5),
- *         FuzzyPattern.pattern("51. SSN or TIN", 3),
+ *         FuzzyPattern.compile("56a. Provider", 3),
+ *         FuzzyPattern.compile("Speciality Code", 4),
+ *         FuzzyPattern.compile("57. Phone", 3),
+ *         FuzzyPattern.compile("52. Phone", 3),
+ *         FuzzyPattern.compile("49. NPI", 2),
+ *         FuzzyPattern.compile("50. License Number", 5),
+ *         FuzzyPattern.compile("57. License Number", 5),
+ *         FuzzyPattern.compile("51. SSN or TIN", 3),
  *         //inside address
- *         FuzzyPattern.pattern("Street", 2, true),
- *         FuzzyPattern.pattern("Suite", 2, true),
- *         FuzzyPattern.pattern("Floor", 2, true),
- *         FuzzyPattern.pattern("Drive", 2, true)
+ *         FuzzyPattern.compile("Street", 2, true),
+ *         FuzzyPattern.compile("Suite", 2, true),
+ *         FuzzyPattern.compile("Floor", 2, true),
+ *         FuzzyPattern.compile("Drive", 2, true)
  *      };
  *
  *      public void process(Document document) {

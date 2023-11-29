@@ -4,14 +4,14 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Interface of the successfully matched result.
+ * Interface of the found matching.
  * <p>
  * {@link FuzzyMatcher} itself implements this interface to reduce heap memory usage
  * when search is done via {@link FuzzyMatcher#find()} method in the {@code while} loop:
  * <pre>{@code
  *     FuzzyMatcher matcher = pattern.matcher(text);
  *     while(matcher.find()) {
- *      System.out.println("Found text: " + text.substring(matcher.start(), matcher.end());
+ *      System.out.println("Found text: " + matcher.foundText());
  *     }
  * }</pre>
  * <p>

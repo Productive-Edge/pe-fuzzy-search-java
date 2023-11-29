@@ -190,7 +190,7 @@ class Bitap64Test {
 
     @Test
     void testMaxLen() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("1234567890123456789012345678901234567890123456789012345678901234", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("1234567890123456789012345678901234567890123456789012345678901234", 1);
         assertTrue(pattern instanceof Bitap64);
         //replace
         {
@@ -350,7 +350,7 @@ class Bitap64Test {
     @Test
     void testRealCase() {
         String text = "4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i";
-        FuzzyPattern pattern = FuzzyPattern.pattern(" (if both, complete 5-11 for dental only.)", 10);
+        FuzzyPattern pattern = FuzzyPattern.compile(" (if both, complete 5-11 for dental only.)", 10);
         assertEquals(
                 " (!f both, complete 3-11 for dental oniy.i",
                 pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse("")
@@ -397,7 +397,7 @@ class Bitap64Test {
             "insert replace delete dde,nsert rrplace ddelete de,5",
     })
     void insertionBeforeReplacementAndDeletion(String pattern, String text, int maxDiff) {
-        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, maxDiff)
+        FuzzyMatcher matcher = FuzzyPattern.compile(pattern, maxDiff)
                 .matcher(text);
         assertTrue(matcher.find());
         assertEquals(text, matcher.foundText());

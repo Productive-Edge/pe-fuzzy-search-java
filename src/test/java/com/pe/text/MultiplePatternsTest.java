@@ -132,9 +132,9 @@ class MultiplePatternsTest {
     @Test
     void testLongPattern() {
         FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{
-                FuzzyPattern.pattern("ut", 0, true),
-                FuzzyPattern.pattern("Duis", 1),
-                FuzzyPattern.pattern("dolor", 1)
+                FuzzyPattern.compile("ut", 0, true),
+                FuzzyPattern.compile("Duis", 1),
+                FuzzyPattern.compile("dolor", 1)
         });
 
         Stream<FuzzyResult> resultStream = patterns.matcher("Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
@@ -151,8 +151,8 @@ class MultiplePatternsTest {
     @Test
     void testMatchingOrder() {
         FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{
-                FuzzyPattern.pattern("aaa", 1),
-                FuzzyPattern.pattern("aa", 1)
+                FuzzyPattern.compile("aaa", 1),
+                FuzzyPattern.compile("aa", 1)
         });
 
         FuzzyMatcher matcher = patterns.matcher("aaaaa");

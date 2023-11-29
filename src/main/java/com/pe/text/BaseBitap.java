@@ -35,8 +35,8 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
 
     @Override
     public String toString() {
-        return getClass().getName() + "{pattern=" + pattern +
-                ", maxLevenshteinDistance=" + maxLevenshteinDistance +
+        return getClass().getName() + "{pattern=\"" + pattern +
+                "\", maxLevenshteinDistance=" + maxLevenshteinDistance +
                 ", caseInsensitive=" + caseInsensitive +
                 '}';
     }
@@ -204,8 +204,8 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
         public String toString() {
             return getClass().getName() + '{' +
                     "edits=" + Arrays.toString(streamEditTypes().toArray()) +
-                    ", text=" + text +
-                    ", distance={current=" + levenshteinDistance + ", max=" + maxDistance +
+                    ", text=\"" + text +
+                    "\", distance={current=" + levenshteinDistance + ", max=" + maxDistance +
                     "}, index=" + index +
                     " in [" + fromIndex + '-' + toIndex + "]}";
         }

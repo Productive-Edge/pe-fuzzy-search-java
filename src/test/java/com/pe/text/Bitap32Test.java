@@ -1,6 +1,7 @@
 package com.pe.text;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
@@ -15,7 +16,7 @@ class Bitap32Test {
 
     @Test
     void testNoDistance() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("123", 0);
+        FuzzyPattern pattern = FuzzyPattern.compile("123", 0);
         FuzzyMatcher matcher = pattern.matcher("0123");
         assertTrue(matcher.find());
         assertEquals(0, matcher.distance());
@@ -26,7 +27,7 @@ class Bitap32Test {
 
     @Test
     void testFullDistance() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("12", 2);
+        FuzzyPattern pattern = FuzzyPattern.compile("12", 2);
         FuzzyMatcher matcher = pattern.matcher("0123");
         assertTrue(matcher.find());
         assertEquals(0, matcher.distance());
@@ -261,7 +262,7 @@ class Bitap32Test {
 
     @Test
     void testMaxLen() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("12345678901234567890123456789012", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("12345678901234567890123456789012", 1);
         assertTrue(pattern instanceof Bitap32);
         //insert 2
         {
@@ -531,7 +532,7 @@ class Bitap32Test {
 
     @Test
     void testAbcBy2a() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("aa", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("aa", 1);
         FuzzyMatcher matcher = pattern.matcher("abc");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
@@ -550,7 +551,7 @@ class Bitap32Test {
 
     @Test
     void test1aBy2a() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("aa", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("aa", 1);
         FuzzyMatcher matcher = pattern.matcher("a");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
@@ -562,7 +563,7 @@ class Bitap32Test {
 
     @Test
     void test3aBy2a() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("aa", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("aa", 1);
         FuzzyMatcher matcher = pattern.matcher("aaa");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
@@ -579,7 +580,7 @@ class Bitap32Test {
 
     @Test
     void test5aBy2a() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("aa", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("aa", 1);
         FuzzyMatcher matcher = pattern.matcher("aaaaa");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
@@ -600,9 +601,19 @@ class Bitap32Test {
     }
 
     @Test
+    @Disabled("this code is just for README.md")
+    void readme() {
+        FuzzyPattern
+                .compile("Medical?", 3)
+                .matcher("4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i")
+                .stream()
+                .forEach(System.out::println);
+    }
+
+    @Test
     void testRealCase() {
         String text = "4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i";
-        FuzzyPattern pattern = FuzzyPattern.pattern(" (if both, complete 5-11 for ", 10);
+        FuzzyPattern pattern = FuzzyPattern.compile(" (if both, complete 5-11 for ", 10);
         assertEquals(
                 " (!f both, complete 3-11 for ",
                 pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse("")
@@ -612,7 +623,7 @@ class Bitap32Test {
     @Test
     void testTheBest() {
         String text = "AABAAA";
-        FuzzyPattern pattern = FuzzyPattern.pattern("AAA", 2);
+        FuzzyPattern pattern = FuzzyPattern.compile("AAA", 2);
         assertEquals("AABA", pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse(null));
         assertEquals("AAA", pattern.matcher(text).findTheBest(true).map(FuzzyResult::foundText).orElse(null));
     }
@@ -622,7 +633,7 @@ class Bitap32Test {
         String text = "b aa ba a a a";
         String expl = "0____0_1__";
         String ptrn = "a aa aaa a";
-        FuzzyPattern pattern = FuzzyPattern.pattern(ptrn, 6);
+        FuzzyPattern pattern = FuzzyPattern.compile(ptrn, 6);
         BaseBitap.Matcher matcher = (BaseBitap.Matcher) pattern.matcher(text);
         assertTrue(matcher.find());
         assertEquals(3, matcher.distance());
@@ -649,7 +660,7 @@ class Bitap32Test {
             "insert replace delete dde,nsert rrplace ddelete de,4",
     })
     void insertionBeforeReplacementAndDeletion(String pattern, String text, int maxDiff) {
-        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, maxDiff)
+        FuzzyMatcher matcher = FuzzyPattern.compile(pattern, maxDiff)
                 .matcher(text);
         assertTrue(matcher.find());
         assertEquals(text, matcher.foundText());
