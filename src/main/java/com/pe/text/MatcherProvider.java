@@ -2,7 +2,7 @@ package com.pe.text;
 
 /**
  * Common interface for the simple {@link FuzzyPattern} and multiple pattern instance created
- * via {@link FuzzyMultiPattern#combine(FuzzyPattern, FuzzyPattern, FuzzyPattern...)}
+ * via {@link FuzzyPatterns#combine(FuzzyPattern, FuzzyPattern, FuzzyPattern...)}
  */
 interface MatcherProvider {
 

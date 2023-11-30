@@ -6,10 +6,10 @@ import java.util.PriorityQueue;
 import java.util.stream.Stream;
 
 /**
- * Fallback implementation of the {@link FuzzyMultiPattern} if one of the patterns doesn't implement {@link IterativeFuzzyPattern}
+ * Fallback implementation of the {@link FuzzyPatterns} if one of the patterns doesn't implement {@link IterativeFuzzyPattern}
  * This implementation calls find for all patterns at the begging and then lazily continues searching using priority queue.
  */
-class MultiplePatterns implements FuzzyMultiPattern {
+class MultiplePatterns implements FuzzyPatterns {
 
     private static final Comparator<FuzzyMatcher> START_POSITION_COMPARATOR =
             Comparator.comparing(MultiplePatterns::getStartPositionSafely)

@@ -74,7 +74,7 @@ class MultiplePatternsTest {
             "test,_es_t"
     })
     void testFuzzy1Fail(String test, String text) {
-        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
+        FuzzyPatterns patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertFalse(matcher.find());
     }
@@ -131,7 +131,7 @@ class MultiplePatternsTest {
 
     @Test
     void testLongPattern() {
-        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{
+        FuzzyPatterns patterns = new MultiplePatterns(new FuzzyPattern[]{
                 FuzzyPattern.compile("ut", 0, true),
                 FuzzyPattern.compile("Duis", 1),
                 FuzzyPattern.compile("dolor", 1)
@@ -150,7 +150,7 @@ class MultiplePatternsTest {
 
     @Test
     void testMatchingOrder() {
-        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{
+        FuzzyPatterns patterns = new MultiplePatterns(new FuzzyPattern[]{
                 FuzzyPattern.compile("aaa", 1),
                 FuzzyPattern.compile("aa", 1)
         });

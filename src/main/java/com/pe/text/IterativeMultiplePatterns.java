@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 /**
  * Internal implementation of the {@link IterativeFuzzyPattern} and {@link IterativeFuzzyMatcher}
  */
-class IterativeMultiplePatterns implements FuzzyMultiPattern, IterativeFuzzyPattern {
+class IterativeMultiplePatterns implements FuzzyPatterns, IterativeFuzzyPattern {
 
     private final IterativeFuzzyPattern[] patterns;
 

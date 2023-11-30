@@ -24,13 +24,13 @@ public class MultiPatternBenchmarkTest {
     public static final FuzzyPattern DUIS = FuzzyPattern.compile("Duis", 1);
     public static final FuzzyPattern DOLOR = FuzzyPattern.compile("dolor", 1);
 
-    public static final FuzzyMultiPattern iterativeMultiPattern = FuzzyMultiPattern.combine(
+    public static final FuzzyPatterns iterativeMultiPattern = FuzzyPatterns.combine(
             UT,
             DUIS,
             DOLOR
     );
 
-    public static final FuzzyMultiPattern multiPattern = new MultiplePatterns(new FuzzyPattern[]{
+    public static final FuzzyPatterns multiPattern = new MultiplePatterns(new FuzzyPattern[]{
             UT,
             DUIS,
             DOLOR

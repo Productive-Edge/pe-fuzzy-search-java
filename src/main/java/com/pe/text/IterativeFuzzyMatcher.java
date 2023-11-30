@@ -30,7 +30,7 @@ interface IterativeFuzzyMatcher extends DefaultFuzzyMatcher {
 
     /**
      * Updates current position of the matcher,
-     * used in the {@link FuzzyMultiPattern} implementation to synchronize position of all patterns
+     * used in the {@link FuzzyPatterns} implementation to synchronize position of all patterns
      *
      * @param index - new position for search
      */

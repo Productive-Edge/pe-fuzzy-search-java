@@ -12,7 +12,7 @@ import java.util.Arrays;
  * This combined pattern is faster in case only one or few first matchings needed:
  *
  * <pre>{@code
- *   private static final FuzzyMultiPattern INGREDIENTS_TO_EXCLUDE = FuzzyMultiPattern.combine(
+ *   private static final FuzzyPatterns INGREDIENTS_TO_EXCLUDE = FuzzyPatterns.combine(
  *      FuzzyPattern.compile("Corn Syrup", 3, true), //maximum 3 OCR errors, case insensitive
  *      FuzzyPattern.compile("Tomato Concentrate", 4, true) //maximum 4 OCR errors, case insensitive
  *   );
@@ -25,7 +25,7 @@ import java.util.Arrays;
  * <p>
  * For case where all matches have to be found and order is not important,
  * it is slightly faster to iterate through all findings for each pattern one-by-one
- * rather than {@link FuzzyMultiPattern#combine(FuzzyPattern, FuzzyPattern, FuzzyPattern...)}
+ * rather than {@link FuzzyPatterns#combine(FuzzyPattern, FuzzyPattern, FuzzyPattern...)}
  * <pre>{@code
  *
  *     private static final FuzzyPattern[] KEYWORDS = {
@@ -62,17 +62,17 @@ import java.util.Arrays;
  *      }
  * }</pre>
  */
-public interface FuzzyMultiPattern extends MatcherProvider {
+public interface FuzzyPatterns extends MatcherProvider {
 
     /**
-     * Creates instance of the {@code FuzzyMultiPattern} combining specified fuzzy patterns.
+     * Creates instance of the {@code FuzzyPatterns} combining specified fuzzy patterns.
      *
      * @param first  The 1st fuzzy pattern.
      * @param second The 2nd fuzzy pattern.
      * @param others Optional additional fuzzy patterns to combine.
      * @return The instance of multiple fuzzy pattern which is able to match all provided patterns into one scan.
      */
-    static FuzzyMultiPattern combine(FuzzyPattern first, FuzzyPattern second, FuzzyPattern... others) {
+    static FuzzyPatterns combine(FuzzyPattern first, FuzzyPattern second, FuzzyPattern... others) {
         FuzzyPattern[] patterns = new FuzzyPattern[others.length + 2];
         patterns[0] = first;
         patterns[1] = second;

@@ -121,7 +121,7 @@ class Example {
     // case-insensitive pattern with maximum allowed 5 character edits
     private static final FuzzyPattern CONCENTRATE = FuzzyPattern.compile("Tomato Concentrate", 5, true);
     // it is possible to combine multiple patterns into the one
-    private static final FuzzyMultiPattern INGREDIENTS_TO_EXCLUDE = FuzzyMultiPattern.combine(
+    private static final FuzzyPatterns INGREDIENTS_TO_EXCLUDE = FuzzyPatterns.combine(
             CORN_SYRUP,
             CONCENTRATE
     );
