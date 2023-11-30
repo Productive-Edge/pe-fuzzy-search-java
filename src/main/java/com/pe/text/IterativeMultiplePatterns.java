@@ -1,22 +1,28 @@
 package com.pe.text;
 
 
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Internal implementation of the {@link IterativeFuzzyPattern} and {@link IterativeFuzzyMatcher}
+ * Internal implementation of the {@link IterativeFuzzyMatcherProvider} and {@link IterativeFuzzyMatcher}
  */
-class IterativeMultiplePatterns implements FuzzyPatterns, IterativeFuzzyPattern {
+class IterativeMultiplePatterns implements FuzzyPatterns, IterativeFuzzyMatcherProvider {
 
-    private final IterativeFuzzyPattern[] patterns;
+    private final IterativeFuzzyMatcherProvider[] patterns;
 
-    IterativeMultiplePatterns(IterativeFuzzyPattern[] patterns) {
+    IterativeMultiplePatterns(IterativeFuzzyMatcherProvider[] patterns) {
         this.patterns = patterns;
     }
 
     @Override
     public IterativeFuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
         return new Matcher(text, fromIndex, toIndex);
+    }
+
+    @Override
+    public Iterable<? extends FuzzyMatcherProvider> patterns() {
+        return (Iterable<IterativeFuzzyMatcherProvider>) Arrays.stream(patterns)::iterator;
     }
 
     class Matcher implements IterativeFuzzyMatcher {

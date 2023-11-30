@@ -4,7 +4,7 @@ package com.pe.text;
  * Fuzzy pattern interface. Instance can be created via {@link FuzzyPattern#compile(CharSequence, int)}
  * and {@link FuzzyPattern#compile(CharSequence, int, boolean)}
  */
-public interface FuzzyPattern extends MatcherProvider {
+public interface FuzzyPattern extends FuzzyMatcherProvider {
 
     /**
      * Creates case-sensitive compiled fuzzy search pattern with maximum allowed Levenshtein distance to match.

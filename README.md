@@ -111,6 +111,7 @@ This library has similar API to the `java.util.regex.Pattern` and `java.util.reg
 
 ```java
 import com.pe.text.FuzzyMatcher;
+import com.pe.text.FuzzyPatterns;
 import com.pe.text.FuzzyResult;
 
 import java.util.stream.Stream;

@@ -7,12 +7,12 @@ import java.util.stream.StreamSupport;
 /**
  * An engine that performs fuzzy match operations on a character sequence.
  * <p>
- * A matcher is created from a pattern by invoking the pattern's {@link MatcherProvider#matcher}/{@link FuzzyPattern#matcher} methods:
+ * A matcher is created from a pattern by invoking the pattern's {@link FuzzyMatcherProvider#matcher}/{@link FuzzyPattern#matcher} methods:
  * <ul>
- *     <li>{@link MatcherProvider#matcher(CharSequence)} to create matcher for the input text</li>
- *     <li>{@link MatcherProvider#matcher(CharSequence, int)} to create matcher for the input text,
+ *     <li>{@link FuzzyMatcherProvider#matcher(CharSequence)} to create matcher for the input text</li>
+ *     <li>{@link FuzzyMatcherProvider#matcher(CharSequence, int)} to create matcher for the input text,
  *     to search from the specified index</li>
- *     <li>{@link MatcherProvider#matcher(CharSequence, int, int)} to create matcher for the input text,
+ *     <li>{@link FuzzyMatcherProvider#matcher(CharSequence, int, int)} to create matcher for the input text,
  *       to searching in the specified bounds</li>
  * </ul>
  * Once created, a matcher can be used to perform following search operations:

@@ -3,7 +3,7 @@ package com.pe.text;
 /**
  * Internal interface which returns {@link IterativeFuzzyMatcher}
  */
-interface IterativeFuzzyPattern extends MatcherProvider {
+interface IterativeFuzzyMatcherProvider extends FuzzyMatcherProvider {
     default FuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
         return getIterativeMatcher(text, fromIndex, toIndex);
     }

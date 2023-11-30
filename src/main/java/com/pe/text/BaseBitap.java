@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 /**
  * Base abstract implementation of the Fuzzy Pattern and Matcher
  */
-abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyPattern {
+abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider {
     private final CharSequence pattern;
     private final int maxLevenshteinDistance;
     private final boolean caseInsensitive;

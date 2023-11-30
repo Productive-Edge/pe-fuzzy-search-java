@@ -2,8 +2,6 @@ package com.pe.text;
 
 import com.pe.ordinal.OrdinalSuffix;
 
-import java.util.Arrays;
-
 /**
  * Fuzzy Pattern created as combination of the other multiple fuzzy patterns,
  * it returns non overlapping matchings in order they are in text.
@@ -12,7 +10,7 @@ import java.util.Arrays;
  * This combined pattern is faster in case only one or few first matchings needed:
  *
  * <pre>{@code
- *   private static final FuzzyPatterns INGREDIENTS_TO_EXCLUDE = FuzzyPatterns.combine(
+ *   private static final FuzzyPatterns INGREDIENTS_TO_EXCLUDE = FuzzyPatterns.of(
  *      FuzzyPattern.compile("Corn Syrup", 3, true), //maximum 3 OCR errors, case insensitive
  *      FuzzyPattern.compile("Tomato Concentrate", 4, true) //maximum 4 OCR errors, case insensitive
  *   );
@@ -25,7 +23,7 @@ import java.util.Arrays;
  * <p>
  * For case where all matches have to be found and order is not important,
  * it is slightly faster to iterate through all findings for each pattern one-by-one
- * rather than {@link FuzzyPatterns#combine(FuzzyPattern, FuzzyPattern, FuzzyPattern...)}
+ * rather than {@link FuzzyPatterns#combine(FuzzyMatcherProvider, FuzzyMatcherProvider, FuzzyMatcherProvider...)}
  * <pre>{@code
  *
  *     private static final FuzzyPattern[] KEYWORDS = {
@@ -62,7 +60,7 @@ import java.util.Arrays;
  *      }
  * }</pre>
  */
-public interface FuzzyPatterns extends MatcherProvider {
+public interface FuzzyPatterns extends FuzzyMatcherProvider {
 
     /**
      * Creates instance of the {@code FuzzyPatterns} combining specified fuzzy patterns.
@@ -71,23 +69,24 @@ public interface FuzzyPatterns extends MatcherProvider {
      * @param second The 2nd fuzzy pattern.
      * @param others Optional additional fuzzy patterns to combine.
      * @return The instance of multiple fuzzy pattern which is able to match all provided patterns into one scan.
+     * @throws NullPointerException in case any of arguments is null
      */
-    static FuzzyPatterns combine(FuzzyPattern first, FuzzyPattern second, FuzzyPattern... others) {
-        FuzzyPattern[] patterns = new FuzzyPattern[others.length + 2];
-        patterns[0] = first;
-        patterns[1] = second;
-        //noinspection ManualArrayCopy
-        for (int i = 0; i < others.length; i++) patterns[i + 2] = others[i];
-        boolean isIterative = true;
-        for (int i = 0; i < patterns.length; i++) {
-            if (patterns[i] == null)
-                throw new IllegalArgumentException(OrdinalSuffix.EN.addTo(i + 1) + " pattern is null");
-            isIterative = isIterative && patterns[i] instanceof IterativeFuzzyPattern;
-        }
-        if (isIterative) {
-            return new IterativeMultiplePatterns(Arrays.copyOf(patterns, patterns.length, IterativeFuzzyPattern[].class));
-        }
-        // fall back to not iterative implementation
-        return new MultiplePatterns(patterns);
+    static FuzzyPatterns combine(FuzzyMatcherProvider first, FuzzyMatcherProvider second, FuzzyMatcherProvider... others) {
+        if (first == null)
+            throw new NullPointerException("1st pattern is null");
+        if (second == null)
+            throw new NullPointerException("2nd pattern is null");
+        for (int i = 0; i < others.length; i++)
+            if (others[i] == null)
+                throw new NullPointerException(OrdinalSuffix.EN.addTo(i + 1) + " pattern is null");
+
+        return first.combineWith(second, others);
     }
+
+    /**
+     * Returns iterable over combined fuzzy patterns on this instance
+     *
+     * @return iterable over combined fuzzy patterns on this instance
+     */
+    Iterable<? extends FuzzyMatcherProvider> patterns();
 }
