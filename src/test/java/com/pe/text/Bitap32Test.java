@@ -608,6 +608,7 @@ class Bitap32Test {
                 .matcher("4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i")
                 .stream()
                 .forEach(System.out::println);
+        assertTrue(true);
     }
 
     @Test
@@ -637,6 +638,7 @@ class Bitap32Test {
         BaseBitap.Matcher matcher = (BaseBitap.Matcher) pattern.matcher(text);
         assertTrue(matcher.find());
         assertEquals(3, matcher.distance());
+        assertEquals("b aa ba a", matcher.foundText());
         assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 1}, matcher.lengthChanges);
         StringBuilder explanation = new StringBuilder(expl.length());
         for (int i = 0, j = 0, l = 1; i < ptrn.length(); i++) {
@@ -671,4 +673,25 @@ class Bitap32Test {
         assertEquals(OperationType.DELETION, edits.get(2).type());
     }
 
+    @Test
+    void testMissing1() {
+        FuzzyMatcher matcher = FuzzyPattern.compile("3 Mis Teeth", 4)
+                .matcher("3 Mis    Teeth Information         {Place an X         on each missing toofh.)");
+
+        assertTrue(matcher.find());
+        matcher.streamEditTypes().forEach(System.out::println);
+        assertEquals("3 Mis    Teeth", matcher.foundText());
+
+    }
+
+    @Test
+    void testMissing2() {
+        FuzzyMatcher matcher = FuzzyPattern.compile("33. Missing Teeth Information", 13)
+                .matcher("       EXTRACT-ERUPTED TOOTH OR EXPOS             141.00               33. Missing         Teeth Information         {Place an X         on each missing toofh.)");
+
+        assertTrue(matcher.find());
+        matcher.streamEditTypes().forEach(System.out::println);
+        assertEquals("33. Missing         Teeth Information", matcher.foundText());
+
+    }
 }

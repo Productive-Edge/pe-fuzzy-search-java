@@ -48,7 +48,7 @@ class Bitap32 extends BaseBitap {
     public IterativeFuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
         return new Matcher(text, fromIndex, toIndex);
     }
-    
+
     final class Matcher extends BaseBitap.Matcher {
 
         /**
@@ -90,46 +90,72 @@ class Bitap32 extends BaseBitap {
                 final int insertion = current << 1;
                 // replace current character with correct one
                 final int substitution = deletion << 1;
-                final int previousMatching = previousMatchings[levenshteinDistance];
+                final int previousCombined = previousMatchings[levenshteinDistance];
                 // get current character as is
-                final int matching = (previousMatching << 1) | charPositions;
+                final int matching = (previousCombined << 1) | charPositions;
                 final int combined = currentMatchings[levenshteinDistance] = insertion & deletion & substitution & matching;
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
                 if (!applied) {
                     if (deletion < current) {
                         // skip previous operation
-                        if (substitution < matching && lengthChanges[levenshteinDistance] == 1) {
-                            lengthChanges[levenshteinDistance] = 0;
+                        if (substitution < matching) {
+                            if (lengthChanges[levenshteinDistance] == 1) {
+                                lengthChanges[levenshteinDistance] = 0;
+                                setInsertsAfter(levenshteinDistance);
+                                applied = true;
+                            }
+                        } else if (previousCombined < matching) {
+                            lengthChanges[levenshteinDistance] = -1;
                             setInsertsAfter(levenshteinDistance);
                             applied = true;
                         }
                     } else {
                         if (matching <= insertion || matching >= 0) {
                             // skip previous operation, otherwise transform it: replacement -> deletion | insert -> replacement (decrease length)
-                            // matching < previousMatching
-                            final int highBitDiff = ~(matching ^ previousMatching);
-                            final int invert = (Integer.MAX_VALUE | matching) ^ (Integer.MAX_VALUE | previousMatching);
-                            if ((invert < 0) == (highBitDiff < previousMatching)) {
-                                lengthChanges[levenshteinDistance]--;
-                                setInsertsAfter(levenshteinDistance);
-                                applied = true;
+                            // matching < previousCombined
+                            final int highBitDiff = ~(matching ^ previousCombined);
+                            final int invert = (Integer.MAX_VALUE | matching) ^ (Integer.MAX_VALUE | previousCombined);
+                            if ((invert < 0) == (highBitDiff < previousCombined)) {
+                                boolean reduce = (invert < 0) == ((previousCombined | charPositions) > insertion);
+                                if (reduce) {
+                                    lengthChanges[levenshteinDistance]--;
+                                    setInsertsAfter(levenshteinDistance);
+                                    applied = true;
+                                }
                             }
                         } else if (current < deletion) { // most likely insertion
                             // skip it if character can match later
-                            if (insertion < previousMatching && insertion <= ((previousMatchings[maxDistance] << 1) | charPositions)) {
+                            if (insertion < previousCombined && insertion <= ((previousMatchings[maxDistance] << 1) | charPositions)) {
                                 lengthChanges[levenshteinDistance] = 1;
                                 setInsertsAfter(levenshteinDistance);
                                 applied = true;
                             }
                         } else {
-                            // can be insertion or replacement
-                            final boolean isReplacement = lengthChanges[levenshteinDistance] == 1
-                                    && lengthChanges[maxDistance] != -1
-                                    && ((previousMatchings[maxDistance] & (~Bitap32.this.lastBitMask)) | charPositions) >= combined;
-                            if (isReplacement) {
-                                lengthChanges[levenshteinDistance] = 0;
-                                setInsertsAfter(levenshteinDistance);
-                                applied = true;
+                            switch (lengthChanges[levenshteinDistance]) {
+                                case 1: {
+                                    final boolean isReplacement = lengthChanges[maxDistance] != -1
+                                            && ((previousMatchings[maxDistance] & ((~Bitap32.this.lastBitMask) | (previousMatchings[maxDistance] << 1))) | charPositions) >= combined;
+                                    if (isReplacement) {
+                                        lengthChanges[levenshteinDistance] = 0;
+                                        setInsertsAfter(levenshteinDistance);
+                                        applied = true;
+                                    }
+                                    break;
+                                }
+                                case 0: {
+                                    final int invert = (Integer.MAX_VALUE | matching) ^ (Integer.MAX_VALUE | previousCombined);
+                                    final boolean delete = (invert < 0) == ((previousCombined | charPositions) <= matching);
+                                    if (delete) {
+                                        lengthChanges[levenshteinDistance] = -1;
+                                        int i = levenshteinDistance + 1;
+                                        while (i < maxDistance && lengthChanges[i] == 0) lengthChanges[i++] = -1;
+                                        applied = true;
+                                        setInsertsAfter(i - 1);
+                                    }
+                                    break;
+                                }
+                                default:
+                                    break;
                             }
                         }
                     }
