@@ -34,7 +34,7 @@ class Bitap32Test {
         assertEquals("12", matcher.foundText());
         assertEquals(1, matcher.start());
         assertEquals(3, matcher.end());
-        assertArrayEquals(new int[]{0, 1, 1}, ((BaseBitap.Matcher) matcher).lengthChanges);
+        assertArrayEquals(new int[]{0, 0, 0}, ((BaseBitap.Matcher) matcher).lengthChanges);
     }
 
     @ParameterizedTest
@@ -56,9 +56,9 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
-            "test,tst,0,3,'0,1,1'",
-            "test,tost,0,4,'0,0,1'",
-            "test,toest,0,5,'0,-1,1'",
+            "test,tst,0,3,'0,1,0'",
+            "test,tost,0,4,'0,0,0'",
+            "test,toest,0,5,'0,-1,0'",
     })
     void testOperations2(String test, String text, int start, int end, @ConvertWith(CsvIntsConverter.class) int[] changes) {
         FuzzyPattern bitap = new Bitap32(test, 2);
@@ -99,13 +99,13 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
-            "test,test,0,4,0,'0,1'",
+            "test,test,0,4,0,'0,0'",
             "test,tet,0,3,1,'0,1'",
             "test,tes,0,3,1,'0,1'",
             "test,tost,0,4,1,'0,0'",
             "test,tesl,0,4,1,'0,0'",
             "test,te5t,0,4,1,'0,0'",
-            "test,_test,1,5,0,'0,1'",
+            "test,_test,1,5,0,'0,0'",
             "test,_te5t,1,5,1,'0,0'",
             "test,tst,0,3,1,'0,1'",
             "test,_tst,1,4,1,'0,1'",
@@ -145,18 +145,18 @@ class Bitap32Test {
     @CsvSource({
             "Result,Rsulut,0,6,2,'0,1,-1'",
             "Result,Rsuult,0,6,2,'0,1,-1'",
-            "Result,Result,0,6,0,'0,1,1'",
-            "Result,Resul,0,5,1,'0,1,1'",
+            "Result,Result,0,6,0,'0,0,0'",
+            "Result,Resul,0,5,1,'0,1,0'",
             "Result,Resu,0,4,2,'0,1,1'",
-            "Result,Resul_,0,6,1,'0,0,1'",
-            "Result,Resu_t,0,6,1,'0,0,1'",
-            "Result,_esult,0,6,1,'0,0,1'",
+            "Result,Resul_,0,6,1,'0,0,0'",
+            "Result,Resu_t,0,6,1,'0,0,0'",
+            "Result,_esult,0,6,1,'0,0,0'",
             "Result,_esul_,0,6,2,'0,0,0'",
             "Result,_esul_t,0,7,2,'0,0,-1'",
-            "Result,_Result,1,7,0,'0,1,1'",
-            "Result,_Resul_,1,7,1,'0,0,1'",
-            "Result,_Resu_t,1,7,1,'0,0,1'",
-            "Result,__esult,1,7,1,'0,0,1'",
+            "Result,_Result,1,7,0,'0,0,0'",
+            "Result,_Resul_,1,7,1,'0,0,0'",
+            "Result,_Resu_t,1,7,1,'0,0,0'",
+            "Result,__esult,1,7,1,'0,0,0'",
             "Result,__esul_,1,7,2,'0,0,0'",
             "Result,__esul_t,1,8,2,'0,0,-1'"
     })
@@ -639,7 +639,7 @@ class Bitap32Test {
         assertTrue(matcher.find());
         assertEquals(3, matcher.distance());
         assertEquals("b aa ba a", matcher.foundText());
-        assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 1}, matcher.lengthChanges);
+        assertArrayEquals(new int[]{0, 0, 0, 1, 0, 0, 0}, matcher.lengthChanges);
         StringBuilder explanation = new StringBuilder(expl.length());
         for (int i = 0, j = 0, l = 1; i < ptrn.length(); i++) {
             if (ptrn.charAt(i) != text.charAt(j++)) {

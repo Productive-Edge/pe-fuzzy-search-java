@@ -135,10 +135,12 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
             return fromIndex;
         }
 
+        @Deprecated
         @Override
+        /**
+         * @deprecated ?
+         */
         public void resetState() {
-            //fill with insertions
-            setInsertsAfter(0);
         }
 
         @Override
@@ -191,11 +193,11 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
         }
 
         /**
-         * Sets insertion operations after the specified operation by index
-         *
          * @param index of the operation which should be unchanged,
          *              all following operations have to be reset to the insertions
+         * @deprecated Sets insertion operations after the specified operation by index
          */
+        @Deprecated
         protected final void setInsertsAfter(int index) {
             for (int i = index + 1; i <= maxDistance; i++) lengthChanges[i] = 1;
         }
