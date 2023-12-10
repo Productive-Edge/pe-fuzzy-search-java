@@ -99,21 +99,53 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
-            "test,test,0,4,0,'0,0'",
-            "test,tet,0,3,1,'0,1'",
-            "test,tes,0,3,1,'0,1'",
-            "test,tost,0,4,1,'0,0'",
-            "test,tesl,0,4,1,'0,0'",
-            "test,te5t,0,4,1,'0,0'",
-            "test,_test,1,5,0,'0,0'",
-            "test,_te5t,1,5,1,'0,0'",
-            "test,tst,0,3,1,'0,1'",
-            "test,_tst,1,4,1,'0,1'",
-            "test,t_est,0,5,1,'0,-1'",
-            "test,tes_t,0,5,1,'0,-1'"
+            "test,0,4,0,'0,0'",
+            "tet,0,3,1,'0,1'",
+            "tes,0,3,1,'0,1'",
+            "tost,0,4,1,'0,0'",
+            "tesl,0,4,1,'0,0'",
+            "te5t,0,4,1,'0,0'",
+            "_test,1,5,0,'0,0'",
+            "_te5t,1,5,1,'0,0'",
+            "tst,0,3,1,'0,1'",
+            "_tst,1,4,1,'0,1'",
+            "t_est,0,5,1,'0,-1'",
+            "tes_t,0,5,1,'0,-1'"
     })
-    void testFuzzy1(String test, String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
-        FuzzyPattern bitap = new Bitap32(test, 1);
+    void testFuzzy1(String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
+        FuzzyPattern bitap = new Bitap32("test", 1);
+        FuzzyMatcher matcher = bitap.matcher(text);
+        assertTrue(matcher.find());
+        assertEquals(start, matcher.start());
+        assertEquals(end, matcher.end());
+        assertEquals(d, matcher.distance());
+        assertArrayEquals(changes, ((BaseBitap.Matcher) matcher).lengthChanges);
+        assertFalse(matcher.find());
+    }
+
+
+    @ParameterizedTest
+    @CsvSource({
+            "Rsulut,0,6,2,'0,1,-1'",
+            "Rsuult,0,6,2,'0,1,-1'",
+            "Result,0,6,0,'0,0,0'",
+            "Resul,0,5,1,'0,1,0'",
+            "Resu,0,4,2,'0,1,1'",
+            "Resul_,0,6,1,'0,0,0'",
+            "Resu_t,0,6,1,'0,0,0'",
+            "_esult,0,6,1,'0,0,0'",
+            "_esul_,0,6,2,'0,0,0'",
+            "_esul_t,0,7,2,'0,0,-1'",
+            "_Result,1,7,0,'0,0,0'",
+            "_Resul_,1,7,1,'0,0,0'",
+            "_Resu_t,1,7,1,'0,0,0'",
+            "__esult,1,7,1,'0,0,0'",
+            "__esul_,1,7,2,'0,0,0'",
+            "__esul_t,1,8,2,'0,0,-1'",
+            "Resu__lt,0,6,2,'0,0,0'"
+    })
+    void testFuzzy2(String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
+        FuzzyPattern bitap = new Bitap32("Result", 2);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -125,49 +157,19 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
-            "test,__st",
-            "test,to_t",
-            "test,_esl",
-            "test,_e5t",
-            "test,_t_5t",
-            "test,ts__",
-            "test,_ts_",
-            "test,t_es_",
-            "test,_es_t"
+            "__st",
+            "to_t",
+            "_esl",
+            "_e5t",
+            "_t_5t",
+            "ts__",
+            "_ts_",
+            "t_es_",
+            "_es_t"
     })
-    void testFuzzy1Fail(String test, String text) {
-        FuzzyPattern bitap = new Bitap32(test, 1);
+    void testFuzzy1Fail(String text) {
+        FuzzyPattern bitap = new Bitap32("test", 1);
         FuzzyMatcher matcher = bitap.matcher(text);
-        assertFalse(matcher.find());
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "Result,Rsulut,0,6,2,'0,1,-1'",
-            "Result,Rsuult,0,6,2,'0,1,-1'",
-            "Result,Result,0,6,0,'0,0,0'",
-            "Result,Resul,0,5,1,'0,1,0'",
-            "Result,Resu,0,4,2,'0,1,1'",
-            "Result,Resul_,0,6,1,'0,0,0'",
-            "Result,Resu_t,0,6,1,'0,0,0'",
-            "Result,_esult,0,6,1,'0,0,0'",
-            "Result,_esul_,0,6,2,'0,0,0'",
-            "Result,_esul_t,0,7,2,'0,0,-1'",
-            "Result,_Result,1,7,0,'0,0,0'",
-            "Result,_Resul_,1,7,1,'0,0,0'",
-            "Result,_Resu_t,1,7,1,'0,0,0'",
-            "Result,__esult,1,7,1,'0,0,0'",
-            "Result,__esul_,1,7,2,'0,0,0'",
-            "Result,__esul_t,1,8,2,'0,0,-1'"
-    })
-    void testFuzzy2(String test, String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
-        FuzzyPattern bitap = new Bitap32(test, 2);
-        FuzzyMatcher matcher = bitap.matcher(text);
-        assertTrue(matcher.find());
-        assertEquals(start, matcher.start());
-        assertEquals(end, matcher.end());
-        assertEquals(d, matcher.distance());
-        assertArrayEquals(changes, ((BaseBitap.Matcher) matcher).lengthChanges);
         assertFalse(matcher.find());
     }
 

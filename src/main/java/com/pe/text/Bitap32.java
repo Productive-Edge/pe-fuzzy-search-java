@@ -111,7 +111,8 @@ class Bitap32 extends BaseBitap {
                         if (insertion < substitution) {
                             if (matching < insertion || matching > 0) {
                             } else {
-                                lengthChanges[ld--] = 1; // TODO handle delete
+                                lengthChanges[ld] = 1;
+                                ld--;
                                 if (ld == 0) break;
                             }
                             if (ci > 0) {
@@ -128,7 +129,10 @@ class Bitap32 extends BaseBitap {
                             }
                         } else {
                             if (matching < substitution || matching > 0) {
-                                // TODO delete
+                                if (substitution < insertion && nc > current[ld]) {
+                                    lengthChanges[ld--] = 0;
+                                    if (ld == 0) break;
+                                }
                             } else {
                                 lengthChanges[ld] = nc >= current[ld] ? -1 : 0;
                                 ld--;
