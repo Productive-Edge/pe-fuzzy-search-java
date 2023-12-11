@@ -126,6 +126,12 @@ class Bitap32 extends BaseBitap {
                             case MATCHING:
                                 idt = rdt;
                                 rdt = current[ld] >= previous[ld] ? -1 : 0;
+//                                if (idt == -1 && rdt == -1) {
+//                                    lengthChanges[ld] = 0;
+//                                    ld--;
+//                                }
+//                                idt = rdt;
+//                                rdt = current[ld] >= previous[ld] ? -1 : 0;
                                 break;
                             default:
                                 break;
@@ -136,7 +142,7 @@ class Bitap32 extends BaseBitap {
                         if (co != OperationType.INSERTION || idt == -1) {
                             if (ci > from()) {
                                 ci--;
-                                if (rdt == 0) {
+                                if (rdt == 0/*!(rdt == -1 && co == OperationType.MATCHING)*/) {
                                     lb >>= 1;
                                     if (lb == 0) lb = Integer.MAX_VALUE;
                                 }
