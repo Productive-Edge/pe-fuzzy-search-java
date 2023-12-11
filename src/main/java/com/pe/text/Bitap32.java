@@ -66,7 +66,7 @@ class Bitap32 extends BaseBitap {
 
         private Matcher(CharSequence text, int fromIndex, int toIndex) {
             super(text, fromIndex, toIndex);
-            matchings = new int[pattern().text().length() + 1][maxDistance + 1];
+            matchings = new int[pattern().text().length()][maxDistance + 1];
         }
 
         @Override
@@ -99,63 +99,61 @@ class Bitap32 extends BaseBitap {
                 int substitution = deletion << 1;
                 // get current character as is
                 int matching = (previous[levenshteinDistance] << 1) | charPositions;
-                final int combined = current[levenshteinDistance] = insertion & deletion & substitution & matching;
+                int combined = current[levenshteinDistance] = insertion & deletion & substitution & matching;
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
                 if (found) {
                     if (levenshteinDistance < maxDistance) lengthChanges[levenshteinDistance + 1] = 0;
+                    int lb = Bitap32.this.lastBitMask << 1;
                     int ld = levenshteinDistance;
                     int mi = (matchingsIndex == 0 ? matchings.length : matchingsIndex) - 1;
                     int ci = index;
-                    int nc = combined << 1;
+                    matching = combined | charPositions | -lb;
+                    int rdt = 0;
+                    int idt = 0;
                     do {
-                        if (insertion < substitution) {
-                            if (matching < insertion || matching > 0) {
-                            } else {
-                                lengthChanges[ld] = 1;
+                        OperationType co = (insertion < substitution || insertion > 0)
+                                ? ((matching < insertion || matching > 0) ? OperationType.MATCHING : OperationType.INSERTION)
+                                : ((matching < substitution || matching > 0) ? OperationType.MATCHING : OperationType.REPLACEMENT);
+                        switch (co) {
+                            case INSERTION:
+                                lengthChanges[ld] = 1 + idt;
                                 ld--;
-                                if (ld == 0) break;
-                            }
-                            if (ci > 0) {
-                                ci--;
-                                mi = (mi == 0 ? matchings.length : mi) - 1;
-                                nc = current[ld];
-                                current = previous;
-                                charPositions = Bitap32.this.positionMasks.getOrDefault(text.charAt(ci), -1);
-                                previous = matchings[mi];
-                            } else {
-                                // insert from left
-                                while (ld > 0) lengthChanges[ld--] = 1;
                                 break;
-                            }
-                        } else {
-                            if (matching < substitution || matching > 0) {
-                                if (substitution < insertion && nc > current[ld]) {
-                                    lengthChanges[ld--] = 0;
-                                    if (ld == 0) break;
+                            case REPLACEMENT:
+                                lengthChanges[ld] = rdt;
+                                ld--;
+                                break;
+                            case MATCHING:
+                                idt = rdt;
+                                rdt = current[ld] >= previous[ld] ? -1 : 0;
+                                break;
+                            default:
+                                break;
+                        }
+                        if (ld == 0)
+                            return true;
+
+                        if (co != OperationType.INSERTION || idt == -1) {
+                            if (ci > from()) {
+                                ci--;
+                                if (rdt == 0) {
+                                    lb >>= 1;
+                                    if (lb == 0) lb = Integer.MAX_VALUE;
                                 }
-                            } else {
-                                lengthChanges[ld] = nc >= current[ld] ? -1 : 0;
-                                ld--;
-                                if (ld == 0) break;
-                            }
-                            if (ci > 0) {
-                                ci--;
                                 mi = (mi == 0 ? matchings.length : mi) - 1;
-                                nc = current[ld];
                                 current = previous;
                                 charPositions = Bitap32.this.positionMasks.getOrDefault(text.charAt(ci), -1);
                                 previous = matchings[mi];
                             } else {
-                                // inserts from left
+                                // only insertions can be here
                                 while (ld > 0) lengthChanges[ld--] = 1;
-                                break;
+                                return true;
                             }
                         }
                         insertion = current[ld - 1] << 1;
                         substitution = previous[ld - 1] << 1;
-                        matching = previous[ld] << 1 | charPositions;
+                        matching = current[ld] | charPositions | -lb;
                     } while (true);
-                    return true;
                 }
             }
             return false;

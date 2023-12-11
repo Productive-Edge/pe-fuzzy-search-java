@@ -142,7 +142,8 @@ class Bitap32Test {
             "__esult,1,7,1,'0,0,0'",
             "__esul_,1,7,2,'0,0,0'",
             "__esul_t,1,8,2,'0,0,-1'",
-            "Resu__lt,0,6,2,'0,0,0'"
+            "Resu__lt,0,6,2,'0,0,0'",
+            "Res__ult,0,8,2,'0,-1,-1'",
     })
     void testFuzzy2(String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
         FuzzyPattern bitap = new Bitap32("Result", 2);
@@ -676,24 +677,38 @@ class Bitap32Test {
     }
 
     @Test
-    void testMissing1() {
+    void testMissingS() {
         FuzzyMatcher matcher = FuzzyPattern.compile("3 Mis Teeth", 4)
                 .matcher("3 Mis    Teeth Information         {Place an X         on each missing toofh.)");
-
         assertTrue(matcher.find());
-        matcher.streamEditTypes().forEach(System.out::println);
         assertEquals("3 Mis    Teeth", matcher.foundText());
-
     }
 
-    @Test
-    void testMissing2() {
+    @ParameterizedTest
+    @CsvSource({
+            "33. Missing Teeth Information",
+            "33. Missing  Teeth Information",
+            "33. Missing   Teeth Information",
+            "33. Missing    Teeth Information",
+            "33. Missing     Teeth Information",
+            "33. Missing      Teeth Information",
+            "33. Missing       Teeth Information",
+            "33. Missing        Teeth Information",
+            "33. Missing x Teeth Information",
+            "33. Missing xx Teeth Information",
+            "33. Missing xxx Teeth Information",
+            "33. Missing xxxx Teeth Information",
+            "33. Missing xxxxx Teeth Information",
+            "33. Missing xxxxxx Teeth Information",
+            "33. Missing Teeth Teeth Information",
+            "33. Missing Teeth  Teeth Information",
+    })
+    void testMissing(String text) {
         FuzzyMatcher matcher = FuzzyPattern.compile("33. Missing Teeth Information", 13)
-                .matcher("       EXTRACT-ERUPTED TOOTH OR EXPOS             141.00               33. Missing         Teeth Information         {Place an X         on each missing toofh.)");
-
+                .matcher(text);
         assertTrue(matcher.find());
-        matcher.streamEditTypes().forEach(System.out::println);
-        assertEquals("33. Missing         Teeth Information", matcher.foundText());
-
+        System.out.println(matcher.streamEditTypes().map(Enum::toString).collect(Collectors.joining(",")));
+        assertEquals(text, matcher.foundText());
     }
+
 }
