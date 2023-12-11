@@ -107,7 +107,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
             while (++index < toIndex) {
                 if (testNextSymbol()) {
                     final int maxDistanceCopy = maxDistance;
-                    improveResult(Math.min(index + BaseBitap.this.pattern.length() + maxLevenshteinDistance + 1 - levenshteinDistance, toIndex));
+                    improveResult(Math.min(index + BaseBitap.this.pattern.length() + maxLevenshteinDistance, toIndex));
                     maxDistance = maxDistanceCopy;
                     return true;
                 }

@@ -358,6 +358,18 @@ class Bitap32Test {
     }
 
     @Test
+    void testEdgeCaseS3x3u() {
+        FuzzyPattern p = new Bitap32("abc", 2);
+        FuzzyMatcher m = p.matcher("axc");
+        assertTrue(m.find());
+        assertEquals("axc", m.foundText().toString(), "foundText");
+        assertEquals(0, m.start(), "start");
+        assertEquals(3, m.end(), "end");
+        assertEquals(1, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+
+    @Test
     void testEdgeCase2() {
         FuzzyPattern p = new Bitap32(" abc ", 2);
         FuzzyMatcher m = p.matcher(" AbC ");
@@ -700,6 +712,11 @@ class Bitap32Test {
             "33. Missing xxxx Teeth Information",
             "33. Missing xxxxx Teeth Information",
             "33. Missing xxxxxx Teeth Information",
+            "33. Missing xxxxxxx Teeth Information",
+            "33. Missing T Teeth Information",
+            "33. Missing Te Teeth Information",
+            "33. Missing Tee Teeth Information",
+            "33. Missing Teet Teeth Information",
             "33. Missing Teeth Teeth Information",
             "33. Missing Teeth  Teeth Information",
     })
@@ -710,5 +727,26 @@ class Bitap32Test {
         System.out.println(matcher.streamEditTypes().map(Enum::toString).collect(Collectors.joining(",")));
         assertEquals(text, matcher.foundText());
     }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1234567890,1234567890",
+            "1_234567890,1_234567890",
+            "1__234567890,_234567890",
+            "1___234567890,_234567890",
+            "1____234567890,_234567890",
+            "1_____234567890,_234567890",
+            "1______234567890,_234567890",
+            "1_______234567890,_234567890",
+            "1________234567890,_234567890",
+    })
+    void testDeletions(String text, String expected) {
+        FuzzyMatcher matcher = FuzzyPattern.compile("1234567890", 9)
+                .matcher(text);
+        assertTrue(matcher.find());
+        System.out.println(matcher.streamEditTypes().map(Enum::toString).collect(Collectors.joining(",")));
+        assertEquals(expected, matcher.foundText());
+    }
+
 
 }
