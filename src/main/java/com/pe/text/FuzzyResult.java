@@ -84,6 +84,26 @@ public interface FuzzyResult {
         );
     }
 
+    default void debug() {
+        streamCharByCharOperations()
+                .map(o -> {
+                    switch (o.type()) {
+                        case MATCHING:
+                            return "[" + o.textChar().value() + '=' + o.patternChar().value() + ']';
+                        case REPLACEMENT:
+                            return "[" + o.textChar().value() + '>' + o.patternChar().value() + ']';
+                        case INSERTION:
+                            return "[+" + o.patternChar().value() + ']';
+                        case DELETION:
+                            return "[" + o.textChar().value() + "-]";
+                        default:
+                            return o.type().toString();
+                    }
+                })
+                .forEach(System.out::print);
+        System.out.println();
+    }
+
     /**
      * Streams all operations for this result char-by-char including matchings.
      *

@@ -358,6 +358,18 @@ class Bitap32Test {
     }
 
     @Test
+    void testDeletes2() {
+        FuzzyPattern p = new Bitap32("abcd", 2);
+        FuzzyMatcher m = p.matcher("addd");
+        assertTrue(m.find());
+        assertEquals("addd", m.foundText().toString(), "foundText");
+        assertEquals(0, m.start(), "start");
+        assertEquals(4, m.end(), "end");
+        assertEquals(2, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+
+    @Test
     void testEdgeCaseS3x3u() {
         FuzzyPattern p = new Bitap32("abc", 2);
         FuzzyMatcher m = p.matcher("axc");

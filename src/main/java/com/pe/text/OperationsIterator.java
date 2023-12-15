@@ -27,15 +27,19 @@ class OperationsIterator implements Iterator<Operation> {
         return edits.length;
     }
 
+    private boolean hasNextPatternChar() {
+        return patternIndex < result.pattern().text().length();
+    }
+
     @Override
     public boolean hasNext() {
-        return editIndex < edits.length;
+        return editIndex < edits.length || (includeMatchingOperation && hasNextPatternChar());
     }
 
     @Override
     public Operation next() {
         while (hasNext()) {
-            final boolean hasPatternChar = patternIndex < result.pattern().text().length();
+            final boolean hasPatternChar = hasNextPatternChar();
             final char p = hasPatternChar
                     ? result.pattern().text().charAt(patternIndex)
                     : (char) 0;

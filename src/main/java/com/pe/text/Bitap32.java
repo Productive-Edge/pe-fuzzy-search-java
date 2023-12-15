@@ -2,6 +2,9 @@ package com.pe.text;
 
 import it.unimi.dsi.fastutil.chars.Char2IntOpenHashMap;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Bitap implementation using 32-bit word, it is even slightly faster on the 64-bit CPUs.
  */
@@ -43,16 +46,16 @@ class Bitap32 extends BaseBitap {
             }
         }
     }
-
-    static int roundUpInverted(int bits) {
-        // bits++;
-        bits &= bits >> 1;
-        bits &= bits >> 2;
-        bits &= bits >> 4;
-        bits &= bits >> 8;
-        bits &= bits >> 16;
-        return bits - 1;
-    }
+//
+//    static int roundUpInverted(int bits) {
+//        // bits++;
+//        bits &= bits >> 1;
+//        bits &= bits >> 2;
+//        bits &= bits >> 4;
+//        bits &= bits >> 8;
+//        bits &= bits >> 16;
+//        return bits - 1;
+//    }
 
     @Override
     public IterativeFuzzyMatcher getIterativeMatcher(CharSequence text, int fromIndex, int toIndex) {
@@ -66,7 +69,7 @@ class Bitap32 extends BaseBitap {
 
         private Matcher(CharSequence text, int fromIndex, int toIndex) {
             super(text, fromIndex, toIndex);
-            matchings = new int[pattern().text().length()][maxDistance + 1];
+            matchings = new int[pattern().text().length() + maxDistance][maxDistance + 1];
         }
 
         @Override
@@ -81,11 +84,14 @@ class Bitap32 extends BaseBitap {
         @Override
         public boolean testNextSymbol() {
             int charPositions = Bitap32.this.positionMasks.getOrDefault(text.charAt(index), -1);
+            System.out.println("  \"" + text.subSequence(from(), index + 1) + '\"');
             int[] previous = matchings[matchingsIndex++];
             if (matchingsIndex == matchings.length) matchingsIndex = 0;
             int[] current = matchings[matchingsIndex];
             levenshteinDistance = 0;
             current[0] = (previous[0] << 1) | charPositions;
+            System.out.println(text.charAt(index) + ": " + Integer.toBinaryString(current[0]));
+            System.out.println("0: " + Integer.toBinaryString(current[0]) + " <- " + Integer.toBinaryString(previous[0]));
             if (0 == (current[0] & Bitap32.this.lastBitMask)) {
                 if (lengthChanges.length > 1) lengthChanges[1] = 0;
                 return true;
@@ -100,65 +106,95 @@ class Bitap32 extends BaseBitap {
                 // get current character as is
                 int matching = (previous[levenshteinDistance] << 1) | charPositions;
                 int combined = current[levenshteinDistance] = insertion & deletion & substitution & matching;
+                System.out.println("L: " + levenshteinDistance);
+                System.out.println("I: " + Integer.toBinaryString(insertion) + " <- " + Integer.toBinaryString(current[levenshteinDistance - 1]));
+                System.out.println("S: " + Integer.toBinaryString(substitution) + " <- " + Integer.toBinaryString(deletion));
+                System.out.println("M: " + Integer.toBinaryString(matching) + " <- " + Integer.toBinaryString(previous[levenshteinDistance]));
+                System.out.println("C: " + Integer.toBinaryString(combined));
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
                 if (found) {
                     if (levenshteinDistance < maxDistance) lengthChanges[levenshteinDistance + 1] = 0;
-                    int lb = Bitap32.this.lastBitMask << 1;
-                    int ld = levenshteinDistance;
-                    int mi = (matchingsIndex == 0 ? matchings.length : matchingsIndex) - 1;
-                    int ci = index;
-                    matching = combined | charPositions | -lb;
-                    int rdt = 0;
-                    int idt = 0;
+                    int lastBit = Bitap32.this.lastBitMask << 1;
+                    int leviDist = levenshteinDistance;
+                    int matchIndex = (matchingsIndex == 0 ? matchings.length : matchingsIndex) - 1;
+                    int charIndex = index;
+                    matching = combined | charPositions | -lastBit;
+                    int dt = 0;
+                    OperationType co = OperationType.INSERTION;
                     do {
-                        OperationType co = (insertion < substitution || insertion > 0)
+                        final int leviDistCopy = leviDist;
+                        final OperationType po = co;
+                        co = (insertion < substitution || insertion > 0)
                                 ? ((matching < insertion || matching > 0) ? OperationType.MATCHING : OperationType.INSERTION)
                                 : ((matching < substitution || matching > 0) ? OperationType.MATCHING : OperationType.REPLACEMENT);
                         switch (co) {
-                            case INSERTION:
-                                lengthChanges[ld] = 1 + idt;
-                                ld--;
+                            case INSERTION: {
+//                                if (po == OperationType.REPLACEMENT) dt = 0;
+                                if (dt < 0) {
+                                    do {
+                                        lengthChanges[leviDist--] = 0;
+                                    } while (++dt < 0);
+                                } else {
+                                    lengthChanges[leviDist--] = 1;
+                                }
                                 break;
-                            case REPLACEMENT:
-                                lengthChanges[ld] = rdt;
-                                ld--;
+                            }
+                            case REPLACEMENT: {
+//                                if (po == OperationType.INSERTION) dt = 0;
+                                if (dt < 0) {
+                                    do {
+                                        lengthChanges[leviDist--] = -1;
+                                    } while (++dt < 0);
+                                    if (current[leviDistCopy] < 0 && current[leviDistCopy] >= previous[leviDistCopy]) {
+                                        dt--;
+                                    }
+                                } else {
+                                    lengthChanges[leviDist--] = 0;
+                                }
                                 break;
+                            }
                             case MATCHING:
-                                idt = rdt;
-                                rdt = current[ld] >= previous[ld] ? -1 : 0;
-//                                if (idt == -1 && rdt == -1) {
-//                                    lengthChanges[ld] = 0;
-//                                    ld--;
-//                                }
-//                                idt = rdt;
-//                                rdt = current[ld] >= previous[ld] ? -1 : 0;
+                                if (po != OperationType.MATCHING) dt = 0;
+                                if (current[leviDistCopy] < 0 && current[leviDistCopy] >= previous[leviDistCopy]) {
+                                    dt--;
+                                } /*else {
+                                    while (dt < 0) {
+                                        lengthChanges[leviDist--] = -1;
+                                        dt++;
+                                    }
+                                }*/
                                 break;
                             default:
                                 break;
                         }
-                        if (ld == 0)
-                            return true;
 
-                        if (co != OperationType.INSERTION || idt == -1) {
-                            if (ci > from()) {
-                                ci--;
-                                if (rdt == 0/*!(rdt == -1 && co == OperationType.MATCHING)*/) {
-                                    lb >>= 1;
-                                    if (lb == 0) lb = Integer.MAX_VALUE;
-                                }
-                                mi = (mi == 0 ? matchings.length : mi) - 1;
+                        if (leviDist == 0) {
+                            if (dt < 0) {
+//                                lengthChanges[leviDistCopy]--;
+                            }
+                            System.out.println("LC: " + Arrays.stream(lengthChanges).skip(1).limit(levenshteinDistance)
+                                    .mapToObj(String::valueOf).collect(Collectors.joining(",")));
+                            debug();
+                            return true;
+                        }
+
+                        if (co == OperationType.INSERTION) {
+                        } else {
+                            if (charIndex > from()) {
+                                charPositions = Bitap32.this.positionMasks.getOrDefault(text.charAt(--charIndex), -1);
+                                matchIndex = (matchIndex == 0 ? matchings.length : matchIndex) - 1;
                                 current = previous;
-                                charPositions = Bitap32.this.positionMasks.getOrDefault(text.charAt(ci), -1);
-                                previous = matchings[mi];
+                                previous = matchings[matchIndex];
                             } else {
                                 // only insertions can be here
-                                while (ld > 0) lengthChanges[ld--] = 1;
+                                while (leviDist > 0) lengthChanges[leviDist--] = 1;
                                 return true;
                             }
                         }
-                        insertion = current[ld - 1] << 1;
-                        substitution = previous[ld - 1] << 1;
-                        matching = current[ld] | charPositions | -lb;
+
+                        insertion = current[leviDist - 1] << 1;
+                        substitution = previous[leviDist - 1] << 1;
+                        matching = current[leviDist] | charPositions | -lastBit;
                     } while (true);
                 }
             }
