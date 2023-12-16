@@ -114,25 +114,23 @@ class Bitap32 extends BaseBitap {
                 final boolean found = 0 == (combined & Bitap32.this.lastBitMask);
                 if (found) {
                     if (levenshteinDistance < maxDistance) lengthChanges[levenshteinDistance + 1] = 0;
-                    int lastBit = Bitap32.this.lastBitMask << 1;
                     int leviDist = levenshteinDistance;
                     int matchIndex = (matchingsIndex == 0 ? matchings.length : matchingsIndex) - 1;
                     int charIndex = index;
-                    matching = combined | charPositions | -lastBit;
+                    matching = combined | charPositions;
                     int dt = 0;
                     OperationType co = OperationType.INSERTION;
                     do {
-                        final int leviDistCopy = leviDist;
                         final OperationType po = co;
                         co = (insertion < substitution || insertion > 0)
                                 ? ((matching < insertion || matching > 0) ? OperationType.MATCHING : OperationType.INSERTION)
                                 : ((matching < substitution || matching > 0) ? OperationType.MATCHING : OperationType.REPLACEMENT);
                         switch (co) {
                             case INSERTION: {
-//                                if (po == OperationType.REPLACEMENT) dt = 0;
                                 if (dt < 0) {
+                                    int lengthChange = previous[leviDist] < matchings[matchIndex - dt][leviDist - 1] ? -1 : 0;
                                     do {
-                                        lengthChanges[leviDist--] = 0;
+                                        lengthChanges[leviDist--] = lengthChange;
                                     } while (++dt < 0);
                                 } else {
                                     lengthChanges[leviDist--] = 1;
@@ -140,12 +138,18 @@ class Bitap32 extends BaseBitap {
                                 break;
                             }
                             case REPLACEMENT: {
-//                                if (po == OperationType.INSERTION) dt = 0;
                                 if (dt < 0) {
+//                                    while (matching < -1) {
+//                                        charPositions = Bitap32.this.positionMasks.getOrDefault(text.charAt(--charIndex), -1);
+//                                        matchIndex = (matchIndex == 0 ? matchings.length : matchIndex) - 1;
+//                                        current = previous;
+//                                        previous = matchings[matchIndex];
+//                                        matching = current[leviDist] | charPositions;
+//                                    }
                                     do {
                                         lengthChanges[leviDist--] = -1;
                                     } while (++dt < 0);
-                                    if (current[leviDistCopy] < 0 && current[leviDistCopy] >= previous[leviDistCopy]) {
+                                    if (current[leviDist] < 0 && current[leviDist] >= previous[leviDist]) {
                                         dt--;
                                     }
                                 } else {
@@ -155,23 +159,15 @@ class Bitap32 extends BaseBitap {
                             }
                             case MATCHING:
                                 if (po != OperationType.MATCHING) dt = 0;
-                                if (current[leviDistCopy] < 0 && current[leviDistCopy] >= previous[leviDistCopy]) {
+                                if (current[leviDist] < 0 && current[leviDist] >= previous[leviDist]) {
                                     dt--;
-                                } /*else {
-                                    while (dt < 0) {
-                                        lengthChanges[leviDist--] = -1;
-                                        dt++;
-                                    }
-                                }*/
+                                }
                                 break;
                             default:
                                 break;
                         }
 
                         if (leviDist == 0) {
-                            if (dt < 0) {
-//                                lengthChanges[leviDistCopy]--;
-                            }
                             System.out.println("LC: " + Arrays.stream(lengthChanges).skip(1).limit(levenshteinDistance)
                                     .mapToObj(String::valueOf).collect(Collectors.joining(",")));
                             debug();
@@ -194,7 +190,7 @@ class Bitap32 extends BaseBitap {
 
                         insertion = current[leviDist - 1] << 1;
                         substitution = previous[leviDist - 1] << 1;
-                        matching = current[leviDist] | charPositions | -lastBit;
+                        matching = current[leviDist] | charPositions;
                     } while (true);
                 }
             }
