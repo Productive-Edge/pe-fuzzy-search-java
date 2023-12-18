@@ -38,4 +38,9 @@ public final class CharWithIndex {
         if (value != charWithIndex.value) return false;
         return index == charWithIndex.index;
     }
+
+    @Override
+    public String toString() {
+        return "{'" + value + "' at " + index + '}';
+    }
 }

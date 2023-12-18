@@ -43,10 +43,6 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
 
     abstract class Matcher implements IterativeFuzzyMatcher {
 
-        /**
-         * temporal copy of values in the {@link #lengthChanges}
-         */
-        private final int[] lengthChangesCopy;
         protected CharSequence text;
         /**
          * current Levenshtein distance
@@ -79,11 +75,12 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
          */
         private int fromIndex;
 
+        private State theBestState;
+
         protected Matcher(CharSequence text, int fromIndex, int toIndex) {
             maxDistance = maxLevenshteinDistance;
             final int n = maxDistance + 1;
             lengthChanges = new int[n];
-            lengthChangesCopy = new int[n];
             reset(text, fromIndex, toIndex);
         }
 
@@ -107,7 +104,9 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
             while (++index < toIndex) {
                 if (testNextSymbol()) {
                     final int maxDistanceCopy = maxDistance;
-                    improveResult(Math.min(index + BaseBitap.this.pattern.length() + maxLevenshteinDistance, toIndex));
+                    final int totalLengthChanges = sumLengthChanges();
+                    final int maxIndex = Math.min(toIndex, index + totalLengthChanges + maxDistance + 1);
+                    improveResult(maxIndex);
                     maxDistance = maxDistanceCopy;
                     return true;
                 }
@@ -135,38 +134,38 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
             return fromIndex;
         }
 
+        /**
+         * Sum of the all length changes, which is the difference in length between pattern and this matching
+         *
+         * @return Sum of the all length changes
+         */
+        protected int sumLengthChanges() {
+            int result = 0;
+            for (int i = 1; i <= levenshteinDistance; i++) result += lengthChanges[i];
+            return result;
+        }
+
         @Override
         public void improveResult(int maxIndex) {
             if (levenshteinDistance == 0)
                 return;
-            if (index + 1 == maxIndex)
-                return;
-            // store
-            final int indexCopy = index;
-            final int levenshteinDistanceCopy = levenshteinDistance;
-            final int totalLengthChangesCopy = sumLengthChanges();
-            // loop is faster on small arrays
-            //noinspection ManualArrayCopy
-            for (int i = 1; i <= levenshteinDistanceCopy; i++) lengthChangesCopy[i] = lengthChanges[i];
 
-            maxDistance = levenshteinDistance;
+            if (theBestState == null) theBestState = new State();
+            theBestState.getFromMatcher(sumLengthChanges());
             while (++index < maxIndex) {
                 if (testNextSymbol()) {
-                    if (levenshteinDistance < levenshteinDistanceCopy || sumLengthChanges() < totalLengthChangesCopy) {
-                        improveResult(maxIndex);
-                        return;
+                    if (levenshteinDistance < theBestState.levenshteinDistance) {
+                        theBestState.getFromMatcher(sumLengthChanges());
+                    } else if (levenshteinDistance == theBestState.levenshteinDistance) {
+                        int totalLengthChange = sumLengthChanges();
+                        if (totalLengthChange < theBestState.totalLengthChange) {
+                            theBestState.getFromMatcher(totalLengthChange);
+                        }
                     }
-                } else {
-                    break;
                 }
             }
-            // restore
-            index = indexCopy;
-            levenshteinDistance = levenshteinDistanceCopy;
-            // loop is faster on small arrays
-            //noinspection ManualArrayCopy
-            for (int i = 1; i <= levenshteinDistanceCopy; i++) lengthChanges[i] = lengthChangesCopy[i];
 
+            theBestState.putToMatcher();
         }
 
         @Override
@@ -183,7 +182,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
         public void setMaxDistance(int maxDistance) {
             this.maxDistance = maxDistance;
         }
-        
+
         @Override
         public String toString() {
             return getClass().getName() + '{' +
@@ -192,6 +191,27 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
                     "\", distance={current=" + levenshteinDistance + ", max=" + maxDistance +
                     "}, index=" + index +
                     " in [" + fromIndex + '-' + toIndex + "]}";
+        }
+
+        final class State {
+            int index;
+            int levenshteinDistance;
+            int[] lengthChanges = Matcher.this.lengthChanges.clone();
+
+            int totalLengthChange;
+
+            void getFromMatcher(int totalLengthChange) {
+                index = Matcher.this.index;
+                levenshteinDistance = Matcher.this.levenshteinDistance;
+                this.totalLengthChange = totalLengthChange;
+                for (int i = 1; i <= levenshteinDistance; i++) lengthChanges[i] = Matcher.this.lengthChanges[i];
+            }
+
+            void putToMatcher() {
+                Matcher.this.index = index;
+                Matcher.this.levenshteinDistance = levenshteinDistance;
+                for (int i = 1; i <= levenshteinDistance; i++) Matcher.this.lengthChanges[i] = lengthChanges[i];
+            }
         }
 
         @Override
@@ -221,16 +241,6 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
             return text.subSequence(start(), end());
         }
 
-        /**
-         * Sum of the all length changes, which is the difference in length between pattern and this matching
-         *
-         * @return Sum of the all length changes
-         */
-        protected int sumLengthChanges() {
-            int result = 0;
-            for (int i = 1; i <= levenshteinDistance; i++) result += lengthChanges[i];
-            return result;
-        }
 
         @Override
         public Stream<OperationType> streamEditTypes() {
@@ -239,6 +249,8 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
             return Arrays.stream(lengthChanges, 1, levenshteinDistance + 1)
                     .mapToObj(change -> OperationType.values[change + 2]);
         }
+
+
     }
 
 }

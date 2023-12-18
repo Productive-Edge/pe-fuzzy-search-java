@@ -34,7 +34,7 @@ class Bitap32Test {
         assertEquals("12", matcher.foundText());
         assertEquals(1, matcher.start());
         assertEquals(3, matcher.end());
-        assertArrayEquals(new int[]{0, 0, 0}, ((BaseBitap.Matcher) matcher).lengthChanges);
+        assertFalse(matcher.streamEditTypes().findAny().isPresent());
     }
 
     @ParameterizedTest
@@ -142,7 +142,7 @@ class Bitap32Test {
             "__esult,1,7,1,'0,0,0'",
             "__esul_,1,7,2,'0,0,0'",
             "__esul_t,1,8,2,'0,0,-1'",
-            "Resu__lt,0,6,2,'0,0,0'",
+            "Resu__lt,0,8,2,'0,-1,-1'",
             "Res__ult,0,8,2,'0,-1,-1'",
     })
     void testFuzzy2(String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
@@ -659,26 +659,14 @@ class Bitap32Test {
     @Test
     void testRepeated() {
         String text = "b aa ba a a a";
-        String expl = "0____10___";
         String ptrn = "a aa aaa a";
         FuzzyPattern pattern = FuzzyPattern.compile(ptrn, 6);
         BaseBitap.Matcher matcher = (BaseBitap.Matcher) pattern.matcher(text);
         assertTrue(matcher.find());
-        assertEquals(3, matcher.distance());
-        assertEquals("b aa ba a", matcher.foundText());
-        assertArrayEquals(new int[]{0, 0, 1, 0, 0, 0, 0}, matcher.lengthChanges);
-        StringBuilder explanation = new StringBuilder(expl.length());
-        for (int i = 0, j = 0, l = 1; i < ptrn.length(); i++) {
-            if (ptrn.charAt(i) != text.charAt(j++)) {
-                final int op = matcher.lengthChanges[l++];
-                j += op;
-                explanation.append(op == -1 ? 'd' : (char) (op + 48));
-            } else {
-                explanation.append('_');
-            }
-        }
-        assertEquals(expl, explanation.toString());
-        assertEquals("b aa ba a", matcher.foundText());
+        matcher.streamEditsDetails().forEach(System.out::println);
+        assertEquals(2, matcher.distance());
+        assertEquals("a ba a a a", matcher.foundText());
+        assertArrayEquals(new int[]{0, 0, 0, 0, 0, 0, 0}, matcher.lengthChanges);
     }
 
 
@@ -729,11 +717,11 @@ class Bitap32Test {
             "33. Missing Te Teeth Information",
             "33. Missing Tee Teeth Information",
             "33. Missing Teet Teeth Information",
-            "33. Missing Teeth Teeth Information", // TODO fails on maxLeviD = 10, but works on 9
+            "33. Missing Teeth Teeth Information", // was failing on maxLeviD = 10, but worked on 9, due optimistic improvements
             "33. Missing Teeth  Teeth Information",
     })
     void testMissing(String text) {
-        FuzzyMatcher matcher = FuzzyPattern.compile("33. Missing Teeth Information", 9)
+        FuzzyMatcher matcher = FuzzyPattern.compile("33. Missing Teeth Information", 10)
                 .matcher(text);
         assertTrue(matcher.find());
         System.out.println(matcher.streamEditTypes().map(Enum::toString).collect(Collectors.joining(",")));

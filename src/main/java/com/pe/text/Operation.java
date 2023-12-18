@@ -26,7 +26,7 @@ public final class Operation {
     }
 
     /**
-     * Returns pattern character details used in the operation
+     * Returns pattern character with index which was used in the operation
      * <ul>
      *     <li>{@link OperationType#MATCHING} - matched pattern character value</li>
      *     <li>{@link OperationType#DELETION} - must be {@code null} for deletion</li>
@@ -34,14 +34,14 @@ public final class Operation {
      *     <li>{@link OperationType#INSERTION} - pattern character inserted into the text</li>
      * </ul>
      *
-     * @return pattern character and its position index used in the operation
+     * @return pattern character with index or {@code null} in case of {@link OperationType#DELETION}
      */
     public CharWithIndex patternChar() {
         return patternChar;
     }
 
     /**
-     * Returns text character and its index before the edit operation was applied
+     * Returns character and its index in the found text where edit operation was applied:
      * <ul>
      *     <li>{@link OperationType#MATCHING} - matched text character</li>
      *     <li>{@link OperationType#DELETION} - deleted text character</li>
@@ -49,9 +49,18 @@ public final class Operation {
      *     <li>{@link OperationType#INSERTION} - must be {@code null} for insertion</li>
      * </ul>
      *
-     * @return text character and its index before the edit operation was applied
+     * @return character and its index in the found text or {@code null} in case of {@link OperationType#INSERTION}
      */
     public CharWithIndex textChar() {
         return textChar;
+    }
+
+    @Override
+    public String toString() {
+        return "Operation{" +
+                "type=" + type +
+                ", patternChar=" + patternChar +
+                ", textChar=" + textChar +
+                '}';
     }
 }
