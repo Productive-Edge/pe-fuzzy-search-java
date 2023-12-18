@@ -368,13 +368,13 @@ class Bitap64Test {
     @Test
     void testRepeated() {
         String text = "b aa ba a a a";
-        String expl = "0____0_1__";
+        String expl = "0____10___";
         String ptrn = "a aa aaa a";
         FuzzyPattern pattern = new Bitap64(ptrn, 6);
         BaseBitap.Matcher matcher = (BaseBitap.Matcher) pattern.matcher(text);
         assertTrue(matcher.find());
         assertEquals(3, matcher.distance());
-        assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 1}, matcher.lengthChanges);
+        assertArrayEquals(new int[]{0, 0, 1, 0, 0, 0, 0}, matcher.lengthChanges);
         StringBuilder explanation = new StringBuilder(expl.length());
         for (int i = 0, j = 0, l = 1; i < ptrn.length(); i++) {
             if (ptrn.charAt(i) != text.charAt(j++)) {
