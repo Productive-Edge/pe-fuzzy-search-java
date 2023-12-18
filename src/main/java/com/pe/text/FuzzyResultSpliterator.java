@@ -3,6 +3,9 @@ package com.pe.text;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 
+/**
+ * Spliterator implementation to support streaming of matchings.
+ */
 class FuzzyResultSpliterator extends Spliterators.AbstractSpliterator<FuzzyResult> {
 
     static final int CHARACTERISTICS = ORDERED | NONNULL | IMMUTABLE;

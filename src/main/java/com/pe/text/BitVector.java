@@ -1,101 +1,166 @@
 package com.pe.text;
 
+/**
+ * Simplified implementation of the {@link java.util.BitSet}
+ * Most of the operations mutates current instance
+ */
 final class BitVector {
-    final long[] bits;
+    final long[] words;
     final long lastBitMask;
 
+    /**
+     * Creates new instance of vector which consists of 64-bit words enough to store specified amount of bits
+     *
+     * @param length - specified amount of bits to store
+     */
     BitVector(final int length) {
-        bits = new long[((length - 1) >>> 6) + 1];
+        words = new long[((length - 1) >>> 6) + 1];
         lastBitMask = 1L << ((length - 1) & 63);
     }
 
+    /**
+     * Sets zero at the specified bit index on this instance and returns it.
+     *
+     * @param bitIndex specified bit index to set to zero.
+     * @return this mutated instance
+     */
     BitVector setZeroAt(final int bitIndex) {
-        bits[bitIndex >>> 6] &= ~(1L << (bitIndex & 63));
+        words[bitIndex >>> 6] &= ~(1L << (bitIndex & 63));
         return this;
     }
 
-    boolean hasZeroAtLastBit() {
-        return 0L == (bits[bits.length - 1] & lastBitMask);
-    }
-
-    BitVector setMinusOne() {
-        for (int i = 0, l = bits.length; i < l; i++) bits[i] = -1L;
+    /**
+     * Sets one at the specified bit index on this instance and returns it.
+     *
+     * @param bitIndex specified bit index to set to zero.
+     * @return this mutated instance
+     */
+    BitVector setOneAt(final int bitIndex) {
+        words[bitIndex >>> 6] |= 1L << (bitIndex & 63);
         return this;
     }
 
+    /**
+     * Returns true if all bits set to zero, otherwise - false
+     *
+     * @return true if all bits set to zero, otherwise - false
+     */
+    boolean isZero() {
+        for (long word : words)
+            if (word != 0)
+                return false;
+        return true;
+    }
+
+    /**
+     * Returns true if the last bit (specified at constructor) has zero, otherwise - false
+     *
+     * @return true if the last bit (specified at constructor) has zero, otherwise - false
+     */
+    boolean hasZeroAtTheLastBit() {
+        return 0L == (words[words.length - 1] & lastBitMask);
+    }
+
+
+    /**
+     * Sets all bits to 1 (one), which is analogue of -1 for signed integers
+     *
+     * @return this mutated instance where all bits are set to 1
+     */
+    BitVector resetToMinusOne() {
+        for (int i = 0, l = words.length; i < l; i++) words[i] = -1L;
+        return this;
+    }
+
+    /**
+     * Sets all bits to 0 (zero), which is analogue of 0 for signed integers
+     *
+     * @return this mutated instance where all bits are set to 1
+     */
+    BitVector resetToZero() {
+        for (int i = 0, l = words.length; i < l; i++) words[i] = 0;
+        return this;
+    }
+
+    /**
+     * Copy bits from the specified bit vector into this instance
+     *
+     * @param vector source of copy operation
+     * @return this mutated instance with bits set (copied) from the specified vector
+     */
     BitVector setBitsFrom(final BitVector vector) {
-        for (int i = 0, l = bits.length; i < l; i++) bits[i] = vector.bits[i];
+        for (int i = 0, l = words.length; i < l; i++) words[i] = vector.words[i];
         return this;
     }
 
+    /**
+     * Performs bitwise OR (|) operation on this and specified vector and stores result to this instance.
+     *
+     * @param vector 2nd vector
+     * @return this mutated instance with the result of the OR bitwise operation
+     */
     BitVector or(final BitVector vector) {
-        for (int i = 0; i < bits.length; i++) bits[i] |= vector.bits[i];
+        for (int i = 0; i < words.length; i++) words[i] |= vector.words[i];
         return this;
     }
 
+    /**
+     * Performs bitwise AND (&) operation on this and specified vector and stores result to this instance.
+     *
+     * @param vector 2nd vector
+     * @return this mutated instance with the result of the AND bitwise operation
+     */
     BitVector and(final BitVector vector) {
-        for (int i = 0; i < bits.length; i++) bits[i] &= vector.bits[i];
+        for (int i = 0; i < words.length; i++) words[i] &= vector.words[i];
         return this;
     }
 
-    BitVector invert() {
-        for (int i = 0; i < bits.length; i++) bits[i] = ~bits[i];
-        return this;
-    }
-
+    /**
+     * Shifts left all bits on one {@code << 1} in this instance
+     *
+     * @return this mutated instance with result of {@code << 1}
+     */
     BitVector leftShift1() {
-        long bit = 0;
-        for (int i = 0, l = bits.length; i < l; i++) {
-            final long overflow = bits[i] >>> 63;
-            bits[i] <<= 1;
-            bits[i] |= bit;
-            bit = overflow;
+        long bit = 0L;
+        for (int i = 0, l = words.length; i < l; i++) {
+            final long wi = words[i];
+            words[i] = (wi << 1) | bit;
+            bit = wi >>> 63;
         }
         return this;
     }
 
+    /**
+     * Shifts left all bits on the specified amount of bits {@code << bitsCount} in this instance
+     *
+     * @param bitsCount - specified amount of bits
+     * @return this mutated instance with result of {@code << bitsCount}
+     */
     BitVector leftShift(final int bitsCount) {
-        final int words = bitsCount >>> 6;
-        for (int i = 0; i < words; i++) bits[i] = 0L;
-        long bit = 0;
+        final int wordsCount = bitsCount >>> 6;
+        for (int i = 0; i < wordsCount; i++) this.words[i] = 0L;
+        long bits = 0L;
         final int reminder = 64 - (bitsCount & 63);
-        for (int i = words, l = bits.length; i < l; i++) {
-            final long overflow = bits[i] >>> reminder;
-            bits[i] <<= bitsCount;
-            bits[i] |= bit;
-            bit = overflow;
+        for (int i = wordsCount, l = this.words.length; i < l; i++) {
+            final long wi = this.words[i];
+            this.words[i] = (wi << bitsCount) | bits;
+            bits = wi >>> reminder;
         }
         return this;
     }
 
-    boolean notLessThan(BitVector vector) {
-        return !lessThan(vector);
-    }
-
-    boolean lessThan(BitVector vector) {
-        for (int i = bits.length - 1; i >= 0; i--) {
-            final long delta = bits[i] - vector.bits[i];
-            if (delta == 0L) continue;
-            return delta < 0L;
+    /**
+     * Performs mutations as unsigned right shift (>>>) on one bit.
+     *
+     * @return the same instance, with modified bits
+     */
+    BitVector rightUnsignedShift1() {
+        long bit = 0L;
+        for (int i = words.length - 1; i >= 0; i--) {
+            final long wi = words[i];
+            words[i] = (words[i] >>> 1) | bit;
+            bit = wi << 63;
         }
-        return false;
-    }
-
-    public BitVector xor(BitVector vector) {
-        for (int i = 0; i < bits.length; i++) bits[i] ^= vector.bits[i];
-        return this;
-    }
-
-    public boolean isPositive() {
-        return !isNegative();
-    }
-
-    public boolean isNegative() {
-        return bits[bits.length - 1] < 0L;
-    }
-
-    public BitVector andInvertedLastBitMask() {
-        bits[bits.length - 1] &= ~lastBitMask;
         return this;
     }
 }

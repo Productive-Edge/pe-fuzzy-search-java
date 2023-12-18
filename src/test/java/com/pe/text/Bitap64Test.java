@@ -190,7 +190,7 @@ class Bitap64Test {
 
     @Test
     void testMaxLen() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("1234567890123456789012345678901234567890123456789012345678901234", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("1234567890123456789012345678901234567890123456789012345678901234", 1);
         assertTrue(pattern instanceof Bitap64);
         //replace
         {
@@ -350,7 +350,7 @@ class Bitap64Test {
     @Test
     void testRealCase() {
         String text = "4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i";
-        FuzzyPattern pattern = FuzzyPattern.pattern(" (if both, complete 5-11 for dental only.)", 10);
+        FuzzyPattern pattern = FuzzyPattern.compile(" (if both, complete 5-11 for dental only.)", 10);
         assertEquals(
                 " (!f both, complete 3-11 for dental oniy.i",
                 pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse("")
@@ -368,25 +368,12 @@ class Bitap64Test {
     @Test
     void testRepeated() {
         String text = "b aa ba a a a";
-        String expl = "0____0_1__";
         String ptrn = "a aa aaa a";
         FuzzyPattern pattern = new Bitap64(ptrn, 6);
         BaseBitap.Matcher matcher = (BaseBitap.Matcher) pattern.matcher(text);
         assertTrue(matcher.find());
-        assertEquals(3, matcher.distance());
-        assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 1}, matcher.lengthChanges);
-        StringBuilder explanation = new StringBuilder(expl.length());
-        for (int i = 0, j = 0, l = 1; i < ptrn.length(); i++) {
-            if (ptrn.charAt(i) != text.charAt(j++)) {
-                final int op = matcher.lengthChanges[l++];
-                j += op;
-                explanation.append(op == -1 ? 'd' : (char) (op + 48));
-            } else {
-                explanation.append('_');
-            }
-        }
-        assertEquals(expl, explanation.toString());
-        assertEquals("b aa ba a", matcher.foundText());
+        assertEquals(2, matcher.distance());
+        assertEquals("a ba a a a", matcher.foundText());
     }
 
 
@@ -397,7 +384,7 @@ class Bitap64Test {
             "insert replace delete dde,nsert rrplace ddelete de,5",
     })
     void insertionBeforeReplacementAndDeletion(String pattern, String text, int maxDiff) {
-        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, maxDiff)
+        FuzzyMatcher matcher = FuzzyPattern.compile(pattern, maxDiff)
                 .matcher(text);
         assertTrue(matcher.find());
         assertEquals(text, matcher.foundText());

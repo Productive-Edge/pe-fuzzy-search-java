@@ -1,6 +1,7 @@
 package com.pe.text;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
@@ -15,7 +16,7 @@ class Bitap32Test {
 
     @Test
     void testNoDistance() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("123", 0);
+        FuzzyPattern pattern = FuzzyPattern.compile("123", 0);
         FuzzyMatcher matcher = pattern.matcher("0123");
         assertTrue(matcher.find());
         assertEquals(0, matcher.distance());
@@ -26,14 +27,14 @@ class Bitap32Test {
 
     @Test
     void testFullDistance() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("12", 2);
+        FuzzyPattern pattern = FuzzyPattern.compile("12", 2);
         FuzzyMatcher matcher = pattern.matcher("0123");
         assertTrue(matcher.find());
         assertEquals(0, matcher.distance());
         assertEquals("12", matcher.foundText());
         assertEquals(1, matcher.start());
         assertEquals(3, matcher.end());
-        assertArrayEquals(new int[]{0, 1, 1}, ((BaseBitap.Matcher) matcher).lengthChanges);
+        assertFalse(matcher.streamEditTypes().findAny().isPresent());
     }
 
     @ParameterizedTest
@@ -55,9 +56,9 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
-            "test,tst,0,3,'0,1,1'",
-            "test,tost,0,4,'0,0,1'",
-            "test,toest,0,5,'0,-1,1'",
+            "test,tst,0,3,'0,1,0'",
+            "test,tost,0,4,'0,0,0'",
+            "test,toest,0,5,'0,-1,0'",
     })
     void testOperations2(String test, String text, int start, int end, @ConvertWith(CsvIntsConverter.class) int[] changes) {
         FuzzyPattern bitap = new Bitap32(test, 2);
@@ -98,21 +99,54 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
-            "test,test,0,4,0,'0,1'",
-            "test,tet,0,3,1,'0,1'",
-            "test,tes,0,3,1,'0,1'",
-            "test,tost,0,4,1,'0,0'",
-            "test,tesl,0,4,1,'0,0'",
-            "test,te5t,0,4,1,'0,0'",
-            "test,_test,1,5,0,'0,1'",
-            "test,_te5t,1,5,1,'0,0'",
-            "test,tst,0,3,1,'0,1'",
-            "test,_tst,1,4,1,'0,1'",
-            "test,t_est,0,5,1,'0,-1'",
-            "test,tes_t,0,5,1,'0,-1'"
+            "test,0,4,0,'0,0'",
+            "tet,0,3,1,'0,1'",
+            "tes,0,3,1,'0,1'",
+            "tost,0,4,1,'0,0'",
+            "tesl,0,4,1,'0,0'",
+            "te5t,0,4,1,'0,0'",
+            "_test,1,5,0,'0,0'",
+            "_te5t,1,5,1,'0,0'",
+            "tst,0,3,1,'0,1'",
+            "_tst,1,4,1,'0,1'",
+            "t_est,0,5,1,'0,-1'",
+            "tes_t,0,5,1,'0,-1'"
     })
-    void testFuzzy1(String test, String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
-        FuzzyPattern bitap = new Bitap32(test, 1);
+    void testFuzzy1(String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
+        FuzzyPattern bitap = new Bitap32("test", 1);
+        FuzzyMatcher matcher = bitap.matcher(text);
+        assertTrue(matcher.find());
+        assertEquals(start, matcher.start());
+        assertEquals(end, matcher.end());
+        assertEquals(d, matcher.distance());
+        assertArrayEquals(changes, ((BaseBitap.Matcher) matcher).lengthChanges);
+        assertFalse(matcher.find());
+    }
+
+
+    @ParameterizedTest
+    @CsvSource({
+            "Rsulut,0,6,2,'0,1,-1'",
+            "Rsuult,0,6,2,'0,1,-1'",
+            "Result,0,6,0,'0,0,0'",
+            "Resul,0,5,1,'0,1,0'",
+            "Resu,0,4,2,'0,1,1'",
+            "Resul_,0,6,1,'0,0,0'",
+            "Resu_t,0,6,1,'0,0,0'",
+            "_esult,0,6,1,'0,0,0'",
+            "_esul_,0,6,2,'0,0,0'",
+            "_esul_t,0,7,2,'0,0,-1'",
+            "_Result,1,7,0,'0,0,0'",
+            "_Resul_,1,7,1,'0,0,0'",
+            "_Resu_t,1,7,1,'0,0,0'",
+            "__esult,1,7,1,'0,0,0'",
+            "__esul_,1,7,2,'0,0,0'",
+            "__esul_t,1,8,2,'0,0,-1'",
+            "Resu__lt,0,8,2,'0,-1,-1'",
+            "Res__ult,0,8,2,'0,-1,-1'",
+    })
+    void testFuzzy2(String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
+        FuzzyPattern bitap = new Bitap32("Result", 2);
         FuzzyMatcher matcher = bitap.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -124,49 +158,19 @@ class Bitap32Test {
 
     @ParameterizedTest
     @CsvSource({
-            "test,__st",
-            "test,to_t",
-            "test,_esl",
-            "test,_e5t",
-            "test,_t_5t",
-            "test,ts__",
-            "test,_ts_",
-            "test,t_es_",
-            "test,_es_t"
+            "__st",
+            "to_t",
+            "_esl",
+            "_e5t",
+            "_t_5t",
+            "ts__",
+            "_ts_",
+            "t_es_",
+            "_es_t"
     })
-    void testFuzzy1Fail(String test, String text) {
-        FuzzyPattern bitap = new Bitap32(test, 1);
+    void testFuzzy1Fail(String text) {
+        FuzzyPattern bitap = new Bitap32("test", 1);
         FuzzyMatcher matcher = bitap.matcher(text);
-        assertFalse(matcher.find());
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "Result,Rsulut,0,6,2,'0,1,-1'",
-            "Result,Rsuult,0,6,2,'0,1,-1'",
-            "Result,Result,0,6,0,'0,1,1'",
-            "Result,Resul,0,5,1,'0,1,1'",
-            "Result,Resu,0,4,2,'0,1,1'",
-            "Result,Resul_,0,6,1,'0,0,1'",
-            "Result,Resu_t,0,6,1,'0,0,1'",
-            "Result,_esult,0,6,1,'0,0,1'",
-            "Result,_esul_,0,6,2,'0,0,0'",
-            "Result,_esul_t,0,7,2,'0,0,-1'",
-            "Result,_Result,1,7,0,'0,1,1'",
-            "Result,_Resul_,1,7,1,'0,0,1'",
-            "Result,_Resu_t,1,7,1,'0,0,1'",
-            "Result,__esult,1,7,1,'0,0,1'",
-            "Result,__esul_,1,7,2,'0,0,0'",
-            "Result,__esul_t,1,8,2,'0,0,-1'"
-    })
-    void testFuzzy2(String test, String text, int start, int end, int d, @ConvertWith(CsvIntsConverter.class) int[] changes) {
-        FuzzyPattern bitap = new Bitap32(test, 2);
-        FuzzyMatcher matcher = bitap.matcher(text);
-        assertTrue(matcher.find());
-        assertEquals(start, matcher.start());
-        assertEquals(end, matcher.end());
-        assertEquals(d, matcher.distance());
-        assertArrayEquals(changes, ((BaseBitap.Matcher) matcher).lengthChanges);
         assertFalse(matcher.find());
     }
 
@@ -261,7 +265,7 @@ class Bitap32Test {
 
     @Test
     void testMaxLen() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("12345678901234567890123456789012", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("12345678901234567890123456789012", 1);
         assertTrue(pattern instanceof Bitap32);
         //insert 2
         {
@@ -347,6 +351,30 @@ class Bitap32Test {
         FuzzyMatcher m = p.matcher("acc");
         assertTrue(m.find());
         assertEquals("acc", m.foundText().toString(), "foundText");
+        assertEquals(0, m.start(), "start");
+        assertEquals(3, m.end(), "end");
+        assertEquals(1, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+
+    @Test
+    void testTwoReplacesInRow() {
+        FuzzyPattern p = new Bitap32("abcd", 2);
+        FuzzyMatcher m = p.matcher("addd");
+        assertTrue(m.find());
+        assertEquals("addd", m.foundText().toString(), "foundText");
+        assertEquals(0, m.start(), "start");
+        assertEquals(4, m.end(), "end");
+        assertEquals(2, m.distance(), "distance");
+        assertFalse(m.find());
+    }
+
+    @Test
+    void testEdgeCaseS3x3u() {
+        FuzzyPattern p = new Bitap32("abc", 2);
+        FuzzyMatcher m = p.matcher("axc");
+        assertTrue(m.find());
+        assertEquals("axc", m.foundText().toString(), "foundText");
         assertEquals(0, m.start(), "start");
         assertEquals(3, m.end(), "end");
         assertEquals(1, m.distance(), "distance");
@@ -461,8 +489,8 @@ class Bitap32Test {
         assertEquals(2, m.distance(), "distance");
         assertArrayEquals(
                 new OperationType[]{OperationType.INSERTION, OperationType.INSERTION},
-                m.streamEdits().toArray());
-        List<Operation> all = m.streamAllDetails().collect(Collectors.toList());
+                m.streamEditTypes().toArray());
+        List<Operation> all = m.streamCharByCharOperations().collect(Collectors.toList());
         assertEquals(5, all.size());
 
         assertEquals(OperationType.MATCHING, all.get(0).type());
@@ -531,14 +559,14 @@ class Bitap32Test {
 
     @Test
     void testAbcBy2a() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("aa", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("aa", 1);
         FuzzyMatcher matcher = pattern.matcher("abc");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
         assertEquals(2, matcher.end());
         assertEquals(1, matcher.distance());
         assertEquals("ab", matcher.foundText());
-        List<Operation> all = matcher.streamAllDetails().collect(Collectors.toList());
+        List<Operation> all = matcher.streamCharByCharOperations().collect(Collectors.toList());
         assertEquals(2, all.size());
         Assertions.assertEquals(OperationType.MATCHING, all.get(0).type());
         Assertions.assertEquals(OperationType.REPLACEMENT, all.get(1).type());
@@ -550,7 +578,7 @@ class Bitap32Test {
 
     @Test
     void test1aBy2a() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("aa", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("aa", 1);
         FuzzyMatcher matcher = pattern.matcher("a");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
@@ -562,7 +590,7 @@ class Bitap32Test {
 
     @Test
     void test3aBy2a() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("aa", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("aa", 1);
         FuzzyMatcher matcher = pattern.matcher("aaa");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
@@ -579,7 +607,7 @@ class Bitap32Test {
 
     @Test
     void test5aBy2a() {
-        FuzzyPattern pattern = FuzzyPattern.pattern("aa", 1);
+        FuzzyPattern pattern = FuzzyPattern.compile("aa", 1);
         FuzzyMatcher matcher = pattern.matcher("aaaaa");
         assertTrue(matcher.find());
         assertEquals(0, matcher.start());
@@ -600,9 +628,20 @@ class Bitap32Test {
     }
 
     @Test
+    @Disabled("this code is just for README.md")
+    void readme() {
+        FuzzyPattern
+                .compile("Medical?", 3)
+                .matcher("4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i")
+                .stream()
+                .forEach(System.out::println);
+        assertTrue(true);
+    }
+
+    @Test
     void testRealCase() {
         String text = "4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i";
-        FuzzyPattern pattern = FuzzyPattern.pattern(" (if both, complete 5-11 for ", 10);
+        FuzzyPattern pattern = FuzzyPattern.compile(" (if both, complete 5-11 for ", 10);
         assertEquals(
                 " (!f both, complete 3-11 for ",
                 pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse("")
@@ -612,7 +651,7 @@ class Bitap32Test {
     @Test
     void testTheBest() {
         String text = "AABAAA";
-        FuzzyPattern pattern = FuzzyPattern.pattern("AAA", 2);
+        FuzzyPattern pattern = FuzzyPattern.compile("AAA", 2);
         assertEquals("AABA", pattern.matcher(text).findTheBest().map(FuzzyResult::foundText).orElse(null));
         assertEquals("AAA", pattern.matcher(text).findTheBest(true).map(FuzzyResult::foundText).orElse(null));
     }
@@ -620,25 +659,14 @@ class Bitap32Test {
     @Test
     void testRepeated() {
         String text = "b aa ba a a a";
-        String expl = "0____0_1__";
         String ptrn = "a aa aaa a";
-        FuzzyPattern pattern = FuzzyPattern.pattern(ptrn, 6);
+        FuzzyPattern pattern = FuzzyPattern.compile(ptrn, 6);
         BaseBitap.Matcher matcher = (BaseBitap.Matcher) pattern.matcher(text);
         assertTrue(matcher.find());
-        assertEquals(3, matcher.distance());
-        assertArrayEquals(new int[]{0, 0, 0, 1, 1, 1, 1}, matcher.lengthChanges);
-        StringBuilder explanation = new StringBuilder(expl.length());
-        for (int i = 0, j = 0, l = 1; i < ptrn.length(); i++) {
-            if (ptrn.charAt(i) != text.charAt(j++)) {
-                final int op = matcher.lengthChanges[l++];
-                j += op;
-                explanation.append(op == -1 ? 'd' : (char) (op + 48));
-            } else {
-                explanation.append('_');
-            }
-        }
-        assertEquals(expl, explanation.toString());
-        assertEquals("b aa ba a", matcher.foundText());
+        matcher.streamEditsDetails().forEach(System.out::println);
+        assertEquals(2, matcher.distance());
+        assertEquals("a ba a a a", matcher.foundText());
+        assertArrayEquals(new int[]{0, 0, 0, 0, 0, 0, 0}, matcher.lengthChanges);
     }
 
 
@@ -649,7 +677,7 @@ class Bitap32Test {
             "insert replace delete dde,nsert rrplace ddelete de,4",
     })
     void insertionBeforeReplacementAndDeletion(String pattern, String text, int maxDiff) {
-        FuzzyMatcher matcher = FuzzyPattern.pattern(pattern, maxDiff)
+        FuzzyMatcher matcher = FuzzyPattern.compile(pattern, maxDiff)
                 .matcher(text);
         assertTrue(matcher.find());
         assertEquals(text, matcher.foundText());
@@ -659,5 +687,61 @@ class Bitap32Test {
         assertEquals(OperationType.REPLACEMENT, edits.get(1).type());
         assertEquals(OperationType.DELETION, edits.get(2).type());
     }
+
+    @Test
+    void testMissingS() {
+        FuzzyMatcher matcher = FuzzyPattern.compile("3 Mis Teeth", 4)
+                .matcher("3 Mis    Teeth Information         {Place an X         on each missing toofh.)");
+        assertTrue(matcher.find());
+        assertEquals("3 Mis    Teeth", matcher.foundText());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "33. Missing Teeth Information",
+            "33. Missing  Teeth Information",
+            "33. Missing   Teeth Information",
+            "33. Missing    Teeth Information",
+            "33. Missing     Teeth Information",
+            "33. Missing      Teeth Information",
+            "33. Missing       Teeth Information",
+            "33. Missing        Teeth Information",
+            "33. Missing x Teeth Information",
+            "33. Missing xx Teeth Information",
+            "33. Missing xxx Teeth Information",
+            "33. Missing xxxx Teeth Information",
+            "33. Missing xxxxx Teeth Information",
+            "33. Missing xxxxxx Teeth Information",
+            "33. Missing xxxxxxx Teeth Information",
+            "33. Missing T Teeth Information",
+            "33. Missing Te Teeth Information",
+            "33. Missing Tee Teeth Information",
+            "33. Missing Teet Teeth Information",
+            "33. Missing Teeth Teeth Information", // was failing on maxLeviD = 10, but worked on 9, due optimistic improvements
+            "33. Missing Teeth  Teeth Information",
+    })
+    void testMissing(String text) {
+        FuzzyMatcher matcher = FuzzyPattern.compile("33. Missing Teeth Information", 10)
+                .matcher(text);
+        assertTrue(matcher.find());
+        System.out.println(matcher.streamEditTypes().map(Enum::toString).collect(Collectors.joining(",")));
+        assertEquals(text, matcher.foundText());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1234567890,1234567890",
+            "1_234567890,1_234567890",
+            "1__234567890,_234567890",
+            "1___234567890,_234567890",
+    })
+    void testDeletions(String text, String expected) {
+        FuzzyMatcher matcher = FuzzyPattern.compile("1234567890", 9)
+                .matcher(text);
+        assertTrue(matcher.find());
+        System.out.println(matcher.streamEditTypes().map(Enum::toString).collect(Collectors.joining(",")));
+        assertEquals(expected, matcher.foundText());
+    }
+
 
 }

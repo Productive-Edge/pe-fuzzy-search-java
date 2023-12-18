@@ -209,7 +209,7 @@ class Bitap65PlusTest {
 
     @Test
     void testLongPattern() {
-        FuzzyPattern pattern = FuzzyPattern.pattern(
+        FuzzyPattern pattern = FuzzyPattern.compile(
                 "nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat",
                 5, true);
 

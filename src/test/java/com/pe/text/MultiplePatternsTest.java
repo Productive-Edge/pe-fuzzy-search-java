@@ -18,7 +18,7 @@ class MultiplePatternsTest {
             "test,tetest,2,6",
     })
     void testFuzzy0(String test, String text, int start, int end) {
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
+        FuzzyMatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -31,7 +31,7 @@ class MultiplePatternsTest {
     void testFuzzy0Fail() {
         String test = "test";
         String text = "aaaa";
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
+        FuzzyMatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertFalse(matcher.find());
         assertThrows(IllegalStateException.class, matcher::start);
@@ -53,7 +53,7 @@ class MultiplePatternsTest {
             "test,tes_t,0,5,1"
     })
     void testFuzzy1(String test, String text, int start, int end, int d) {
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 1)});
+        FuzzyMatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 1)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -74,7 +74,7 @@ class MultiplePatternsTest {
             "test,_es_t"
     })
     void testFuzzy1Fail(String test, String text) {
-        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
+        FuzzyPatterns patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 0)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertFalse(matcher.find());
     }
@@ -97,7 +97,7 @@ class MultiplePatternsTest {
             "Result,__esul_t,1,8,2"
     })
     void testFuzzy2(String test, String text, int start, int end, int d) {
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 2)});
+        FuzzyMatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus(test, 2)});
         FuzzyMatcher matcher = patterns.matcher(text);
         assertTrue(matcher.find());
         assertEquals(start, matcher.start());
@@ -107,7 +107,7 @@ class MultiplePatternsTest {
 
     @Test
     void testAllMatches() {
-        MatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus("test", 1)});
+        FuzzyMatcherProvider patterns = new MultiplePatterns(new FuzzyPattern[]{new Bitap65Plus("test", 1)});
         String text = "Test string to test all matches. tes";
         FuzzyMatcher matcher = patterns.matcher(text);
         assertTrue(matcher.find());
@@ -131,10 +131,10 @@ class MultiplePatternsTest {
 
     @Test
     void testLongPattern() {
-        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{
-                FuzzyPattern.pattern("ut", 0, true),
-                FuzzyPattern.pattern("Duis", 1),
-                FuzzyPattern.pattern("dolor", 1)
+        FuzzyPatterns patterns = new MultiplePatterns(new FuzzyPattern[]{
+                FuzzyPattern.compile("ut", 0, true),
+                FuzzyPattern.compile("Duis", 1),
+                FuzzyPattern.compile("dolor", 1)
         });
 
         Stream<FuzzyResult> resultStream = patterns.matcher("Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
@@ -150,9 +150,9 @@ class MultiplePatternsTest {
 
     @Test
     void testMatchingOrder() {
-        FuzzyMultiPattern patterns = new MultiplePatterns(new FuzzyPattern[]{
-                FuzzyPattern.pattern("aaa", 1),
-                FuzzyPattern.pattern("aa", 1)
+        FuzzyPatterns patterns = new MultiplePatterns(new FuzzyPattern[]{
+                FuzzyPattern.compile("aaa", 1),
+                FuzzyPattern.compile("aa", 1)
         });
 
         FuzzyMatcher matcher = patterns.matcher("aaaaa");

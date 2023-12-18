@@ -4,14 +4,14 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Interface of the successfully matched result.
+ * Interface of the found matching.
  * <p>
  * {@link FuzzyMatcher} itself implements this interface to reduce heap memory usage
  * when search is done via {@link FuzzyMatcher#find()} method in the {@code while} loop:
  * <pre>{@code
  *     FuzzyMatcher matcher = pattern.matcher(text);
  *     while(matcher.find()) {
- *      System.out.println("Found text: " + text.substring(matcher.start(), matcher.end());
+ *      System.out.println("Found text: " + matcher.foundText());
  *     }
  * }</pre>
  * <p>
@@ -84,7 +84,13 @@ public interface FuzzyResult {
         );
     }
 
-    default Stream<Operation> streamAllDetails() {
+    /**
+     * Streams all operations for this result char-by-char including matchings.
+     *
+     * @return stream with all operations for this result char-by-char including matchings
+     * @see Operation
+     */
+    default Stream<Operation> streamCharByCharOperations() {
         return StreamSupport.stream(
                 () -> new OperationsSpliterator(new OperationsIterator(this, true)),
                 OperationsSpliterator.CHARACTERISTICS,
@@ -92,5 +98,24 @@ public interface FuzzyResult {
         );
     }
 
-    Stream<OperationType> streamEdits();
+    /**
+     * Streams edit operations applied to the found text to get pattern.
+     *
+     * @return stream with edit operations applied to the found text to get pattern
+     * @see Operation
+     */
+    default Stream<Operation> streamEditOperations() {
+        return StreamSupport.stream(
+                () -> new OperationsSpliterator(new OperationsIterator(this, false)),
+                OperationsSpliterator.CHARACTERISTICS,
+                false
+        );
+    }
+
+    /**
+     * Streams edit operations, without matching, applied to the text to match the pattern
+     *
+     * @return stream with applied edit operations, without matching.
+     */
+    Stream<OperationType> streamEditTypes();
 }

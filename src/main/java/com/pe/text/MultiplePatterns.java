@@ -1,22 +1,23 @@
 package com.pe.text;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.stream.Stream;
 
 /**
- * Fallback implementation of the {@link FuzzyMultiPattern} if one of the patterns doesn't implement {@link IterativeFuzzyPattern}
+ * Fallback implementation of the {@link FuzzyPatterns} if one of the patterns doesn't implement {@link IterativeFuzzyMatcherProvider}
  * This implementation calls find for all patterns at the begging and then lazily continues searching using priority queue.
  */
-class MultiplePatterns implements FuzzyMultiPattern {
+class MultiplePatterns implements FuzzyPatterns {
 
     private static final Comparator<FuzzyMatcher> START_POSITION_COMPARATOR =
             Comparator.comparing(MultiplePatterns::getStartPositionSafely)
                     .thenComparing(MultiplePatterns::getEndPositionSafely);
-    private final FuzzyPattern[] patterns;
+    private final FuzzyMatcherProvider[] patterns;
 
-    public MultiplePatterns(FuzzyPattern[] patterns) {
+    public MultiplePatterns(FuzzyMatcherProvider[] patterns) {
         this.patterns = patterns;
     }
 
@@ -31,6 +32,11 @@ class MultiplePatterns implements FuzzyMultiPattern {
     @Override
     public FuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex) {
         return new Matcher(text, fromIndex, toIndex);
+    }
+
+    @Override
+    public Iterable<? extends FuzzyMatcherProvider> patterns() {
+        return Arrays.stream(patterns)::iterator;
     }
 
     class Matcher implements DefaultFuzzyMatcher {
@@ -143,8 +149,8 @@ class MultiplePatterns implements FuzzyMultiPattern {
         }
 
         @Override
-        public Stream<OperationType> streamEdits() {
-            return ensureFound().streamEdits();
+        public Stream<OperationType> streamEditTypes() {
+            return ensureFound().streamEditTypes();
         }
 
         @Override

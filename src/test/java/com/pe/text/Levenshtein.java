@@ -18,7 +18,7 @@ public class Levenshtein {
             l1 = l2;
             l2 = s2.length();
         }
-        FuzzyPattern pattern = FuzzyPattern.pattern(s1, l1);
+        FuzzyPattern pattern = FuzzyPattern.compile(s1, l1);
         @SuppressWarnings("OptionalGetWithoutIsPresent") FuzzyResult result = pattern.matcher(s2).findTheBest().get();
         return l2 - result.end() + result.start() + result.distance();
     }

@@ -15,27 +15,31 @@ class OperationsIterator implements Iterator<Operation> {
     OperationsIterator(FuzzyResult result, boolean includeMatchingOperation) {
         this.result = result;
         this.text = result.foundText();
-        this.edits = result.streamEdits().mapToInt(OperationType::ordinal).toArray();
+        this.edits = result.streamEditTypes().mapToInt(OperationType::ordinal).toArray();
         this.includeMatchingOperation = includeMatchingOperation;
     }
 
     int size() {
         if (includeMatchingOperation) {
             return result.pattern().text().length()
-                    + result.streamEdits().mapToInt(type -> type.ordinal() - 2).sum();
+                    + result.streamEditTypes().mapToInt(type -> type.ordinal() - 2).sum();
         }
         return edits.length;
     }
 
+    private boolean hasNextPatternChar() {
+        return patternIndex < result.pattern().text().length();
+    }
+
     @Override
     public boolean hasNext() {
-        return editIndex < edits.length;
+        return editIndex < edits.length || (includeMatchingOperation && hasNextPatternChar());
     }
 
     @Override
     public Operation next() {
         while (hasNext()) {
-            final boolean hasPatternChar = patternIndex < result.pattern().text().length();
+            final boolean hasPatternChar = hasNextPatternChar();
             final char p = hasPatternChar
                     ? result.pattern().text().charAt(patternIndex)
                     : (char) 0;
@@ -54,18 +58,18 @@ class OperationsIterator implements Iterator<Operation> {
             if (!isSame) {
                 switch (OperationType.values[edits[editIndex++]]) {
                     case DELETION:
-                        return new OperationRecord(OperationType.DELETION,
+                        return new Operation(OperationType.DELETION,
                                 null,
-                                new CharDetailsRecord(t, textIndex++)
+                                new CharWithIndex(t, textIndex++)
                         );
                     case REPLACEMENT:
-                        return new OperationRecord(OperationType.REPLACEMENT,
-                                new CharDetailsRecord(p, patternIndex++),
-                                new CharDetailsRecord(t, textIndex++)
+                        return new Operation(OperationType.REPLACEMENT,
+                                new CharWithIndex(p, patternIndex++),
+                                new CharWithIndex(t, textIndex++)
                         );
                     case INSERTION:
-                        return new OperationRecord(OperationType.INSERTION,
-                                new CharDetailsRecord(p, patternIndex++),
+                        return new Operation(OperationType.INSERTION,
+                                new CharWithIndex(p, patternIndex++),
                                 null
                         );
                     default:
@@ -77,13 +81,13 @@ class OperationsIterator implements Iterator<Operation> {
             }
 
             if (includeMatchingOperation) {
-                return new OperationRecord(
+                return new Operation(
                         OperationType.MATCHING,
-                        new CharDetailsRecord(p, patternIndex++),
-                        new CharDetailsRecord(t, textIndex++)
+                        new CharWithIndex(p, patternIndex++),
+                        new CharWithIndex(t, textIndex++)
                 );
             }
-            
+
             patternIndex++;
             textIndex++;
         }
