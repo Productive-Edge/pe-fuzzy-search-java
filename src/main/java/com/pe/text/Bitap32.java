@@ -1,6 +1,6 @@
 package com.pe.text;
 
-import it.unimi.dsi.fastutil.chars.Char2IntOpenHashMap;
+import com.pe.hash.Char2IntMap;
 
 /**
  * Bitap implementation using 32-bit word, it is even slightly faster on the 64-bit CPUs.
@@ -10,7 +10,7 @@ class Bitap32 extends BaseBitap {
     /**
      * Positions inverted bitmask for every character in the pattern
      */
-    private final Char2IntOpenHashMap positionMasks;
+    private final Char2IntMap positionMasks;
 
     /**
      * Position bitmask (not inverted) of the last pattern character,
@@ -28,16 +28,20 @@ class Bitap32 extends BaseBitap {
             throw new IllegalArgumentException("Pattern length exceeds allowed maximum in 32 characters");
         }
         lastBitMask = 1 << (pattern.length() - 1);
-        positionMasks = new Char2IntOpenHashMap(pattern.length() << 1);
+        positionMasks = new Char2IntMap(
+                caseInsensitive
+                        ? pattern.toString().toUpperCase() + pattern.toString().toLowerCase()
+                        : pattern,
+                -1);
         if (!caseInsensitive) {
             for (int i = 0; i < pattern.length(); i++) {
                 final char c = pattern.charAt(i);
-                positionMasks.put(c, positionMasks.getOrDefault(c, -1) & (~(1 << i)));
+                positionMasks.put(c, positionMasks.get(c) & (~(1 << i)));
             }
         } else {
             for (int i = 0; i < pattern.length(); i++) {
                 final char lc = Character.toLowerCase(pattern.charAt(i));
-                final int mask = positionMasks.getOrDefault(lc, -1) & (~(1 << i));
+                final int mask = positionMasks.get(lc) & (~(1 << i));
                 positionMasks.put(lc, mask);
                 positionMasks.put(Character.toUpperCase(lc), mask);
             }
@@ -69,7 +73,7 @@ class Bitap32 extends BaseBitap {
 
         @Override
         public boolean testNextSymbol() {
-            int charPositions = Bitap32.this.positionMasks.getOrDefault(text.charAt(index), -1);
+            int charPositions = Bitap32.this.positionMasks.get(text.charAt(index));
             int[] previous = matchings[matchingsIndex++];
             if (matchingsIndex == matchings.length) matchingsIndex = 0;
             int[] current = matchings[matchingsIndex];
@@ -117,7 +121,7 @@ class Bitap32 extends BaseBitap {
 
                         if (!inserted) {
                             if (reverseIndex > from()) {
-                                charPositions = Bitap32.this.positionMasks.getOrDefault(text.charAt(--reverseIndex), -1);
+                                charPositions = Bitap32.this.positionMasks.get(text.charAt(--reverseIndex));
                                 reverseMatchingsIndex = (reverseMatchingsIndex == 0 ? matchings.length : reverseMatchingsIndex) - 1;
                                 previous = matchings[reverseMatchingsIndex];
                             } else {
