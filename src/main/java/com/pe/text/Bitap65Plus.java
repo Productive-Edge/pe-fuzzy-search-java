@@ -1,6 +1,6 @@
 package com.pe.text;
 
-import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
+import com.pe.hash.Char2ObjMap;
 
 /**
  * Bitap implementation using unlimited {@link BitVector} for cases where pattern length is more than 64 characters.
@@ -10,7 +10,7 @@ class Bitap65Plus extends BaseBitap {
     /**
      * Positions inverted bitmask for every character in the pattern
      */
-    private final Char2ObjectOpenHashMap<BitVector> positionMasks;
+    private final Char2ObjMap<BitVector> positionMasks;
 
     Bitap65Plus(CharSequence pattern, int maxLevenshteinDistance) {
         this(pattern, maxLevenshteinDistance, false);
@@ -18,7 +18,12 @@ class Bitap65Plus extends BaseBitap {
 
     Bitap65Plus(CharSequence pattern, int maxLevenshteinDistance, boolean caseInsensitive) {
         super(pattern, maxLevenshteinDistance, caseInsensitive);
-        positionMasks = new Char2ObjectOpenHashMap<>(pattern.length() << 1);
+        positionMasks = new Char2ObjMap<>(
+                caseInsensitive
+                        ? pattern.toString().toUpperCase() + pattern.toString().toLowerCase()
+                        : pattern,
+                BitVector.class,
+                null);
         if (!caseInsensitive) {
             for (int i = 0; i < pattern.length(); i++) {
                 final char c = pattern.charAt(i);
@@ -67,7 +72,7 @@ class Bitap65Plus extends BaseBitap {
 
         @Override
         public boolean testNextSymbol() {
-            BitVector charPositions = Bitap65Plus.this.positionMasks.getOrDefault(text.charAt(index), null);
+            BitVector charPositions = Bitap65Plus.this.positionMasks.get(text.charAt(index));
             BitVector[] previous = matchings[matchingsIndex++];
             if (matchingsIndex == matchings.length) matchingsIndex = 0;
             BitVector[] current = matchings[matchingsIndex];
@@ -127,7 +132,7 @@ class Bitap65Plus extends BaseBitap {
 
                         if (!inserted) {
                             if (reverseIndex > from()) {
-                                charPositions = Bitap65Plus.this.positionMasks.getOrDefault(text.charAt(--reverseIndex), null);
+                                charPositions = Bitap65Plus.this.positionMasks.get(text.charAt(--reverseIndex));
                                 reverseMatchingsIndex = (reverseMatchingsIndex == 0 ? matchings.length : reverseMatchingsIndex) - 1;
                                 previous = matchings[reverseMatchingsIndex];
                             } else {
