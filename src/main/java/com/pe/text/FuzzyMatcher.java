@@ -136,7 +136,7 @@ public interface FuzzyMatcher extends FuzzyResult {
      *
      * @param includeOverlapped if true next search will start from the (start + 1) position of the previous matching
      *                          to try to find better matching within range of previous one
-     *                          (might be useful in rare specific cases i.e. for DNA subsequence search, where long pattern consists of few repeating characters),
+     *                          (might be useful in rare specific where a long pattern consists of few repeating characters),
      *                          otherwise it will start from the end position of the previous matching (usual case for OCR-ed text)
      * @return the first best matching (i.e. with minimal Levenshtein distance) or {{@link Optional#empty()}} if no matches.
      */
