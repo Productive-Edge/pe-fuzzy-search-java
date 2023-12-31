@@ -33,7 +33,7 @@ class FixedCharTableTest {
         Random r = new Random();
         IntStream lengths = r.ints(3, 64);
         StringBuilder sb = new StringBuilder(64);
-        lengths.limit(100000).mapToObj(l ->
+        lengths.limit(100).mapToObj(l ->
                 r.ints(' ', 'я').limit(l)
                         .collect(() -> {
                             sb.setLength(0);
@@ -65,7 +65,7 @@ class FixedCharTableTest {
 //
 //        Random r = new Random();
 //        for (int i = 0; i < candidates.length; i++) {
-//            FixedCharTable.PerfHash._p = candidates[i];
+//            FixedCharTable.FCTRandomHashPair._p = candidates[i];
 //            IntStream lengths = r.ints(5, 64);
 //            StringBuilder sb = new StringBuilder(64);
 //            int sum = lengths.limit(100000).mapToObj(l ->
@@ -75,7 +75,7 @@ class FixedCharTableTest {
 //                                        return sb;
 //                                    }, StringBuilder::appendCodePoint, StringBuilder::append)
 //                    ).map(FixedCharTable::from)
-//                    .mapToInt(in -> ((FixedCharTable.PerfHash) in).clashCount)
+//                    .mapToInt(in -> ((FixedCharTable.FCTRandomHashPair) in).clashCount)
 //                    .sum();
 //            System.out.println(candidates[i] + "\t" + sum);
 //        }

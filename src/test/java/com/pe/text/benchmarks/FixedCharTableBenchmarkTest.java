@@ -56,7 +56,7 @@ public class FixedCharTableBenchmarkTest {
         for (int i = 0; i < pattern.length(); i++)
             map.put(pattern.charAt(i), 1);
     }
-
+    
     @Disabled("benchmarks have to be run manually")
     @Test
     void runBenchmarks() throws Exception {
