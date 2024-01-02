@@ -18,21 +18,21 @@ final class FCTRandomHashPair implements FixedCharTable {
 
     private final int mod;
     private final int[] chars;
-    //    private final int[] distinct;
-    private int attempts;
+    private final int maxAttempts;
+    int attempts;
     private int seed1;
     private int seed2;
 
     FCTRandomHashPair(int[] distinct, int maxAttempts) {
-//        this.distinct = distinct;
-        this.attempts = maxAttempts;
+        this.maxAttempts = maxAttempts;
+        this.attempts = 0;
         final int log2 = 1 + 32 - Integer.numberOfLeadingZeros(distinct.length);
         chars = new int[1 << log2];
         mod = (chars.length >> 1) - 1;
 
         Random r = new Random();
         boolean clashed = true;
-        while (clashed && attempts-- > 0) {
+        while (clashed && attempts-- < maxAttempts) {
             seed1 = r.nextInt();
             seed2 = r.nextInt();
             clashed = false;
@@ -65,8 +65,9 @@ final class FCTRandomHashPair implements FixedCharTable {
     }
 
     boolean found() {
-        return attempts > 0;
+        return attempts < maxAttempts;
     }
+
 
     @Override
     public int indexOf(char c) {
@@ -79,7 +80,6 @@ final class FCTRandomHashPair implements FixedCharTable {
 
     @Override
     public int size() {
-//        return distinct.length;
         return chars.length;
     }
 }
