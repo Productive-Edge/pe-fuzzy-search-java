@@ -1,37 +1,41 @@
 package com.pe.hash;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class CharHashTest {
 
-
     @Test
     void testBitMask() {
-        String s = "Sets Гена";
-//        s.chars().forEach(c -> System.out.println("" + ((char) c) + ' ' + Integer.toBinaryString(~c)));
-//        int ors = s.chars().reduce(-1, (r, c) -> r & ~c);
-//        System.out.println("|:" + Integer.toBinaryString(ors));
-//        int ands = s.chars().reduce(0, (r, c) -> r | ~c);
-//        System.out.println("&:" + Integer.toBinaryString(ands));
-//        System.out.println("^:" + Integer.toBinaryString(~(ands ^ ors)));
-        s.chars().forEach(c -> System.out.println("~" + ((char) c) + ' ' + Integer.toBinaryString(~c)));
-        int o = s.chars().reduce(0, (r, c) -> r | c);
-        int a = s.chars().reduce(-1, (r, c) -> r & c);
-        int x = o ^ a;
-        System.out.println("~| " + Integer.toBinaryString(~o));
-        System.out.println("~& " + Integer.toBinaryString(~a));
-        System.out.println("~^ " + Integer.toBinaryString(~x));
-        int[] counts = new int[16];
-        int bit = 0;
-        while (x != 0) {
-            counts[bit] = bit << 16;
-            if ((x & 1) != 0) {
-
-            }
-            bit++;
-            x >>>= 1;
+        String s = "Sets Гена of testing below might not be final and in case not found increase mask"
+                + "\r\n int[] chars = s.chars().sorted().distinct().toArray();";
+        int[] chars = s.chars().sorted().distinct().toArray();
+        FCTMinPerfHash hash = FCTMinPerfHash.findFor(chars);
+        assertNotNull(hash);
+        for (int i = 0; i < chars.length; i++) {
+            assertEquals(i, hash.indexOf(chars[i]));
         }
+        System.out.println(hash.multiplier);
     }
 
+
+    @ParameterizedTest()
+    @CsvSource({
+//            "R-3b",
+            "OsW_"
+    })
+    void test2(String s) {
+        int[] chars = s.chars().sorted().distinct().toArray();
+        FCTMinPerfHash hash = FCTMinPerfHash.findFor(chars);
+        assertNotNull(hash);
+        for (int i = 0; i < chars.length; i++) {
+            assertEquals(i, hash.indexOf(chars[i]));
+        }
+        System.out.println(hash.multiplier);
+    }
 
 }
