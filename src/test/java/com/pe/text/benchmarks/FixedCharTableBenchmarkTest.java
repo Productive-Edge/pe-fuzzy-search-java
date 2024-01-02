@@ -45,13 +45,8 @@ public class FixedCharTableBenchmarkTest {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void phNew() {
         ph = new Char2IntMap(pattern, -1);
-        try {
-            for (int i = 0; i < pattern.length(); i++)
-                ph.put(pattern.charAt(i), 1);
-        } catch (Exception e) {
-            System.err.println(pattern);
-            throw e;
-        }
+        for (int i = 0; i < pattern.length(); i++)
+            ph.put(pattern.charAt(i), 1);
     }
 
     @Benchmark
