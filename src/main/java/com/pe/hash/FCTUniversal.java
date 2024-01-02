@@ -26,7 +26,7 @@ final class FCTUniversal implements FixedCharTable {
 
     static int mix(int charCodePoint) {
         final int p = charCodePoint * 0xF3853C3F;
-        return p ^ (p >> 15);
+        return p ^ (p >> 16);
     }
 
     @Override
