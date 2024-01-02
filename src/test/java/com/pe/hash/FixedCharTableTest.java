@@ -2,11 +2,11 @@ package com.pe.hash;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class FixedCharTableTest {
 
@@ -29,17 +29,37 @@ class FixedCharTableTest {
     }
 
     @Test
-    void testRandom() {
+    void testRandomR2() {
         Random r = new Random();
         IntStream lengths = r.ints(3, 64);
         StringBuilder sb = new StringBuilder(64);
-        lengths.limit(100).mapToObj(l ->
-                r.ints(' ', 'я').limit(l)
+        lengths.limit(100000).mapToObj(l ->
+                r.ints(' ', 'z').limit(l)
                         .collect(() -> {
                             sb.setLength(0);
                             return sb;
                         }, StringBuilder::appendCodePoint, StringBuilder::append)
-        ).forEach(FixedCharTable::from);
+        ).forEach(s -> {
+            FCTMinPerfHash hash = FCTMinPerfHash.findFor(Arrays.stream(new FCTUniversal(s).chars).filter(c -> c >= 0).sorted().toArray());
+            assertNotNull(hash, s::toString);
+        });
+    }
+
+    @Test
+    void testRandomM() {
+        Random r = new Random();
+        IntStream lengths = r.ints(3, 64);
+        StringBuilder sb = new StringBuilder(64);
+        lengths.limit(100000).mapToObj(l ->
+                r.ints(' ', 'z').limit(l)
+                        .collect(() -> {
+                            sb.setLength(0);
+                            return sb;
+                        }, StringBuilder::appendCodePoint, StringBuilder::append)
+        ).forEach(s -> {
+            FCTRandomHashPair hash = new FCTRandomHashPair(Arrays.stream(new FCTUniversal(s).chars).filter(c -> c >= 0).toArray(), 100);
+            assertNotNull(hash, s::toString);
+        });
     }
 
 

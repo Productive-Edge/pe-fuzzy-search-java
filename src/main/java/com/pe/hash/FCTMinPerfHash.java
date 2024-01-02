@@ -2,6 +2,11 @@ package com.pe.hash;
 
 import java.util.Arrays;
 
+/**
+ * quite slow finding of the single multiplier for hash function, but the fastest indexOf
+ * (a bit faster than {@link FCTRandomHashPair})
+ * 4xN memory inside :(
+ */
 final class FCTMinPerfHash implements FixedCharTable {
     private final int[] chars;
     private final int[] mods;
@@ -9,14 +14,14 @@ final class FCTMinPerfHash implements FixedCharTable {
     private final int shift;
     private final int maskSize;
 
-    private int multiplier;
+    int multiplier;
 
     private FCTMinPerfHash(final int[] chars) {
         this.chars = chars;
-        this.maskSize = 32 - Integer.numberOfLeadingZeros(chars.length - 1);
-        this.shift = 32 - maskSize;
-        this.mask = (1 << maskSize) - 1;
-        this.mods = new int[1 << maskSize]; // TODO try chars.length * 2 + 1
+        this.maskSize = 2 + 32 - Integer.numberOfLeadingZeros(chars.length - 1);
+        this.shift = maskSize << 1;
+        this.mods = new int[1 << maskSize];
+        this.mask = mods.length - 1;
         Arrays.fill(mods, -1);
     }
 
@@ -64,26 +69,38 @@ final class FCTMinPerfHash implements FixedCharTable {
     }
 
     final class Finder {
-        final int rangeMask = (-1 >>> maskSize) & ~mask;
+        final int rangeMask = ((1 << shift) - 1) & ~mask;
+
+        int align(int x) {
+            return (x & ~mask) | multiplier;
+        }
 
         boolean find() {
             final int i = chars.length - 1;
             final int ci = chars[i];
             final int lowBits = (ci * multiplier) & mask;
             for (int p = mask; p >= 0; p--) {
-                final int mod = p ^ lowBits;
+                final int mod = (p ^ lowBits) & mask;
                 final int prefixed = lowBits | (p << shift);
-                int max = Integer.divideUnsigned(prefixed | rangeMask, ci);
-                while ((max & mask) != multiplier) max--;
-                int min = Integer.divideUnsigned(prefixed & ~rangeMask, ci);
-                while ((min & mask) != multiplier) min++;
+                final int maxNA = Integer.divideUnsigned(prefixed | rangeMask, ci);
+                int max = align(maxNA);
+                if (max > maxNA) max -= mods.length; // 1 << maskSize
+                if (((max * ci) >>> shift) != p)
+                    continue;
+                final int minNA = Integer.divideUnsigned(prefixed/* & ~rangeMask*/, ci);
+                int min = align(minNA);
+                if (min < minNA) min += mods.length;
+                if (((min * ci) >>> shift) != p)
+                    continue;
+
                 if (max >= min) {
                     mods[mod] = i;
                     if (i == 0) {
                         multiplier = min;
                         return true;
                     }
-                    if (findFrom(i - 1, min, max)) return true;
+                    if (findFrom(i - 1, min, max))
+                        return true;
                     mods[mod] = -1;
                 }
             }
@@ -96,14 +113,20 @@ final class FCTMinPerfHash implements FixedCharTable {
             final int minP = (maxMin * ci) >>> shift;
             final int lowBits = (ci * multiplier) & mask;
             for (int p = maxP; p >= minP; p--) {
-                final int mod = p ^ lowBits;
-                if (mods[mod] != -1)
+                final int mod = (p ^ lowBits) & mask;
+                if (mods[mod] >= 0)
                     continue;
                 final int prefixed = lowBits | (p << shift);
-                int max = Integer.divideUnsigned(prefixed | rangeMask, ci);
-                while ((max & mask) != multiplier) max--;
-                int min = Integer.divideUnsigned(prefixed & ~rangeMask, ci);
-                while ((min & mask) != multiplier) min++;
+                final int maxNA = Integer.divideUnsigned(prefixed | rangeMask, ci);
+                int max = align(maxNA);
+                if (max > maxNA) max -= mods.length; // 1 << maskSize
+                if (((max * ci) >>> shift) != p)
+                    continue;
+                final int minNA = Integer.divideUnsigned(prefixed/* & ~rangeMask*/, ci);
+                int min = align(minNA);
+                if (min < minNA) min += mods.length;
+                if (((min * ci) >>> shift) != p)
+                    continue;
                 if (min < maxMin) min = maxMin;
                 if (max > minMax) max = minMax;
                 if (max >= min) {
