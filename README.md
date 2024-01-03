@@ -32,6 +32,7 @@ improvements:
 * it is possible to combine multiple patterns into the one;
 * familiar pattern/matcher API similar to the `java.util.regex.Pattern` and `java.util.regex.Matcher`
   with possibility to stream matching;
+* custom faster "perfect" hashing for fixed set of characters in a pattern;
 
 ## Installation
 
