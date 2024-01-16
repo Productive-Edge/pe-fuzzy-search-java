@@ -13,9 +13,9 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
-public class FixedCharTableBenchmarkTest {
+public class FCTvsFastUtilsAsciiBenchmarkTest {
 
-    @Param({"2", "6", "23", "40"})
+    @Param({"2", "9", "12", "23", "40", "80"})
     public int length;
 
     private String pattern;
@@ -41,7 +41,7 @@ public class FixedCharTableBenchmarkTest {
                 .toString();
     }
 
-    @Benchmark
+    //    @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void phNew() {
         ph = new Char2IntMap(pattern, -1);
@@ -49,7 +49,7 @@ public class FixedCharTableBenchmarkTest {
             ph.put(pattern.charAt(i), 1);
     }
 
-    @Benchmark
+    //    @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void mapNew() {
         map = new Char2IntOpenHashMap(pattern.length());
@@ -64,13 +64,13 @@ public class FixedCharTableBenchmarkTest {
                 new OptionsBuilder()
                         .include(this.getClass().getName() + ".*")
                         .mode(Mode.AverageTime)
-                        .warmupTime(TimeValue.seconds(1))
+                        .warmupTime(TimeValue.milliseconds(500))
                         .warmupIterations(1)
                         .threads(1)
                         .measurementIterations(3)
-                        .measurementTime(TimeValue.seconds(1))
+                        .measurementTime(TimeValue.milliseconds(1000))
                         .forks(1)
-                        .shouldDoGC(true)
+                        .shouldDoGC(false)
                         .build()
         ).run();
     }

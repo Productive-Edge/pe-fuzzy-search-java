@@ -10,14 +10,10 @@ interface FixedCharTable {
         int[] distinct = Arrays.stream(universal.chars).filter(c -> c >= 0).toArray();
         if (distinct.length == 1) return new FCT1(distinct[0]);
         if (distinct.length == 2) return new FCT2(distinct[0], distinct[1]);
-        FCTRandomHashPair randomHashPair = new FCTRandomHashPair(distinct, 100);
+        FCTCuckoo randomHashPair = new FCTCuckoo(distinct, 100);
         if (randomHashPair.found())
             return randomHashPair;
-        Arrays.sort(distinct);
-        FCTMinPerfHash minPerfHash = FCTMinPerfHash.findFor(distinct);
-        if (minPerfHash == null)
-            return universal;
-        return minPerfHash;
+        return universal;
     }
 
     int indexOf(char c);

@@ -5,16 +5,12 @@ import java.util.Random;
 
 /**
  * Perfect hash (not minimal) via random two hash functions with one level clashing allowed.
- * <p>
- * Creation / search of random functions is 3 times slower in average that fast utils map creation,
- * but search is ~2.5x faster ([1.5 - 3] times) than fast utils.
- * 2xN memory usage
- * </p>
+ * This implementation is close to the Cuckoo hashing
  */
-final class FCTRandomHashPair implements FixedCharTable {
+final class FCTCuckoo implements FixedCharTable {
 
     // tested 8 primes which show good distribution for usual text (low clashing rate)
-    private static final int[] primes = new int[]{130531, 261619, 524789, 785857, 786901, 786949, 786959, 884483};
+    static final int[] primes = new int[]{130531, 261619, 524789, 785857, 786901, 786949, 786959, 884483};
 
     private final int mod;
     private final int[] chars;
@@ -23,51 +19,63 @@ final class FCTRandomHashPair implements FixedCharTable {
     private int seed1;
     private int seed2;
 
-    FCTRandomHashPair(int[] distinct, int maxAttempts) {
+    FCTCuckoo(int[] distinct, int maxAttempts) {
         this.maxAttempts = maxAttempts;
         this.attempts = 0;
-        final int log2 = 1 + 32 - Integer.numberOfLeadingZeros(distinct.length);
+        final int log2 = 32 - Integer.numberOfLeadingZeros(distinct.length + (distinct.length >> 1));
         chars = new int[1 << log2];
+        Arrays.fill(chars, -1);
         mod = (chars.length >> 1) - 1;
 
         Random r = new Random();
         boolean clashed = true;
-        while (clashed && attempts-- < maxAttempts) {
-            seed1 = r.nextInt();
-            seed2 = r.nextInt();
+        while (clashed && ++attempts < maxAttempts) {
+            seed1 = seed(r.nextInt());
+            seed2 = seed(r.nextInt());
             clashed = false;
-            for (int i = 0; i < distinct.length; i++) {
-                final int c = distinct[i];
+            for (final int c : distinct) {
                 final int i1 = m1(c);
                 if (chars[i1] < 0) {
                     chars[i1] = c;
                 } else {
                     final int i2 = m2(c);
-                    if (chars[i2] >= 0) {
-                        clashed = true;
-                        Arrays.fill(chars, -1);
-                        break;
+                    if (chars[i2] < 0) {
+                        chars[i2] = c;
+                    } else {
+                        final int i3 = m2(chars[i1]);
+                        if (chars[i3] < 0) {
+                            chars[i3] = chars[i1];
+                            chars[i1] = c;
+                        } else {
+                            clashed = true;
+                            Arrays.fill(chars, -1);
+                            break;
+                        }
                     }
-                    chars[i2] = c;
                 }
             }
         }
     }
 
+    static int seed(int seed) {
+        return primes[seed & 7] + seed;
+    }
+
     private int m1(int x) {
-        x = x * primes[seed2 & 7] + seed1;
-        return ((x ^ (x >>> 16)) & mod) << 1;
+        return m(x * seed1);
     }
 
     private int m2(int x) {
-        x = x * primes[seed1 & 7] + seed2;
-        return (((x ^ (x >>> 16)) & mod) << 1) + 1;
+        return m(x * seed2) + 1;
+    }
+
+    private int m(int x) {
+        return ((x ^ (x >>> 16)) & mod) << 1;
     }
 
     boolean found() {
         return attempts < maxAttempts;
     }
-
 
     @Override
     public int indexOf(char c) {
