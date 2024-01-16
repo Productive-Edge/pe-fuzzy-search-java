@@ -3,8 +3,8 @@ package com.pe.hash;
 import java.util.Arrays;
 
 /**
- * quite slow finding of the single multiplier for hash function, but the fastest indexOf
- * (a bit faster than {@link FCTRandomHashPair})
+ * Findig of the single multiplier for hash function is quite slow, but the fastest indexOf
+ * (a bit faster than {@link FCTCuckoo})
  * 4xN memory inside :(
  */
 final class FCTMinPerfHash implements FixedCharTable {
@@ -12,14 +12,13 @@ final class FCTMinPerfHash implements FixedCharTable {
     private final int[] mods;
     private final int mask;
     private final int shift;
-    private final int maskSize;
 
     int multiplier;
 
     private FCTMinPerfHash(final int[] chars) {
         this.chars = chars;
-        this.maskSize = 2 + 32 - Integer.numberOfLeadingZeros(chars.length - 1);
-        this.shift = maskSize << 1;
+        final int maskSize = 2 + 32 - Integer.numberOfLeadingZeros(chars.length - 1);
+        this.shift = 32 - maskSize; // maskSize << 1;
         this.mods = new int[1 << maskSize];
         this.mask = mods.length - 1;
         Arrays.fill(mods, -1);
@@ -80,7 +79,6 @@ final class FCTMinPerfHash implements FixedCharTable {
             final int ci = chars[i];
             final int lowBits = (ci * multiplier) & mask;
             for (int p = mask; p >= 0; p--) {
-                final int mod = (p ^ lowBits) & mask;
                 final int prefixed = lowBits | (p << shift);
                 final int maxNA = Integer.divideUnsigned(prefixed | rangeMask, ci);
                 int max = align(maxNA);
@@ -94,6 +92,7 @@ final class FCTMinPerfHash implements FixedCharTable {
                     continue;
 
                 if (max >= min) {
+                    final int mod = (p ^ lowBits) & mask;
                     mods[mod] = i;
                     if (i == 0) {
                         multiplier = min;
