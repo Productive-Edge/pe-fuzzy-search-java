@@ -45,7 +45,7 @@ import com.pe.ordinal.OrdinalSuffix;
  *      public void process(Document document) {
  *          final String text = document.getText();
  *          final int startFrom = (text.length() * 3) / 4;
- *          // here order of found matches is not important, so we can simply iterate over each FuzzyPattern,
+ *          // here order of found matches is not important, so simply iterate over each FuzzyPattern,
  *          // to have slightly better performance
  *          Arrays.stream(KEYWORDS)
  *              .flatMap(pattern -> pattern.matcher(text, startFrom).stream())

@@ -4,6 +4,8 @@ This library implements approximate string matching (fuzzy string searching)
 where the building of the full-text search index is overhead (i.e. text where search happen is new each
 time, indexing of the document will take more time than single or few searches with help of this library).
 
+This library is especially helpful for the processing of a text with errors.
+
 ```java
 public class Example {
     public static void main(String[] args) {
@@ -36,26 +38,28 @@ improvements:
 
 ## Installation
 
+```xml
+
+<dependency>
+    <!-- TODO publish -->
+</dependency>
+```
+
 ## History of creation this library
 
 This library was implemented at [Productive Edge LLC](https://www.productiveedge.com/)
 to solve the problem of the information extraction from documents with
-high [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition) error rate.
-We use [Workfusion](https://www.workfusion.com/) AI for the information extraction. Trained models work well on
-documents
-with small amount of OCR errors, but in our case automation of the information extraction from the scanned documents was
-not enough,
-due OCR errors. Hopefully Workfusion AutoML SDK allows to add custom annotations and features to the documents,
-so we can mark important keywords even they have OCR errors inside using fuzzy search.
-The **important criteria** for our need in fuzzy search were:
+high [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition) error rate, where keywords are too unstable for
+pattern matching or machine learning.
 
-* the **precise location of the found matching**, i.e. capture only necessary tokens;
-* **the high performance** at the same time,
-  due importance of spent time on the model training and execution.
+The most **important criteria** for this problem in our case were:
+
+* **precise location of the found matching**, i.e. capture only necessary tokens;
+* **high performance**.
 
 We haven't found anything with these criteria so had to implement own library which we glad to open source.
 
-Example of the custom Workfusion AutoML document annotator with fuzzy searching applied:
+Example of the custom [Workfusion](https://www.workfusion.com/) AutoML document annotator with fuzzy searching applied:
 
 ```java
 public class IsDental {
@@ -157,16 +161,15 @@ distance](https://en.wikipedia.org/wiki/Levenshtein_distance)
 (amount of edited characters),
 and it doesn't have information about edit operations applied to this matching.
 E.g. Default Bitap algorithm for the pattern `ABCD` with maximum allowed Levenshtein distance `2`
-will stop in the text `XXABXD` on the char 'B' (3 - zero based index), with no other details.
+will stop in the text `XXABXD` on the char 'B' (3 - zero based index `XXA>B<XD`),
+without details about difference between pattern and matched text.
 
-Our implementation will return information about the best matching in this case:
-XX**ABXD**, start zero based index = 2, end = 5, found text `ABXD`, with one replacement 'X' -> 'C' at the 4th index.
+This implementation will return information about the best matching in this case:
+XX**ABXD**, start zero based index is 2, end one is 5, found text `ABXD`, with one replacement 'X' -> 'C' at the 4th
+index.
 
 This library prefers replacements to the insertion and deletion when tries to find the best matching,
 since OCR errors in the most cases are fixed by replacement wrongly recognized character.
-
-Anyway we share applied edit operations and their indices, head and tail replacements
-can be treated as inserts if it is better for your task.
 
 ## Credits
 
