@@ -3,7 +3,7 @@ package com.pe.hash;
 import java.util.Arrays;
 
 /**
- * Findig of the single multiplier for hash function is quite slow, but the fastest indexOf
+ * Finding of the single multiplier for hash function is quite slow, but the fastest indexOf
  * (a bit faster than {@link FCTCuckoo})
  * 4xN memory inside :(
  */
