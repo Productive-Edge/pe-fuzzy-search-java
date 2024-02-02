@@ -4,7 +4,10 @@ This library implements approximate string matching (fuzzy string searching)
 where the building of the full-text search index is overhead (i.e. text where the search happens is new each
 time, indexing of the document will take more time than a single or few searches with the help of this library).
 
-Fuzzy string searching finds strings that closely match a given pattern. It allows for variations, errors, or similarities in the strings being compared and relies on algorithms that measure the degree of similarity between strings. This method is used for spell checking, data cleaning, and search engines where it helps retrieve relevant results even when the input query contains errors or variations.
+Fuzzy string searching finds strings that closely match a given pattern. It allows for variations, errors, or
+similarities in the strings being compared and relies on algorithms that measure the degree of similarity between
+strings. This method is used for spell checking, data cleaning, and search engines where it helps retrieve relevant
+results even when the input query contains errors or variations.
 
 This library is beneficial for the processing of text with errors.
 
@@ -13,7 +16,7 @@ public class Example {
     public static void main(String[] args) {
         // maximum 3 edits (differences) allowed
         FuzzyPattern.compile("Medical?", 3)
-                .matcher("4. Dental? [ ! Medicaid? ] I (!f both, complete 3-11 for dental only.i")
+                .matcher("4. Dental? [ ! Medicai? ] I (!f both, complete 3-11 for dental oniy.i") //text with OCR errors
                 .stream()
                 .forEach(System.out::println);
         //Output:
@@ -29,7 +32,8 @@ improvements:
 
 * no restriction on the search pattern length;
 * case-insensitive matching;
-* it doesn't stop on the first finding, which is the worst (i.e., has the maximal allowed distance between the pattern and found
+* it doesn't stop on the first finding, which is the worst (i.e., has the maximal allowed distance between the pattern
+  and found
   text), but tries to improve the result (i.e. minimizes distance);
 * matching result explanation in detail: as lists of characters and their positions which were deleted, replaced,
   or inserted;
