@@ -47,7 +47,9 @@ improvements:
 ```xml
 
 <dependency>
-    <!-- TODO publish -->
+    <groupId>com.productiveedge</groupId>
+    <artifactId>fuzzy-search</artifactId>
+    <version>1.0</version>
 </dependency>
 ```
 
