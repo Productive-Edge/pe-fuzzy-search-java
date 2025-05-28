@@ -70,6 +70,8 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
          * values starts from 1st index to match with count of operations (Levenshtein distance)
          */
         int[] lengthChanges;
+        /** Running sum of values stored in {@link #lengthChanges}. */
+        int totalLengthChange;
         /**
          * start search index (search begins from this position in the {@link #text})
          */
@@ -81,6 +83,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
             maxDistance = maxLevenshteinDistance;
             final int n = maxDistance + 1;
             lengthChanges = new int[n];
+            totalLengthChange = 0;
             reset(text, fromIndex, toIndex);
         }
 
@@ -104,7 +107,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
             while (++index < toIndex) {
                 if (testNextSymbol()) {
                     final int maxDistanceCopy = maxDistance;
-                    final int totalLengthChanges = sumLengthChanges();
+                    final int totalLengthChanges = totalLengthChange;
                     final int maxIndex = Math.min(toIndex, index + totalLengthChanges + maxDistance + 1);
                     improveResult(maxIndex);
                     maxDistance = maxDistanceCopy;
@@ -140,9 +143,16 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
          * @return Sum of the all length changes
          */
         protected int sumLengthChanges() {
-            int result = 0;
-            for (int i = 1; i <= levenshteinDistance; i++) result += lengthChanges[i];
-            return result;
+            return totalLengthChange;
+        }
+
+        /**
+         * Updates {@link #lengthChanges} at the given position and adjusts the cached sum.
+         */
+        protected void setLengthChange(int pos, int value) {
+            totalLengthChange -= lengthChanges[pos];
+            lengthChanges[pos] = value;
+            totalLengthChange += value;
         }
 
         @Override
@@ -151,15 +161,15 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
                 return;
 
             if (theBestState == null) theBestState = new State();
-            theBestState.getFromMatcher(sumLengthChanges());
+            theBestState.getFromMatcher(totalLengthChange);
             while (++index < maxIndex) {
                 if (testNextSymbol()) {
                     if (levenshteinDistance < theBestState.levenshteinDistance) {
-                        theBestState.getFromMatcher(sumLengthChanges());
+                        theBestState.getFromMatcher(totalLengthChange);
                     } else if (levenshteinDistance == theBestState.levenshteinDistance) {
-                        int totalLengthChange = sumLengthChanges();
-                        if (totalLengthChange < theBestState.totalLengthChange) {
-                            theBestState.getFromMatcher(totalLengthChange);
+                        int currentTotalLengthChange = totalLengthChange;
+                        if (currentTotalLengthChange < theBestState.totalLengthChange) {
+                            theBestState.getFromMatcher(currentTotalLengthChange);
                         }
                     }
                 }
@@ -210,6 +220,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
             void putToMatcher() {
                 Matcher.this.index = index;
                 Matcher.this.levenshteinDistance = levenshteinDistance;
+                Matcher.this.totalLengthChange = totalLengthChange;
                 for (int i = 1; i <= levenshteinDistance; i++) Matcher.this.lengthChanges[i] = lengthChanges[i];
             }
         }
@@ -222,7 +233,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
 
         @Override
         public int start() {
-            return end() - BaseBitap.this.pattern.length() + sumLengthChanges();
+            return end() - BaseBitap.this.pattern.length() + totalLengthChange;
         }
 
         @Override

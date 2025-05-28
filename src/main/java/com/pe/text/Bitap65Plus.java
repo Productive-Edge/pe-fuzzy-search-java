@@ -84,7 +84,7 @@ class Bitap65Plus extends BaseBitap {
                         .leftShift1().or(charPositions);
             }
             if (current[0].hasZeroAtTheLastBit()) {
-                if (lengthChanges.length > 1) lengthChanges[1] = 0;
+                if (lengthChanges.length > 1) setLengthChange(1, 0);
                 return true;
             }
             while (levenshteinDistance < maxDistance) {
@@ -105,7 +105,7 @@ class Bitap65Plus extends BaseBitap {
                 }
                 final boolean found = combined.hasZeroAtTheLastBit();
                 if (found) {
-                    if (levenshteinDistance < maxDistance) lengthChanges[levenshteinDistance + 1] = 0;
+                    if (levenshteinDistance < maxDistance) setLengthChange(levenshteinDistance + 1, 0);
                     int reverseLevensteinDistance = levenshteinDistance;
                     int reverseMatchingsIndex = (matchingsIndex == 0 ? matchings.length : matchingsIndex) - 1;
                     int reverseIndex = index;
@@ -116,12 +116,12 @@ class Bitap65Plus extends BaseBitap {
                         if (charPositions != null && matching.and(reverseLastBitMask).isZero()) {
                             reverseLastBitMask.rightUnsignedShift1();
                         } else if (reverseDeletion.and(reverseLastBitMask).isZero()) {
-                            lengthChanges[reverseLevensteinDistance--] = -1;
+                            setLengthChange(reverseLevensteinDistance--, -1);
                         } else if (substitution.and(reverseLastBitMask).isZero()) {
-                            lengthChanges[reverseLevensteinDistance--] = 0;
+                            setLengthChange(reverseLevensteinDistance--, 0);
                             reverseLastBitMask.rightUnsignedShift1();
                         } else {
-                            lengthChanges[reverseLevensteinDistance--] = 1;
+                            setLengthChange(reverseLevensteinDistance--, 1);
                             reverseLastBitMask.rightUnsignedShift1();
                             inserted = true;
                         }
@@ -137,7 +137,7 @@ class Bitap65Plus extends BaseBitap {
                                 previous = matchings[reverseMatchingsIndex];
                             } else {
                                 // only insertions can be here
-                                while (reverseLevensteinDistance > 0) lengthChanges[reverseLevensteinDistance--] = 1;
+                                while (reverseLevensteinDistance > 0) setLengthChange(reverseLevensteinDistance--, 1);
                                 return true;
                             }
                         }
