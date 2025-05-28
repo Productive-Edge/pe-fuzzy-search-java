@@ -17,7 +17,8 @@ final class FCTUniversal implements FixedCharTable {
         chars = new int[1 << maskSize];
         Arrays.fill(chars, -1);
         mask = chars.length - 1;
-        charSequence.chars().forEach(ci -> {
+        for (int i = 0; i < charSequence.length(); i++) {
+            int ci = charSequence.charAt(i);
             int k = mix(ci);
             int p;
             int c;
@@ -28,7 +29,7 @@ final class FCTUniversal implements FixedCharTable {
                 k++;
             }
             chars[p] = ci;
-        });
+        }
     }
 
     private static int log2(int x) {
