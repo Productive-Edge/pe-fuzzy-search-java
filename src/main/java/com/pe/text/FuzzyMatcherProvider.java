@@ -30,7 +30,7 @@ public interface FuzzyMatcherProvider {
     FuzzyMatcher matcher(CharSequence text, int fromIndex, int toIndex);
 
     /**
-     * Creates {@link FuzzyMatcher} for the specified text, and start offset. Equivalent to the {@code paatern.matcher(text, fromIndex, text.length())}
+     * Creates {@link FuzzyMatcher} for the specified text, and start offset. Equivalent to the {@code pattern.matcher(text, fromIndex, text.length())}
      *
      * @param text      The text to scan.
      * @param fromIndex The start offset to scan.
