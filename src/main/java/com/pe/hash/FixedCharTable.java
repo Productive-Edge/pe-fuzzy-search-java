@@ -1,7 +1,5 @@
 package com.pe.hash;
 
-import java.util.Arrays;
-
 interface FixedCharTable {
 
     static FixedCharTable from(CharSequence charSequence) {
