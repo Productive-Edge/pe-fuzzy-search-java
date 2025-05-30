@@ -1,5 +1,7 @@
 package com.pe.text;
 
+import java.util.Objects;
+
 /**
  * Immutable record with information about edit/matching operation in the {@link FuzzyResult}
  */
@@ -41,7 +43,7 @@ public final class Operation {
     }
 
     /**
-     * Returns character and its index in the found text where edit operation was applied:
+     * Returns a character and its index in the found text where the edit operation was applied:
      * <ul>
      *     <li>{@link OperationType#MATCHING} - matched text character</li>
      *     <li>{@link OperationType#DELETION} - deleted text character</li>
@@ -53,6 +55,22 @@ public final class Operation {
      */
     public CharWithIndex textChar() {
         return textChar;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = type.hashCode();
+        result = 31 * result + Objects.hashCode(patternChar);
+        result = 31 * result + Objects.hashCode(textChar);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Operation operation = (Operation) o;
+        return type == operation.type && Objects.equals(patternChar, operation.patternChar) && Objects.equals(textChar, operation.textChar);
     }
 
     @Override

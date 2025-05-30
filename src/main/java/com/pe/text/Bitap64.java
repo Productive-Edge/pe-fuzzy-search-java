@@ -83,11 +83,11 @@ class Bitap64 extends BaseBitap {
                 return true;
             }
             while (levenshteinDistance < maxDistance) {
-                // insert correct character after the current
+                // insert the correct character after the current one
                 final long insertion = current[levenshteinDistance] << 1;
                 // delete current character
                 long deletion = previous[levenshteinDistance++];
-                // insert correct character after the current
+                // insert the correct character after the current one
                 // replace current character with correct one
                 long substitution = deletion << 1;
                 // get current character as is

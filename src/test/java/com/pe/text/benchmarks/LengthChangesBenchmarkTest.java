@@ -102,9 +102,9 @@ public class LengthChangesBenchmarkTest {
             long bits = 0L, signs = 0L;
             for (int j = 1; j < length; j++) {
                 bits <<= 1;
-                bits &= random.nextBoolean() ? 1L : 0L;
+                bits |= random.nextBoolean() ? 1L : 0L;
                 signs <<= 1;
-                signs &= random.nextBoolean() ? 1L : 0L;
+                signs |= random.nextBoolean() ? 1L : 0L;
             }
             long sum = 0L;
             for (int j = 1; j < length; j++) {

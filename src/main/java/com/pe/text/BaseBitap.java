@@ -43,6 +43,16 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
 
     abstract class Matcher implements IterativeFuzzyMatcher {
 
+        /**
+         * contains changes in length (or applied operations DELETION, REPLACEMENT, INSERT) for the matched text:
+         * <ul>
+         *     <li><b>-1</b> symbol was deleted</li>
+         *     <li><b> 0</b> symbol was replaced or matched</li>
+         *     <li><b> 1</b> symbol was inserted</li>
+         * </ul>
+         * values starts from 1st index to match with count of operations (Levenshtein distance)
+         */
+        final int[] lengthChanges;
         protected CharSequence text;
         /**
          * current Levenshtein distance
@@ -53,23 +63,13 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
          */
         protected int maxDistance;
         /**
-         * current search index (i.e. end) in the {@link #text}
+         * current search index (i.e., end) in the {@link #text}
          */
         protected int index;
         /**
          * stop search index (search is stopped by reaching this position in the {@link #text})
          */
         protected int toIndex;
-        /**
-         * contains changes in length (or applied operations DELETION, REPLACEMENT, INSERT) for the matched text:
-         * <ul>
-         *     <li><b>-1</b> symbol was deleted</li>
-         *     <li><b> 0</b> symbol was replaced or matched</li>
-         *     <li><b> 1</b> symbol was inserted</li>
-         * </ul>
-         * values starts from 1st index to match with count of operations (Levenshtein distance)
-         */
-        int[] lengthChanges;
         /**
          * start search index (search begins from this position in the {@link #text})
          */
@@ -135,7 +135,7 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
         }
 
         /**
-         * Sum of the all length changes, which is the difference in length between pattern and this matching
+         * Sum of the length changes, which is the difference in length between a pattern and this matching
          *
          * @return Sum of the all length changes
          */
@@ -194,10 +194,9 @@ abstract class BaseBitap implements FuzzyPattern, IterativeFuzzyMatcherProvider 
         }
 
         final class State {
+            final int[] lengthChanges = Matcher.this.lengthChanges.clone();
             int index;
             int levenshteinDistance;
-            int[] lengthChanges = Matcher.this.lengthChanges.clone();
-
             int totalLengthChange;
 
             void getFromMatcher(int totalLengthChange) {

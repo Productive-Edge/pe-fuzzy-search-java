@@ -24,7 +24,7 @@ public interface FuzzyResult {
      * Returns the start index of the match.
      *
      * @return The index of the first character matched.
-     * @throws IllegalStateException in case {@link FuzzyMatcher#start()} was called when no current matching was found.
+     * @throws IllegalStateException in case this method was called when no current matching was found.
      */
     int start();
 
@@ -38,7 +38,7 @@ public interface FuzzyResult {
      * }</pre>
      *
      * @return The offset after the last character matched.
-     * @throws IllegalStateException in case {@link FuzzyMatcher#end()} was called when no current matching was found.
+     * @throws IllegalStateException in case this method was called when no current matching was found.
      */
     int end();
 
@@ -47,7 +47,7 @@ public interface FuzzyResult {
      * For a matcher <code>m</code> with input sequence <code>s</code>, the expressions <code>m.foundText()</code> and <code>s.subSequence(m.start(), m.end())</code> are equivalent.
      *
      * @return The found subsequence in the input text.
-     * @throws IllegalStateException in case {@link FuzzyMatcher#foundText()} was called when no current matching was found.
+     * @throws IllegalStateException in case this method was called when no current matching was found.
      */
     CharSequence foundText();
 
@@ -72,7 +72,7 @@ public interface FuzzyResult {
      * Returns Levenshtein distance between the pattern text and found one.
      *
      * @return The Levenshtein distance between the pattern text and found one.
-     * @throws IllegalStateException in case {@link FuzzyMatcher#distance()} was called when no current matching was found.
+     * @throws IllegalStateException in case this method was called when no current matching was found.
      */
     int distance();
 
@@ -85,9 +85,9 @@ public interface FuzzyResult {
     }
 
     /**
-     * Streams all operations for this result char-by-char including matchings.
+     * Streams all operations for this result char-by-char, including matchings.
      *
-     * @return stream with all operations for this result char-by-char including matchings
+     * @return stream with all operations for this result char-by-char, including matchings
      * @see Operation
      */
     default Stream<Operation> streamCharByCharOperations() {
@@ -99,9 +99,9 @@ public interface FuzzyResult {
     }
 
     /**
-     * Streams edit operations applied to the found text to get pattern.
+     * Streams edit operations applied to the found text to get a pattern.
      *
-     * @return stream with edit operations applied to the found text to get pattern
+     * @return stream with edit operations applied to the found text to get a pattern
      * @see Operation
      */
     default Stream<Operation> streamEditOperations() {

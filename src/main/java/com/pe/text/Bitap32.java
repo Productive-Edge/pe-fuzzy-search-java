@@ -84,7 +84,7 @@ class Bitap32 extends BaseBitap {
                 return true;
             }
             while (levenshteinDistance < maxDistance) {
-                // insert correct character after the current
+                // insert the correct character after the current
                 final int insertion = current[levenshteinDistance] << 1;
                 // delete current character
                 int deletion = previous[levenshteinDistance++];
