@@ -266,7 +266,7 @@ class Bitap32Test {
     @Test
     void testMaxLen() {
         FuzzyPattern pattern = FuzzyPattern.compile("12345678901234567890123456789012", 1);
-        assertTrue(pattern instanceof Bitap32);
+        assertInstanceOf(Bitap32.class, pattern);
         //insert 2
         {
             List<FuzzyResult> results = pattern.matcher("0234567890123456789012345678901234567890")
@@ -663,7 +663,7 @@ class Bitap32Test {
         FuzzyPattern pattern = FuzzyPattern.compile(ptrn, 6);
         BaseBitap.Matcher matcher = (BaseBitap.Matcher) pattern.matcher(text);
         assertTrue(matcher.find());
-        matcher.streamEditsDetails().forEach(System.out::println);
+        matcher.streamEditOperations().forEach(System.out::println);
         assertEquals(2, matcher.distance());
         assertEquals("a ba a a a", matcher.foundText());
         assertArrayEquals(new int[]{0, 0, 0, 0, 0, 0, 0}, matcher.lengthChanges);
@@ -681,7 +681,7 @@ class Bitap32Test {
                 .matcher(text);
         assertTrue(matcher.find());
         assertEquals(text, matcher.foundText());
-        List<Operation> edits = matcher.streamEditsDetails().collect(Collectors.toList());
+        List<Operation> edits = matcher.streamEditOperations().collect(Collectors.toList());
         assertEquals(maxDiff, edits.size());
         assertEquals(OperationType.INSERTION, edits.get(0).type());
         assertEquals(OperationType.REPLACEMENT, edits.get(1).type());

@@ -5,13 +5,22 @@ with a checkbox [ ] that can be checked off when completed.
 
 ## Architecture Improvements
 
-1. [ ] Refactor the Bitap implementations (Bitap32, Bitap64, Bitap65Plus) to reduce code duplication
+1. [X] Refactor the Bitap implementations (Bitap32, Bitap64, Bitap65Plus) to reduce code duplication
     - The current implementations share significant code but are implemented separately
     - Consider using a template pattern or composition to share common logic
 
-2. [ ] Create a factory class for FuzzyPattern creation
+      [bitap_refactoring.md](bitap_refactoring.md)
+      REVIEW: Performance dropped (execution time increased on):
+        * 32b - 30%
+        * 64b - 100%
+        * 65+ - 7%
+
+      Codebase was increased
+
+2. [X] Create a factory class for FuzzyPattern creation
     - Currently, pattern creation logic is in the interface's static methods
     - A dedicated factory would improve separation of concerns and testability
+      REVIEW: introduced new factory class makes no principal differences
 
 3. [ ] Implement a builder pattern for FuzzyPattern creation
     - Would allow for more flexible configuration options
@@ -56,6 +65,9 @@ with a checkbox [ ] that can be checked off when completed.
 12. [X] Optimize the character position mask generation
     - The current implementation may be inefficient for certain patterns
     - Consider alternative data structures or algorithms
+      REVIEW: [optimization_notes.md](optimization_notes.md)
+      This optimization is better to implement as FixedCharTable interface, instead of changing Bitap32 & Bitap64 (BTW
+      Bitap65Plus was not updated).
 
 13. [X] Implement caching for frequently used patterns
     - Add an optional caching layer for pattern compilation
@@ -78,12 +90,15 @@ with a checkbox [ ] that can be checked off when completed.
 17. [X] Profile and optimize the hot paths in the matching algorithm
     - Use a profiler to identify performance bottlenecks
     - Focus optimization efforts on the most critical sections
+      REVIEW: [hot_paths_optimization.md](hot_paths_optimization.md)
+      Benchmarks show that local caching of fields doesn't have improvements (performance even is slightly worse)
 
 ## Documentation Improvements
 
-18. [ ] Create comprehensive JavaDoc for all public classes and methods
+18. [+] Create comprehensive JavaDoc for all public classes and methods
     - Ensure all public API elements have clear documentation
     - Include examples and edge cases in the documentation
+      REVIEW: Amazing Result
 
 19. [ ] Add a developer guide with implementation details
     - Explain the Bitap algorithm and its variants
