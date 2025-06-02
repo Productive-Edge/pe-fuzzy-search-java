@@ -717,7 +717,7 @@ class Bitap32Test {
             "33. Missing Te Teeth Information",
             "33. Missing Tee Teeth Information",
             "33. Missing Teet Teeth Information",
-            "33. Missing Teeth Teeth Information", // was failing on maxLeviD = 10, but worked on 9, due optimistic improvements
+            "33. Missing Teeth Teeth Information", // was failing on maxLeviD = 10, but worked on 9, due to optimistic improvements
             "33. Missing Teeth  Teeth Information",
     })
     void testMissing(String text) {
